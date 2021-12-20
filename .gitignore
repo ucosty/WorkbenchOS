@@ -1,6 +1,5 @@
 # Temporary shell scripts
 *.sh
-run
 
 # Build output files
 _disk_image
