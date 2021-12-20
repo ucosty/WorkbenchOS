@@ -1,0 +1,34 @@
+// WorkbenchOS
+// Copyright (c) 2021 Matthew Costa <ucosty@gmail.com>
+//
+// SPDX-License-Identifier: GPL-3.0-only
+#pragma once
+
+using uint64_t = __UINT64_TYPE__;
+using uint32_t = __UINT32_TYPE__;
+using uint16_t = __UINT16_TYPE__;
+using uint8_t = __UINT8_TYPE__;
+using int64_t = __INT64_TYPE__;
+using int32_t = __INT32_TYPE__;
+using int16_t = __INT16_TYPE__;
+using int8_t = __INT8_TYPE__;
+
+using size_t = __SIZE_TYPE__;
+using ptrdiff_t = __PTRDIFF_TYPE__;
+using intptr_t = __INTPTR_TYPE__;
+using uintptr_t = __UINTPTR_TYPE__;
+
+template<typename T>
+constexpr T &&move(T &other) {
+    return static_cast<T &&>(other);
+}
+
+static_assert(sizeof(uint8_t) == 1);
+static_assert(sizeof(int8_t) == 1);
+static_assert(sizeof(uint16_t) == 2);
+static_assert(sizeof(int16_t) == 2);
+static_assert(sizeof(uint32_t) == 4);
+static_assert(sizeof(int32_t) == 4);
+static_assert(sizeof(uint64_t) == 8);
+static_assert(sizeof(int64_t) == 8);
+static_assert(sizeof(size_t) == 8);
