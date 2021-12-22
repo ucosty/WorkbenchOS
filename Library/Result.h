@@ -17,7 +17,6 @@ public:
     static Result<T, E> of(T value) { return Result(value); }
     T get() const { return m_value.get(); }
 private:
-    // TODO: Wrap in an optional
     Optional<T> m_value;
     Optional<E> m_error;
     bool m_is_error { false };
