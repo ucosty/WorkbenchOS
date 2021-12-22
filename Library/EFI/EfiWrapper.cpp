@@ -61,6 +61,45 @@ static const char *MEMORY_TYPE[] = {
     "EFI_PERSISTENT_MEMORY",
 };
 
+bool has_status(uint64_t status, uint64_t code) {
+    return status &= code;
+}
+
+#define EFI_LOAD_ERROR 1
+#define EFI_INVALID_PARAMETER 2
+#define EFI_UNSUPPORTED 3
+#define EFI_BAD_BUFFER_SIZE 4
+#define EFI_BUFFER_TOO_SMALL 5
+#define EFI_NOT_READY 6
+#define EFI_DEVICE_ERROR 7
+#define EFI_WRITE_PROTECTED 8
+#define EFI_OUT_OF_RESOURCES 9
+#define EFI_VOLUME_CORRUPTED 10
+#define EFI_VOLUME_FULL 11
+#define EFI_NO_MEDIA 12
+#define EFI_MEDIA_CHANGED 13
+#define EFI_NOT_FOUND 14
+#define EFI_ACCESS_DENIED 15
+#define EFI_NO_RESPONSE 16
+#define EFI_NO_MAPPING 17
+#define EFI_TIMEOUT 18
+#define EFI_NOT_STARTED 19
+#define EFI_ALREADY_STARTED 20
+#define EFI_ABORTED 21
+#define EFI_ICMP_ERROR 22
+#define EFI_TFTP_ERROR 23
+#define EFI_PROTOCOL_ERROR 24
+#define EFI_INCOMPATIBLE_VERSION 25
+#define EFI_SECURITY_VIOLATION 26
+#define EFI_CRC_ERROR 27
+#define EFI_END_OF_MEDIA 28
+#define EFI_END_OF_FILE 31
+#define EFI_INVALID_LANGUAGE 32
+#define EFI_COMPROMISED_DATA 33
+#define EFI_IP_ADDRESS_CONFLICT 34
+#define EFI_HTTP_ERROR 35
+
+
 /**
  * Get a MemoryType in text form
  * @param type memory type to look up
@@ -117,6 +156,14 @@ Result<void> BootServices::allocate_pool(Raw::MemoryType pool_type, uint64_t siz
     return {};
 }
 
+Result<void> BootServices::free_pool(void *buffer) {
+    auto status = m_boot_services->free_pool(buffer);
+    if (status != 0) {
+        return Lib::Error::from_code(status);
+    }
+    return {};
+}
+
 Result<void> BootServices::locate_protocol(const EFI::GUID *protocol, void *registration, void **interface) {
     auto status = m_boot_services->locate_protocol(protocol, registration, interface);
     if (status != 0) {
@@ -139,6 +186,27 @@ Result<void> BootServices::get_memory_map(uint64_t *memory_map_size, Raw::Memory
         return Lib::Error::from_code(status);
     }
     return {};
+}
+
+Result<MemoryMap> BootServices::get_memory_map() {
+    MemoryMap map;
+    Raw::Status status = EFI_BUFFER_TOO_SMALL;
+    while(true) {
+        auto request = get_memory_map(&map.m_size, map.m_descriptors, &map.m_key, &map.m_descriptor_size, &map.m_descriptor_version);
+        if(request.is_error()) {
+            if (has_status(request.get_error().get_code(), EFI_BUFFER_TOO_SMALL)) {
+                if(map.m_descriptors != nullptr) {
+                    TRY(free_pool(map.m_descriptors));
+                }
+                TRY(allocate_pool(EFI::Raw::MemoryType::EFI_LOADER_DATA, map.m_size, (void **) &map.m_descriptors));
+            } else {
+                return request.get_error();
+            }
+        } else {
+            map.m_descriptor_count = map.m_size / map.m_descriptor_size;
+            return map;
+        }
+    }
 }
 
 Result<void> BootServices::exit_boot_services(void *image_handle, uint64_t map_key) {
@@ -220,6 +288,22 @@ Result<void> GraphicsOutputProtocol::blit(Raw::BlitPixel *BltBuffer, Raw::BlitOp
     auto status = m_graphics_output->blit(m_graphics_output, BltBuffer, BltOperation, source_x, source_y, destination_x, destination_y, width, height, delta);
     if (status != 0) {
         return Lib::Error::from_code(status);
+    }
+    return {};
+}
+
+Result<void> MemoryMap::sanity_check() {
+    uint64_t last_address = 0;
+    for(int i = 0; i < m_descriptor_count; i++) {
+        auto descriptor = m_descriptors[i];
+        auto size = descriptor.number_of_pages * 0x1000;
+        if(descriptor.physical_start < last_address) {
+            // Found overlapping memory
+            printf("ERROR!! Overlapping memory found\r\n");
+            printf("%d: start = %X, pages = %d, size = %X\r\n", i, descriptor.physical_start, descriptor.number_of_pages, size);
+            return Lib::Error::from_code(1);
+        }
+        last_address = descriptor.physical_start + size;
     }
     return {};
 }

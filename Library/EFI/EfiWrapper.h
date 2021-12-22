@@ -5,12 +5,14 @@
 #pragma once
 
 #include <EFI/Efi.h>
+#include <Iterator.h>
 #include <Result.h>
 #include <Try.h>
 
 namespace EFI {
     const char *status_code(Raw::Status status);
     const char *memory_type(Raw::MemoryType type);
+    struct MemoryMap;
 
     class BootServices {
     public:
@@ -18,6 +20,7 @@ namespace EFI {
 
         Result<uint64_t> allocate_pages(Raw::AllocateType type, Raw::MemoryType memory_type, uint64_t pages);
         Result<void> allocate_pool(Raw::MemoryType pool_type, uint64_t size, void **buffer);
+        Result<void> free_pool(void *buffer);
         Result<void> exit_boot_services(void *image_handle, uint64_t map_key);
 
         template<typename T>
@@ -38,9 +41,25 @@ namespace EFI {
         }
         Result<void> set_watchdog_timer(uint64_t timeout, uint64_t watchdog_code, uint64_t data_size, wchar_t *watchdog_data);
         Result<void> get_memory_map(uint64_t *memory_map_size, Raw::MemoryDescriptor *memory_map, uint64_t *map_key, uint64_t *descriptor_size, uint32_t *descriptor_version);
+        Result<MemoryMap> get_memory_map();
 
     private:
         Raw::BootServices *m_boot_services;
+    };
+
+    class MemoryMapIterator;
+
+    struct MemoryMap {
+        Raw::MemoryDescriptor *m_descriptors{nullptr};
+        uint64_t m_size{0};
+        uint64_t m_descriptor_count{0};
+        uint64_t m_key{0};
+        uint64_t m_descriptor_size{0};
+        uint32_t m_descriptor_version{0};
+
+        [[nodiscard]] Iterator<Raw::MemoryDescriptor> begin() const { return {&m_descriptors[0]}; }
+        [[nodiscard]] Iterator<Raw::MemoryDescriptor> end() const { return {&m_descriptors[m_descriptor_count]}; }
+        Result<void> sanity_check();
     };
 
     class GraphicsOutputProtocol {
