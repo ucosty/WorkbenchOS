@@ -4,6 +4,8 @@
 // SPDX-License-Identifier: GPL-3.0-only
 #pragma once
 
+#define PACKED __attribute__((__packed__))
+
 using uint64_t = __UINT64_TYPE__;
 using uint32_t = __UINT32_TYPE__;
 using uint16_t = __UINT16_TYPE__;
@@ -32,7 +34,6 @@ static_assert(sizeof(int32_t) == 4);
 static_assert(sizeof(uint64_t) == 8);
 static_assert(sizeof(int64_t) == 8);
 static_assert(sizeof(size_t) == 8);
-
 
 constexpr uint64_t KiB = 1024;
 constexpr uint64_t MiB = 1024 * KiB;

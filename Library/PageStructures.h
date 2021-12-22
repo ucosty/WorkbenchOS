@@ -11,7 +11,7 @@
 
 #include "Types.h"
 
-struct __attribute__((__packed__)) PML4Entry {
+struct PACKED PML4Entry {
     uint64_t present : 1;
     uint64_t writeable : 1;
     uint64_t user_access : 1;
@@ -27,7 +27,7 @@ struct __attribute__((__packed__)) PML4Entry {
     uint64_t execution_disabled : 1;
 };
 
-struct __attribute__((__packed__)) PageDirectoryPointerTableEntry {
+struct PACKED PageDirectoryPointerTableEntry {
     uint64_t present : 1;
     uint64_t writeable : 1;
     uint64_t user_access : 1;
@@ -43,7 +43,7 @@ struct __attribute__((__packed__)) PageDirectoryPointerTableEntry {
     uint64_t execution_disabled : 1;
 };
 
-struct __attribute__((__packed__)) PageDirectoryEntry {
+struct PACKED PageDirectoryEntry {
     uint64_t present : 1;
     uint64_t writeable : 1;
     uint64_t user_access : 1;
@@ -59,7 +59,7 @@ struct __attribute__((__packed__)) PageDirectoryEntry {
     uint64_t execution_disabled : 1;
 };
 
-struct __attribute__((__packed__)) PageTableEntry {
+struct PACKED PageTableEntry {
     uint64_t present : 1;
     uint64_t writeable : 1;
     uint64_t user_access : 1;
