@@ -62,13 +62,14 @@ uint64_t get_efi_preserved_page_count(EFI::MemoryMap &memory_map) {
 
 uint64_t get_pagetable_size(uint64_t pages) {
     // For every 2MiB of pages, we need a Page Table
-    auto page_tables = divide_rounded_up(pages, 2 * MiB);
+    auto pages_bytes = pages * Page;
+    auto page_tables = divide_rounded_up(pages_bytes, 2 * MiB);
 
     // For every 1GiB of pages, we need a Page Directory
-    auto page_directories = divide_rounded_up(pages, 1 * GiB);
+    auto page_directories = divide_rounded_up(pages_bytes, 1 * GiB);
 
     // For every 512GiB of pages, we need a PDP
-    auto page_directory_pointers = divide_rounded_up(pages, 512 * GiB);
+    auto page_directory_pointers = divide_rounded_up(pages_bytes, 512 * GiB);
 
     // We need an additional PDPT for the temporary identity-mapping of memory
     page_directory_pointers++;
@@ -302,7 +303,7 @@ Result<void> init(EFI::Raw::Handle image_handle, EFI::Raw::SystemTable *system_t
     pdpt[510].writeable = 1;
     pdpt[510].physical_address = ((uint64_t) kernel_page_directory) >> 12;
 
-    auto page_tables_count = divide_rounded_up(pages, 2 * MiB);
+    auto page_tables_count = divide_rounded_up(pages, 512);
     for (int i = 0; i < page_tables_count; i++) {
         auto page_table_address = ((uint64_t) kernel_page_tables) + (i * 0x1000);
         kernel_page_directory[i].present = 1;
