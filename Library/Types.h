@@ -32,3 +32,10 @@ static_assert(sizeof(int32_t) == 4);
 static_assert(sizeof(uint64_t) == 8);
 static_assert(sizeof(int64_t) == 8);
 static_assert(sizeof(size_t) == 8);
+
+
+constexpr uint64_t KiB = 1024;
+constexpr uint64_t MiB = 1024 * KiB;
+constexpr uint64_t GiB = 1024 * MiB;
+constexpr uint64_t TiB = 1024 * GiB;
+constexpr uint64_t Page = 4 * KiB;
