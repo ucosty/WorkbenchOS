@@ -27,6 +27,7 @@ struct KernelAddressSpace {
     VirtualMapping initial_pages;
     VirtualMapping memory_map;
     VirtualMapping framebuffer;
+    VirtualMapping stack;
 };
 
 struct BootState {

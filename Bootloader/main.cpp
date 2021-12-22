@@ -184,6 +184,14 @@ Result<void> init(EFI::Raw::Handle image_handle, EFI::Raw::SystemTable *system_t
      *       ------------------------------
      *  .    |                            |
      *  .    |                            |
+     *  .    | Kernel Stack               |
+     *  .    |                            |
+     *  .    |                            |
+     *       ------------------------------
+     *       + Guard Page                 +
+     *       ------------------------------
+     *  .    |                            |
+     *  .    |                            |
      *  .    | Unallocated                |
      *  .    |                            |
      *  .    |                            |
@@ -210,13 +218,18 @@ Result<void> init(EFI::Raw::Handle image_handle, EFI::Raw::SystemTable *system_t
 
     // Allocate memory for the kernel
     auto kernel_physical_base = TRY(boot_services.allocate_pages(EFI::Raw::AllocateType::EFI_ALLOCATE_ANY_PAGES, EFI::Raw::MemoryType::EFI_LOADER_CODE, pages));
-    memset((char *) kernel_physical_base, 0, pages * 0x1000);
+    memset((char *) kernel_physical_base, 0, pages * Page);
 
     // Allocate memory for the boot state block
     auto boot_state_page_count = bytes_to_pages(sizeof(BootState));
     auto boot_state_base = TRY(boot_services.allocate_pages(EFI::Raw::AllocateType::EFI_ALLOCATE_ANY_PAGES, EFI::Raw::MemoryType::EFI_LOADER_CODE, boot_state_page_count));
-    memset((char *) boot_state_base, 0, boot_state_page_count * 0x1000);
+    memset((char *) boot_state_base, 0, boot_state_page_count * Page);
     auto boot_state = reinterpret_cast<BootState *>(boot_state_base);
+
+    // Allocate memory for the kernel stack
+    auto kernel_stack_page_count = 2;
+    auto kernel_stack_base = TRY(boot_services.allocate_pages(EFI::Raw::AllocateType::EFI_ALLOCATE_ANY_PAGES, EFI::Raw::MemoryType::EFI_LOADER_CODE, kernel_stack_page_count));
+    memset((char *) kernel_stack_base, 0, kernel_stack_page_count * Page);
 
     // Convert virtual addresses to kernel physical addresses
     auto kernel_virtual_to_physical = [](uint64_t physical_base, uint64_t virtual_address) {
@@ -276,6 +289,11 @@ Result<void> init(EFI::Raw::Handle image_handle, EFI::Raw::SystemTable *system_t
     boot_state->kernel_address_space.framebuffer.size = bytes_to_pages(gfx.mode()->framebuffer_size) * Page;
     boot_state->kernel_address_space.framebuffer.physical_base = gfx.mode()->framebuffer_base;
 
+    // Stack region
+    boot_state->kernel_address_space.stack.virtual_base = next_virtual_mapping(boot_state->kernel_address_space.framebuffer);
+    boot_state->kernel_address_space.stack.size = kernel_stack_page_count * Page;
+    boot_state->kernel_address_space.stack.physical_base = kernel_stack_base;
+
     // Set up initial paging
     auto paging_physical_base = boot_state->kernel_address_space.initial_pages.physical_base;
     auto pml4 = (PML4Entry *) paging_physical_base;                                       // 256 TiB / 512 GiB per entry
@@ -334,17 +352,24 @@ Result<void> init(EFI::Raw::Handle image_handle, EFI::Raw::SystemTable *system_t
     map_address_space(boot_state->kernel_address_space.initial_pages);
     map_address_space(boot_state->kernel_address_space.memory_map);
     map_address_space(boot_state->kernel_address_space.framebuffer);
+    map_address_space(boot_state->kernel_address_space.stack);
 
     // Disable interrupts and load the new page tables
+    auto entrypoint = elf_header->e_entry;
     asm volatile("cli");
     asm volatile("mov %%rax, %%cr3"
                  : /* no output */
                  : "a"(paging_physical_base)
                  : "memory");
-
-    // Jump into the kernel main function
-    auto kernel_main = reinterpret_cast<void (*)(uint64_t)>(elf_header->e_entry);
-    kernel_main(boot_state->kernel_address_space.boot_state.virtual_base);
+    asm volatile("mov %%rax, %%rsp\n"
+                 "mov %%rax, %%rbp\n"
+                 "push %%rcx\n"
+                 "jmp *(%%edx)"
+                 : /* no output */
+                 : "a"(boot_state->kernel_address_space.stack.virtual_base + boot_state->kernel_address_space.stack.size - 0x1000),
+                   "c"(boot_state->kernel_address_space.boot_state.virtual_base),
+                   "d"(&entrypoint)
+                 : "memory");
     return {};
 }
 
