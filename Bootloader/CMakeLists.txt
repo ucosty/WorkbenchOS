@@ -22,6 +22,7 @@ SET(LIBRARY_SOURCES
         )
 SET(SOURCES main.cpp ${LIBRARY_SOURCES})
 
+add_compile_options(-MTd)
 add_compile_options(-target x86_64-unknown-windows)
 add_compile_options(-mno-red-zone)
 add_compile_options(-fshort-wchar)
