@@ -3,12 +3,24 @@ project(Bootloader)
 SET(LINK_FLAGS -target x86_64-unknown-windows -nostdlib -Wl,-entry:efi_main -Wl,-subsystem:efi_application -fuse-ld=lld-link)
 
 SET(LIBRARY_SOURCES
-        ../Library/cstring.cpp
         ../Library/Convert.cpp
         ../Library/EFI/EfiWrapper.cpp
+        ../Library/EFI/EfiWrapper.h
+        ../Library/EFI/GUID.h
         ../Library/UnbufferedConsole.cpp
-        ../Library/ConsoleIO.cpp)
-SET(SOURCES main.cpp ${LIBRARY_SOURCES} ../Library/LinearFramebuffer.cpp ../Library/LinearFramebuffer.h ../Library/ConsoleFont.h ../Library/Error.h ../Library/Optional.h ../Library/Try.h ../Library/cstring.cpp ../Library/cstring.h)
+        ../Library/ConsoleIO.cpp
+        ../Library/LinearFramebuffer.cpp
+        ../Library/LinearFramebuffer.h
+        ../Library/ConsoleFont.h
+        ../Library/Error.h
+        ../Library/Optional.h
+        ../Library/Try.h
+        ../Library/cstring.cpp
+        ../Library/cstring.h
+        ../Library/Iterator.h
+        ../Library/BootState.h
+        )
+SET(SOURCES main.cpp ${LIBRARY_SOURCES})
 
 add_compile_options(-target x86_64-unknown-windows)
 add_compile_options(-mno-red-zone)
