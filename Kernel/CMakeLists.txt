@@ -4,7 +4,8 @@ SET(LINKER_SCRIPT ${CMAKE_CURRENT_SOURCE_DIR}/linker.ld)
 SET(LIBRARY_SOURCES
         ../Library/cstring.cpp
         ../Library/LinearFramebuffer.cpp
-        ../Library/PageStructures.h)
+        ../Library/PageStructures.h
+        ../Library/GDT.h)
 SET(SOURCES main.cpp ${LIBRARY_SOURCES})
 
 add_compile_options(-target x86_64-pc-none-elf)
