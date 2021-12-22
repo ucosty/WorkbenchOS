@@ -85,12 +85,12 @@ namespace EFI::Raw {
     };
 
     struct GraphicsOutputModeInformation {
-        uint32_t Version;
-        uint32_t HorizontalResolution;
-        uint32_t VerticalResolution;
-        GraphicsPixelFormat PixelFormat;
-        PixelBitmask PixelInformation;
-        uint32_t PixelsPerScanLine;
+        uint32_t version;
+        uint32_t width;
+        uint32_t height;
+        GraphicsPixelFormat pixel_format;
+        PixelBitmask pixel_information;
+        uint32_t pixels_per_scanline;
     };
 
     struct GraphicsOutputProtocolMode {
@@ -200,11 +200,12 @@ namespace EFI::Raw {
     };
 
     struct MemoryDescriptor {
-        MemoryType type;
+        uint32_t type;
         uint64_t physical_start;
         uint64_t virtual_start;
         uint64_t number_of_pages;
         uint64_t attribute;
+        uint64_t pad;
     };
 
     enum TimerDelay {
@@ -213,7 +214,7 @@ namespace EFI::Raw {
         EFI_TIMER_RELATIVE,
     };
 
-    typedef void(EFICALL *CEfiEventNotify)(void *event, void *context);
+    typedef void(EFICALL *EventNotify)(void *event, void *context);
 
     struct BootServices {
         TableHeader header;
@@ -250,7 +251,7 @@ namespace EFI::Raw {
         Status(EFICALL *create_event)(
             uint32_t type,
             ThreadPriorityLevel notify_tpl,
-            CEfiEventNotify notify_function,
+            EventNotify notify_function,
             void *notify_context,
             void **event);
 
@@ -434,7 +435,7 @@ namespace EFI::Raw {
         Status(EFICALL *create_event_ex)(
             uint32_t type,
             ThreadPriorityLevel notify_tpl,
-            CEfiEventNotify notify_function,
+            EventNotify notify_function,
             void *notify_context,
             const GUID *event_group,
             void **event);
