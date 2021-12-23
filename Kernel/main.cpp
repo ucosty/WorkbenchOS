@@ -3,7 +3,7 @@
 //
 // SPDX-License-Identifier: GPL-3.0-only
 #include <BootState.h>
-#include <GDT.h>
+#include <Descriptors.h>
 #include <LinearFramebuffer.h>
 #include <Types.h>
 
