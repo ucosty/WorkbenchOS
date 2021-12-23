@@ -6,15 +6,16 @@
 #include <Descriptors.h>
 #include <LinearFramebuffer.h>
 #include <Types.h>
+#include <ConsoleIO.h>
 
 void configure_interrupts();
 
+
 extern "C" [[noreturn]] void kernel_stage2(const BootState &boot_state) {
-    // TODO: Set up exception handlers
     // TODO: Relocate the stack -- done
     // TODO: Set up new GDT and jump into new kernel code segment -- done
     // TODO: Set up global page tables for kernel and whole-memory access
-    // TODO: Set up IDT and basic exception handlers
+    // TODO: Set up IDT and basic exception handlers -- done
     // TODO: Early stage boot console
     auto framebuffer = LinearFramebuffer(boot_state.kernel_address_space.framebuffer.virtual_base, 1280, 1024);
     framebuffer.rect(50, 50, 100, 100, 0x4455aa, true);
