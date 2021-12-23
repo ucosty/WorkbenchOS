@@ -6,8 +6,11 @@ SET(LIBRARY_SOURCES
         ../Library/LinearFramebuffer.cpp
         ../Library/PageStructures.h
         ../Library/Descriptors.h
+        ../Library/Convert.cpp
+        ../Library/ConsoleIO.cpp
+        ../Library/ConsoleIO.h
         )
-SET(SOURCES main.cpp idt.cpp ${LIBRARY_SOURCES})
+SET(SOURCES main.cpp idt.cpp Debugging.cpp ${LIBRARY_SOURCES})
 
 add_compile_options(-target x86_64-pc-none-elf)
 add_compile_options(-fPIC)
