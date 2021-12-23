@@ -5,6 +5,7 @@
 #pragma once
 
 #define PACKED __attribute__((__packed__))
+#define NAKED __attribute__((__naked__))
 
 using uint64_t = __UINT64_TYPE__;
 using uint32_t = __UINT32_TYPE__;
