@@ -2,12 +2,11 @@
 // Copyright (c) 2021 Matthew Costa <ucosty@gmail.com>
 //
 // SPDX-License-Identifier: GPL-3.0-only
-#include <Types.h>
-#include <Variadic.h>
+#include <ConsoleIO.h>
 #include <Convert.h>
 #include <EFI/Efi.h>
-
-extern EFI::Raw::SimpleTextOutputProtocol *console_out;
+#include <Types.h>
+#include <Variadic.h>
 
 void printf(const char *fmt...) {
     va_list args;
@@ -15,8 +14,8 @@ void printf(const char *fmt...) {
 
     // TODO: Fixed buffer, let's allocate one later
     int output_index = 0;
-    wchar_t buffer[100];
-    for (wchar_t &i: buffer)
+    char buffer[100];
+    for (char &i: buffer)
         i = 0;
 
     bool is_formatting = false;
@@ -90,6 +89,6 @@ void printf(const char *fmt...) {
         buffer[output_index++] = *fmt;
         fmt++;
     }
-    console_out->output_string(console_out, buffer);
+    debug_putstring(buffer);
     va_end(args);
 }

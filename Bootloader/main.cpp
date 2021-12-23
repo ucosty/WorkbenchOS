@@ -3,7 +3,7 @@
 //
 // SPDX-License-Identifier: GPL-3.0-only
 #include <BootState.h>
-#include <ConsleIO.h>
+#include <ConsoleIO.h>
 #include <EFI/Efi.h>
 #include <EFI/EfiWrapper.h>
 #include <ELF.h>
@@ -16,7 +16,17 @@ constexpr uint64_t GUARD_PAGE = 1;
 constexpr uint64_t kernel_virtual_base = 0xffffffff80000000;
 
 EFI::Raw::SimpleTextOutputProtocol *console_out;
-extern "C" void putchar(char c) {
+void debug_putstring(const char *string) {
+    wchar_t buffer[100];
+    for(int i = 0; i < 100; i++) {
+        if(string[i] == '\0')
+            break;
+        buffer[i] = string[i];
+    }
+    console_out->output_string(console_out, buffer);
+}
+
+void debug_putchar(char c) {
     wchar_t output[2] = {static_cast<wchar_t>(c), 0};
     console_out->output_string(console_out, output);
 }
