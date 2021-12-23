@@ -4,7 +4,7 @@
 // SPDX-License-Identifier: GPL-3.0-only
 #pragma once
 
-extern "C" void putchar(char c);
+void debug_putchar(char c);
 
 struct Formatter {
     const char *fmt;
@@ -38,7 +38,7 @@ void println(const char *fmt, Args... args) {
 
     _println_internal(&formatter);
     _println_internal(&formatter, args...);
-    putchar('\r');
-    putchar('\n');
+    debug_putchar('\r');
+    debug_putchar('\n');
 }
 
