@@ -7,6 +7,8 @@
 #include <LinearFramebuffer.h>
 #include <Types.h>
 
+void configure_interrupts();
+
 extern "C" [[noreturn]] void kernel_stage2(const BootState &boot_state) {
     // TODO: Set up exception handlers
     // TODO: Relocate the stack -- done
@@ -16,6 +18,8 @@ extern "C" [[noreturn]] void kernel_stage2(const BootState &boot_state) {
     // TODO: Early stage boot console
     auto framebuffer = LinearFramebuffer(boot_state.kernel_address_space.framebuffer.virtual_base, 1280, 1024);
     framebuffer.rect(50, 50, 100, 100, 0x4455aa, true);
+
+    configure_interrupts();
 
     while (true) {}
 }
