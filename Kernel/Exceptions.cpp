@@ -141,7 +141,16 @@ void general_protection_fault_exception_handler(StackFrameErrorCode frame) {
 
 EXCEPTION_HANDLER_WITH_CODE(page_fault_exception);
 void page_fault_exception_handler(StackFrameErrorCode frame) {
-    printf("Page Fault Exception!\n");
+    uint64_t address = 0;
+    asm volatile("movq %%cr2, %%rax":"=a"(address));
+    printf("\u001b[31mPage Fault Exception!\u001b[0m\n");
+    printf("    rip = %X\n", frame.rip);
+    printf("     cs = %X\n", frame.cs);
+    printf(" rflags = %X\n", frame.rflags);
+    printf("    rsp = %X\n", frame.rsp);
+    printf("     ss = %X\n", frame.ss);
+    printf("  error = %X\n", frame.error);
+    printf("address = %X\n", address);
 }
 
 EXCEPTION_HANDLER(floating_point_error_exception);
