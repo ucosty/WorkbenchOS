@@ -15,20 +15,21 @@
 constexpr uint64_t GUARD_PAGE = 1;
 constexpr uint64_t kernel_virtual_base = 0xffffffff80000000;
 
-EFI::Raw::SimpleTextOutputProtocol *console_out;
+void inline outb(uint16_t port, uint8_t val) {
+    asm volatile("outb %0, %1"
+                 :
+                 : "a"(val), "Nd"(port));
+}
+
 void debug_putstring(const char *string) {
-    wchar_t buffer[100];
-    for(int i = 0; i < 100; i++) {
-        if(string[i] == '\0')
-            break;
-        buffer[i] = string[i];
+    while (*string != '\0') {
+        outb(0xe9, *string);
+        string++;
     }
-    console_out->output_string(console_out, buffer);
 }
 
 void debug_putchar(char c) {
-    wchar_t output[2] = {static_cast<wchar_t>(c), 0};
-    console_out->output_string(console_out, output);
+    outb(0xe9, c);
 }
 
 [[noreturn]] void panic(const char *message) {
@@ -113,9 +114,6 @@ Result<void> init(EFI::Raw::Handle image_handle, EFI::Raw::SystemTable *system_t
 
     // Disable watchdog timer
     boot_services.set_watchdog_timer(0, 0, 0, nullptr);
-
-    // Set up the boot-time console
-    console_out = system_table->console_out;
 
     auto gfx = TRY(init_graphics(&boot_services));
     memset((char *) gfx.mode()->framebuffer_base, 0x88, 1280 * 1024 * 4);
