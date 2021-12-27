@@ -59,16 +59,35 @@ uint64_t get_efi_preserved_page_count(EFI::MemoryMap &memory_map) {
     uint64_t total = 0;
     for (auto &descriptor: memory_map) {
         switch (descriptor.type) {
-            case EFI::Raw::EFI_RUNTIME_SERVICES_DATA:
-            case EFI::Raw::EFI_RUNTIME_SERVICES_CODE:
-            case EFI::Raw::EFI_ACPI_RECLAIM_MEMORY:
-            case EFI::Raw::EFI_ACPI_MEMORY_NVS:
-            case EFI::Raw::EFI_PAL_CODE:
+            case EFI::EFI_RUNTIME_SERVICES_DATA:
+            case EFI::EFI_RUNTIME_SERVICES_CODE:
+            case EFI::EFI_ACPI_RECLAIM_MEMORY:
+            case EFI::EFI_ACPI_MEMORY_NVS:
+            case EFI::EFI_PAL_CODE:
                 total += descriptor.number_of_pages;
                 break;
         }
     }
     return total;
+}
+
+uint64_t get_physical_memory_extent(EFI::MemoryMap &memory_map) {
+    uint64_t high_water_mark = 0;
+    for (auto &descriptor: memory_map) {
+        switch (descriptor.type) {
+            case EFI::EFI_UNUSABLE_MEMORY:
+                break;
+            default:
+                high_water_mark = descriptor.physical_start + (descriptor.number_of_pages * Page);
+        }
+    }
+    return high_water_mark;
+}
+
+size_t bitmap_required_size_in_bytes(uint64_t pool_size, uint64_t unit_size) {
+    uint64_t pool_size_in_bits = (pool_size / unit_size) * 2;
+    uint64_t pool_size_in_bytes = pool_size_in_bits / 8;
+    return pool_size_in_bytes;
 }
 
 uint64_t get_pagetable_size(uint64_t pages) {
@@ -191,22 +210,33 @@ Result<void> init(EFI::Raw::Handle image_handle, EFI::Raw::SystemTable *system_t
      *       + Guard Page                 +
      *       ------------------------------
      *  .    |                            |
-     *  .    |                            |
      *  .    | Kernel Stack               |
      *  .    |                            |
+     *       ------------------------------
+     *       + Guard Page                 +
+     *       ------------------------------
+     *  .    |                            |
+     *  .    | Frame Allocator Bitmap     |
      *  .    |                            |
      *       ------------------------------
      *       + Guard Page                 +
      *       ------------------------------
      *  .    |                            |
      *  .    |                            |
-     *  .    | Unallocated                |
+     *  .    | Unallocated (Kernel Heap)  |
      *  .    |                            |
      *  .    |                            |
      *       ------------------------------
      */
     auto memory_map = TRY(boot_services.get_memory_map());
     TRY(memory_map.sanity_check());
+
+    // Allocate for the initial frame allocator
+    auto memory_size = get_physical_memory_extent(memory_map);
+    auto bitmap_size_in_bytes = bitmap_required_size_in_bytes(memory_size, Page);
+    auto bitmap_size_in_pages = divide_rounded_up(bitmap_size_in_bytes, Page);
+    auto bitmap_physical_base = TRY(boot_services.allocate_pages(EFI::Raw::AllocateType::EFI_ALLOCATE_ANY_PAGES, EFI::MemoryType::EFI_LOADER_DATA, bitmap_size_in_pages));
+    memset((char *) bitmap_physical_base, 0, bitmap_size_in_pages * Page);
 
     // Start with the kernel pages
     auto pages = kernel_pages + GUARD_PAGE;
@@ -224,20 +254,23 @@ Result<void> init(EFI::Raw::Handle image_handle, EFI::Raw::SystemTable *system_t
     auto pagetable_size = get_pagetable_size(pages);
     pages += pagetable_size + GUARD_PAGE;
 
+    // Add the frame allocator pages
+    pages += bitmap_size_in_pages + GUARD_PAGE;
+
     // Allocate memory for the kernel
-    auto kernel_physical_base = TRY(boot_services.allocate_pages(EFI::Raw::AllocateType::EFI_ALLOCATE_ANY_PAGES, EFI::Raw::MemoryType::EFI_LOADER_CODE, pages));
+    auto kernel_physical_base = TRY(boot_services.allocate_pages(EFI::Raw::AllocateType::EFI_ALLOCATE_ANY_PAGES, EFI::MemoryType::EFI_LOADER_DATA, pages));
     memset((char *) kernel_physical_base, 0, pages * Page);
 
     // Allocate memory for the boot state block
     auto boot_state_page_count = bytes_to_pages(sizeof(BootState));
-    auto boot_state_base = TRY(boot_services.allocate_pages(EFI::Raw::AllocateType::EFI_ALLOCATE_ANY_PAGES, EFI::Raw::MemoryType::EFI_LOADER_CODE, boot_state_page_count));
+    auto boot_state_base = TRY(boot_services.allocate_pages(EFI::Raw::AllocateType::EFI_ALLOCATE_ANY_PAGES, EFI::MemoryType::EFI_LOADER_DATA, boot_state_page_count));
     memset((char *) boot_state_base, 0, boot_state_page_count * Page);
     auto boot_state = reinterpret_cast<BootState *>(boot_state_base);
 
     // Allocate memory for the kernel stack
     auto kernel_stack_page_count = 2;
-    auto kernel_stack_base = TRY(boot_services.allocate_pages(EFI::Raw::AllocateType::EFI_ALLOCATE_ANY_PAGES, EFI::Raw::MemoryType::EFI_LOADER_CODE, kernel_stack_page_count));
-    memset((char *) kernel_stack_base, 0, kernel_stack_page_count * Page);
+    auto kernel_stack_physical_base = TRY(boot_services.allocate_pages(EFI::Raw::AllocateType::EFI_ALLOCATE_ANY_PAGES, EFI::MemoryType::EFI_LOADER_DATA, kernel_stack_page_count));
+    memset((char *) kernel_stack_physical_base, 0, kernel_stack_page_count * Page);
 
     // Convert virtual addresses to kernel physical addresses
     auto kernel_virtual_to_physical = [](uint64_t physical_base, uint64_t virtual_address) {
@@ -263,6 +296,8 @@ Result<void> init(EFI::Raw::Handle image_handle, EFI::Raw::SystemTable *system_t
 
     // Exit boot services mode
     TRY(boot_services.exit_boot_services(image_handle, memory_map.m_key));
+
+    boot_state->physical_memory_size = memory_size;
 
     boot_state->framebuffer.base_address = gfx.mode()->framebuffer_base;
     boot_state->framebuffer.size = gfx.mode()->framebuffer_size;
@@ -300,15 +335,30 @@ Result<void> init(EFI::Raw::Handle image_handle, EFI::Raw::SystemTable *system_t
     // Stack region
     boot_state->kernel_address_space.stack.virtual_base = next_virtual_mapping(boot_state->kernel_address_space.framebuffer);
     boot_state->kernel_address_space.stack.size = kernel_stack_page_count * Page;
-    boot_state->kernel_address_space.stack.physical_base = kernel_stack_base;
+    boot_state->kernel_address_space.stack.physical_base = kernel_stack_physical_base;
+
+    // Initial frame allocator
+    boot_state->kernel_address_space.frame_allocator.virtual_base = next_virtual_mapping(boot_state->kernel_address_space.stack);
+    boot_state->kernel_address_space.frame_allocator.size = bitmap_size_in_pages * Page;
+    boot_state->kernel_address_space.frame_allocator.physical_base = bitmap_physical_base;
+
+    // Memory Map object
+    boot_state->memory_map.m_size = memory_map.m_size;
+    boot_state->memory_map.m_descriptor_size = memory_map.m_descriptor_size;
+    boot_state->memory_map.m_descriptor_count = memory_map.m_descriptor_count;
+    boot_state->memory_map.m_key = memory_map.m_key;
+    boot_state->memory_map.m_descriptor_version = memory_map.m_descriptor_version;
+    boot_state->memory_map.m_descriptors = reinterpret_cast<EFI::MemoryDescriptor *>(boot_state->kernel_address_space.memory_map.virtual_base);
 
     // Set up initial paging
     auto paging_physical_base = boot_state->kernel_address_space.initial_pages.physical_base;
     auto pml4 = (PML4Entry *) paging_physical_base;                                       // 256 TiB / 512 GiB per entry
-    auto pdpt = (PageDirectoryPointerTableEntry *) paging_physical_base + 0x1000;         // 512 GiB / 1 GiB per entry
-    auto pdpt_identity = (PageDirectoryPointerTableEntry *) paging_physical_base + 0x2000;// 512 GiB / 1 GiB per entry
-    auto kernel_page_directory = (PageDirectoryEntry *) paging_physical_base + 0x3000;    // 1 GiB / 2 MiB per entry.
-    auto kernel_page_tables = (PageTableEntry *) paging_physical_base + 0x4000;           // 2 MiB / 4 KiB per entry
+    auto pdpt = (PageDirectoryPointerTableEntry *) (paging_physical_base + 0x1000);         // 512 GiB / 1 GiB per entry
+    auto pdpt_identity = (PageDirectoryPointerTableEntry *) (paging_physical_base + 0x2000);// 512 GiB / 1 GiB per entry
+    auto kernel_page_directory = (PageDirectoryEntry *) (paging_physical_base + 0x3000);    // 1 GiB / 2 MiB per entry.
+    auto kernel_page_tables = (PageTableEntry *) (paging_physical_base + 0x4000);           // 2 MiB / 4 KiB per entry
+
+    boot_state->kernel_address_space.kernel_page_directory_virtual_address = boot_state->kernel_address_space.initial_pages.virtual_base + 0x3000;
 
     pml4[511].present = 1;
     pml4[511].writeable = 1;
@@ -361,6 +411,7 @@ Result<void> init(EFI::Raw::Handle image_handle, EFI::Raw::SystemTable *system_t
     map_address_space(boot_state->kernel_address_space.memory_map);
     map_address_space(boot_state->kernel_address_space.framebuffer);
     map_address_space(boot_state->kernel_address_space.stack);
+    map_address_space(boot_state->kernel_address_space.frame_allocator);
 
     // Disable interrupts and load the new page tables
     auto entrypoint = elf_header->e_entry;

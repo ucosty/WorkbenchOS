@@ -5,6 +5,7 @@
 #pragma once
 
 #include <Types.h>
+#include <EFI/MemoryMap.h>
 
 struct Framebuffer {
     uint64_t base_address;
@@ -19,6 +20,7 @@ struct VirtualMapping {
 };
 
 struct KernelAddressSpace {
+    uint64_t kernel_page_directory_virtual_address;
     uint64_t base;
     size_t size;
 
@@ -28,9 +30,12 @@ struct KernelAddressSpace {
     VirtualMapping memory_map;
     VirtualMapping framebuffer;
     VirtualMapping stack;
+    VirtualMapping frame_allocator;
 };
 
 struct BootState {
+    uint64_t physical_memory_size;
     Framebuffer framebuffer;
+    EFI::MemoryMap memory_map;
     KernelAddressSpace kernel_address_space;
 };

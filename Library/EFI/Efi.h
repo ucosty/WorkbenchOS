@@ -5,6 +5,7 @@
 #pragma once
 
 #include <EFI/GUID.h>
+#include <EFI/MemoryMap.h>
 #include <Types.h>
 
 #define EFICALL __attribute__((ms_abi))
@@ -179,33 +180,6 @@ namespace EFI::Raw {
         EFI_ALLOCATE_MAX_ADDRESS = 0x1,
         EFI_ALLOCATE_ADDRESS = 0x2,
         EFI_ALLOCATE_TYPE_N = 0x3
-    };
-
-    enum MemoryType {
-        EFI_RESERVED_MEMORY_TYPE,
-        EFI_LOADER_CODE,
-        EFI_LOADER_DATA,
-        EFI_BOOT_SERVICES_CODE,
-        EFI_BOOT_SERVICES_DATA,
-        EFI_RUNTIME_SERVICES_CODE,
-        EFI_RUNTIME_SERVICES_DATA,
-        EFI_CONVENTIONAL_MEMORY,
-        EFI_UNUSABLE_MEMORY,
-        EFI_ACPI_RECLAIM_MEMORY,
-        EFI_ACPI_MEMORY_NVS,
-        EFI_MEMORY_MAPPED_IO,
-        EFI_MEMORY_MAPPED_IO_PORT_SPACE,
-        EFI_PAL_CODE,
-        EFI_PERSISTENT_MEMORY
-    };
-
-    struct MemoryDescriptor {
-        uint32_t type;
-        uint64_t physical_start;
-        uint64_t virtual_start;
-        uint64_t number_of_pages;
-        uint64_t attribute;
-        uint64_t pad;
     };
 
     enum TimerDelay {

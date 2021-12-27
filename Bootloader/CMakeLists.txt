@@ -19,7 +19,7 @@ SET(LIBRARY_SOURCES
         ../Library/cstring.h
         ../Library/Iterator.h
         ../Library/BootState.h
-        )
+        ../Library/EFI/MemoryMap.h)
 SET(SOURCES main.cpp ${LIBRARY_SOURCES})
 
 add_compile_options(-MTd)

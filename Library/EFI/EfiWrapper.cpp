@@ -4,6 +4,7 @@
 // SPDX-License-Identifier: GPL-3.0-only
 #include <ConsoleIO.h>
 #include <EFI/EfiWrapper.h>
+#include <EFI/MemoryMap.h>
 
 using namespace EFI;
 
@@ -105,7 +106,7 @@ bool has_status(uint64_t status, uint64_t code) {
  * @param type memory type to look up
  * @return MemoryType in descriptive form
  */
-const char *EFI::memory_type(Raw::MemoryType type) {
+const char *EFI::memory_type(MemoryType type) {
     return MEMORY_TYPE[type];
 }
 
@@ -127,14 +128,23 @@ const char *EFI::status_code(Raw::Status status) {
  * @param pages The number of contiguous 4 KiB pages to allocate.
  * @return Pointer to a physical address at the start of the allocated pages
  */
-Result<uint64_t> BootServices::allocate_pages(Raw::AllocateType type, Raw::MemoryType memory_type, uint64_t pages) {
+Result<uint64_t> BootServices::allocate_pages(Raw::AllocateType type, MemoryType memory_type, uint64_t pages) {
     uint64_t value = 0;
     auto status = m_boot_services->allocate_pages(type, memory_type, pages, &value);
     if (status != 0) {
+        printf("Oh no! Got status code %d\r\n", status);
         return Lib::Error::from_code(status);
     }
     return value;
 }
+
+Result<void> BootServices::free_pages(uint64_t memory, uint64_t pages) {
+    auto status = m_boot_services->free_pages(memory, pages);
+    if (status != 0) {
+        return Lib::Error::from_code(status);
+    }
+    return {};
+};
 
 /**
  * Allocates pool memory
@@ -144,7 +154,7 @@ Result<uint64_t> BootServices::allocate_pages(Raw::AllocateType type, Raw::Memor
  * @param buffer
  * @return A pointer to a pointer to the allocated buffer if the call succeeds; undefined otherwise
  */
-Result<void> BootServices::allocate_pool(Raw::MemoryType pool_type, uint64_t size, void **buffer) {
+Result<void> BootServices::allocate_pool(MemoryType pool_type, uint64_t size, void **buffer) {
     if (size == 0) {
         printf("Invalid allocation size = 0\r\n");
         return Lib::Error::from_code(5);
@@ -180,7 +190,7 @@ Result<void> BootServices::set_watchdog_timer(uint64_t timeout, uint64_t watchdo
     return {};
 }
 
-Result<void> BootServices::get_memory_map(uint64_t *memory_map_size, Raw::MemoryDescriptor *memory_map, uint64_t *map_key, uint64_t *descriptor_size, uint32_t *descriptor_version) {
+Result<void> BootServices::get_memory_map(uint64_t *memory_map_size, MemoryDescriptor *memory_map, uint64_t *map_key, uint64_t *descriptor_size, uint32_t *descriptor_version) {
     auto status = m_boot_services->get_memory_map(memory_map_size, memory_map, map_key, descriptor_size, descriptor_version);
     if (status != 0) {
         return Lib::Error::from_code(status);
@@ -190,15 +200,18 @@ Result<void> BootServices::get_memory_map(uint64_t *memory_map_size, Raw::Memory
 
 Result<MemoryMap> BootServices::get_memory_map() {
     MemoryMap map;
-    Raw::Status status = EFI_BUFFER_TOO_SMALL;
-    while(true) {
+    uint64_t last_allocated_page_count = 0;
+    while (true) {
         auto request = get_memory_map(&map.m_size, map.m_descriptors, &map.m_key, &map.m_descriptor_size, &map.m_descriptor_version);
-        if(request.is_error()) {
+        auto size_pages = (map.m_size + (Page - 1)) / Page;
+        if (request.is_error()) {
             if (has_status(request.get_error().get_code(), EFI_BUFFER_TOO_SMALL)) {
-                if(map.m_descriptors != nullptr) {
-                    TRY(free_pool(map.m_descriptors));
+                if (map.m_descriptors != nullptr) {
+                    TRY(free_pages(reinterpret_cast<uint64_t>(map.m_descriptors), last_allocated_page_count));
                 }
-                TRY(allocate_pool(EFI::Raw::MemoryType::EFI_LOADER_DATA, map.m_size, (void **) &map.m_descriptors));
+                auto address = TRY(allocate_pages(Raw::EFI_ALLOCATE_ANY_PAGES, MemoryType::EFI_LOADER_DATA, size_pages));
+                map.m_descriptors = reinterpret_cast<MemoryDescriptor *>(address);
+                last_allocated_page_count = size_pages;
             } else {
                 return request.get_error();
             }
@@ -253,7 +266,7 @@ Result<void> File::read(uint64_t *buffer_size, void *buffer) {
 
 Result<void *> File::read_bytes(uint64_t size) {
     void *bytes;
-    TRY(m_boot_services->allocate_pool(EFI::Raw::MemoryType::EFI_LOADER_DATA, size, (void **) &bytes));
+    TRY(m_boot_services->allocate_pool(MemoryType::EFI_LOADER_DATA, size, (void **) &bytes));
     TRY(read(&size, bytes));
     return bytes;
 }
@@ -294,10 +307,10 @@ Result<void> GraphicsOutputProtocol::blit(Raw::BlitPixel *BltBuffer, Raw::BlitOp
 
 Result<void> MemoryMap::sanity_check() {
     uint64_t last_address = 0;
-    for(int i = 0; i < m_descriptor_count; i++) {
+    for (int i = 0; i < m_descriptor_count; i++) {
         auto descriptor = m_descriptors[i];
         auto size = descriptor.number_of_pages * 0x1000;
-        if(descriptor.physical_start < last_address) {
+        if (descriptor.physical_start < last_address) {
             // Found overlapping memory
             printf("ERROR!! Overlapping memory found\r\n");
             printf("%d: start = %X, pages = %d, size = %X\r\n", i, descriptor.physical_start, descriptor.number_of_pages, size);
