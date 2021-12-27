@@ -9,3 +9,9 @@
 
 #pragma once
 
+#include <Types.h>
+#include <Error.h>
+
+namespace Kernel {
+const char *memory_map_type(uint8_t memory_type);
+}
