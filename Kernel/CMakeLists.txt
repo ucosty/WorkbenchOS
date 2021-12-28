@@ -9,19 +9,22 @@ SET(LIBRARY_SOURCES
         ../Library/Convert.cpp
         ../Library/ConsoleIO.cpp
         ../Library/ConsoleIO.h
-        ../Library/EFI/MemoryMap.h)
+        ../Library/EFI/MemoryMap.h
+        ../Library/VirtualAddress.h
+        ../Library/PhysicalAddress.h
+        ../Library/VirtualAddress.cpp
+        )
 SET(KERNEL_SOURCES
         main.cpp
         Exceptions.cpp
         Debugging.cpp
-        Memory/PhysicalAddress.h
         Memory/MemoryManager.cpp
         Memory/MemoryManager.h
         Memory/Bitmap.cpp
         Memory/Bitmap.h
-        Memory/VirtualAddress.h
-        CxxAbi.cpp)
-SET(SOURCES ${KERNEL_SOURCES} ${LIBRARY_SOURCES} Memory/VirtualAddress.cpp)
+        CxxAbi.cpp
+        )
+SET(SOURCES ${KERNEL_SOURCES} ${LIBRARY_SOURCES})
 
 add_compile_options(-target x86_64-pc-none-elf)
 add_compile_options(-fPIC)

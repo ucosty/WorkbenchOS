@@ -4,9 +4,8 @@
 // SPDX-License-Identifier: GPL-3.0-only
 #pragma once
 
-#include <Types.h>
+#include "Types.h"
 
-namespace Kernel {
 class VirtualAddress {
 public:
     VirtualAddress() = default;
@@ -24,4 +23,3 @@ public:
 private:
     uint64_t m_address{0};
 };
-}// namespace Kernel

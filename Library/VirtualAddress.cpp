@@ -4,10 +4,10 @@
 // SPDX-License-Identifier: GPL-3.0-only
 #include "VirtualAddress.h"
 
-namespace Kernel {
 bool operator>(const VirtualAddress &lhs, const VirtualAddress &rhs) {
     return rhs.m_address < lhs.m_address;
 }
+
 bool operator>(const VirtualAddress &lhs, const uint64_t rhs) {
     return lhs.m_address > rhs;
 }
@@ -30,4 +30,3 @@ VirtualAddress VirtualAddress::offset(uint64_t offset) const {
 VirtualAddress VirtualAddress::from_base_and_page_offset(uint64_t base_address, uint64_t page_offset) {
     return VirtualAddress(base_address + (page_offset * Page));
 }
-}// namespace Kernel
