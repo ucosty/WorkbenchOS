@@ -178,7 +178,7 @@ void virtualisation_exception_handler(StackFrame frame) {
     printf("Virtualisation Exception!\n");
 }
 
-void configure_interrupts() {
+void configure_exceptions() {
     set_exception_handler(0, reinterpret_cast<uint64_t>(&divide_by_zero_exception_asm_wrapper));
     set_exception_handler(1, reinterpret_cast<uint64_t>(&debug_exception_asm_wrapper));
     set_exception_handler(2, reinterpret_cast<uint64_t>(&nmi_interrupt_asm_wrapper));

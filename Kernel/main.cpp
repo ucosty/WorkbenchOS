@@ -8,8 +8,9 @@
 #include <LinearFramebuffer.h>
 #include <Try.h>
 #include <Types.h>
+#include <ConsoleIO.h>
 
-void configure_interrupts();
+void configure_exceptions();
 
 extern "C" [[noreturn]] void kernel_stage2(const BootState &boot_state) {
     // TODO: Ensure C++ constructors are run
@@ -17,7 +18,9 @@ extern "C" [[noreturn]] void kernel_stage2(const BootState &boot_state) {
     // TODO: Physical page allocator
     // TODO: Virtual page allocator
     // TODO: Better page fault exception handler
-    configure_interrupts();
+    // TODO: Slab allocator for kernel objects
+    // TODO: Kmalloc() for arbitrary/one-off kernel objects
+    configure_exceptions();
 
     auto &memory_manager = Kernel::MemoryManager::getInstance();
     memory_manager.init(boot_state);
