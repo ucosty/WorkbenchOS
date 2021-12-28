@@ -24,6 +24,8 @@ SET(KERNEL_SOURCES
         Memory/Bitmap.cpp
         Memory/Bitmap.h
         CxxAbi.cpp
+        Processor.cpp
+        Processor.h
         )
 SET(SOURCES ${KERNEL_SOURCES} ${LIBRARY_SOURCES})
 
