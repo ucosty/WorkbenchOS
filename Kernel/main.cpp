@@ -45,7 +45,7 @@ alignas(8) SegmentDescriptor segments[gdt_descriptors] = {
     {0, 0, 0, SEGMENT_READ_WRITE, 1, 3, 1, 0, 0, 0, 0, 0, 0},
 };
 
-extern "C" [[noreturn]] __attribute__((ms_abi)) void kernel_main(uint64_t boot_state_address) {
+extern "C" [[noreturn]] EFICALL void kernel_main(uint64_t boot_state_address) {
     gdt_pointer.address = reinterpret_cast<uint64_t>(&segments);
     gdt_pointer.limit = sizeof(SegmentDescriptor) * gdt_descriptors;
     asm volatile("lgdt gdt_pointer\n"

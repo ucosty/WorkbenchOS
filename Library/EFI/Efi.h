@@ -8,8 +8,6 @@
 #include <EFI/MemoryMap.h>
 #include <Types.h>
 
-#define EFICALL __attribute__((ms_abi))
-
 #define EFI_FILE_MODE_READ 0x01
 
 namespace EFI::Raw {

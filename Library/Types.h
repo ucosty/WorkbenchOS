@@ -4,6 +4,8 @@
 // SPDX-License-Identifier: GPL-3.0-only
 #pragma once
 
+#define EFICALL __attribute__((ms_abi))
+
 #define PACKED __attribute__((__packed__))
 #define NAKED __attribute__((__naked__))
 
