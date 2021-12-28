@@ -36,7 +36,8 @@ struct PACKED PageDirectoryPointerTableEntry {
     uint64_t accessed : 1;
     uint64_t ignored_3 : 1;
     uint64_t size : 1;
-    uint64_t ignored_2 : 4;
+    uint64_t global : 1;
+    uint64_t ignored_2 : 3;
     uint64_t physical_address : 28;
     uint64_t reserved_1 : 12;
     uint64_t ignored_1 : 11;
@@ -52,7 +53,8 @@ struct PACKED PageDirectoryEntry {
     uint64_t accessed : 1;
     uint64_t ignored_3 : 1;
     uint64_t size : 1;
-    uint64_t ignored_2 : 4;
+    uint64_t global : 1;
+    uint64_t ignored_2 : 3;
     uint64_t physical_address : 28;
     uint64_t reserved_1 : 12;
     uint64_t ignored_1 : 11;

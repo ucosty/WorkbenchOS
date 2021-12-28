@@ -372,12 +372,14 @@ Result<void> init(EFI::Raw::Handle image_handle, EFI::Raw::SystemTable *system_t
         pdpt_identity[i].present = 1;
         pdpt_identity[i].writeable = 1;
         pdpt_identity[i].size = 1;
+        pdpt_identity[i].global = 1;
         pdpt_identity[i].physical_address = (i * GiB) >> 12;
     }
 
     // Map 512 GiB of memory to the 510th PML4 entry (-1536 GiB to -1024 GiB)
     pml4[510].present = 1;
     pml4[510].writeable = 1;
+    pml4[510].execution_disabled = 1;
     pml4[510].physical_address = ((uint64_t) pdpt_identity) >> 12;
 
     pdpt[510].present = 1;
