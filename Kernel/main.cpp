@@ -2,26 +2,31 @@
 // Copyright (c) 2021 Matthew Costa <ucosty@gmail.com>
 //
 // SPDX-License-Identifier: GPL-3.0-only
+#include "Memory/MemoryManager.h"
 #include <BootState.h>
 #include <Descriptors.h>
 #include <LinearFramebuffer.h>
+#include <Try.h>
 #include <Types.h>
-#include <ConsoleIO.h>
 
 void configure_interrupts();
 
-
 extern "C" [[noreturn]] void kernel_stage2(const BootState &boot_state) {
-    // TODO: Relocate the stack -- done
-    // TODO: Set up new GDT and jump into new kernel code segment -- done
+    // TODO: Ensure C++ constructors are run
     // TODO: Set up global page tables for kernel and whole-memory access
-    // TODO: Set up IDT and basic exception handlers -- done
-    // TODO: Early stage boot console
-    auto framebuffer = LinearFramebuffer(boot_state.kernel_address_space.framebuffer.virtual_base, 1280, 1024);
-    framebuffer.rect(50, 50, 100, 100, 0x4455aa, true);
-
+    // TODO: Physical page allocator
+    // TODO: Virtual page allocator
+    // TODO: Better page fault exception handler
     configure_interrupts();
 
+    auto &memory_manager = Kernel::MemoryManager::getInstance();
+    memory_manager.init(boot_state);
+
+    auto block = TRY_PANIC(memory_manager.allocate_kernel_heap_page()).as_ptr();
+    block[0] = '!';
+
+    auto framebuffer = LinearFramebuffer(boot_state.kernel_address_space.framebuffer.virtual_base, 1280, 1024);
+    framebuffer.rect(50, 50, 100, 100, 0x4455aa, true);
     while (true) {}
 }
 
