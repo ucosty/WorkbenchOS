@@ -36,7 +36,7 @@ private:
     uint64_t m_base_address;
 
     [[nodiscard]] BlockAndOffset address_to_block_and_offset(uint64_t address) const;
-    static size_t find_free(uint64_t &bitmap);
+    static Result<size_t> find_free(uint64_t &bitmap);
     uint64_t *get_bitmap_block(size_t block_index, uint64_t *storage_offset);
 };
 }// namespace Kernel

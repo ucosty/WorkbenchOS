@@ -3,6 +3,7 @@
 //
 // SPDX-License-Identifier: GPL-3.0-only
 #include "Bitmap.h"
+#include <Try.h>
 
 namespace Kernel {
 void Bitmap::init(size_t block_size, size_t memory_size, uint64_t base_address, uint64_t storage_address) {
@@ -25,7 +26,7 @@ Result<PhysicalAddress> Bitmap::allocate() {
     for (int i = 0; i < m_storage_count; i++) {
         if (m_storage[i] != BUDDY_FULL) {
             auto block = i * blocks_per_storage_unit;
-            auto offset = find_free(m_storage[i]);
+            auto offset = TRY(find_free(m_storage[i]));
             set_allocated({.block = block, .offset = offset});
             m_free_blocks--;
             return PhysicalAddress(m_base_address + (block * m_storage_unit_physical_size) + (offset * m_block_size));
@@ -59,14 +60,14 @@ BlockAndOffset Bitmap::address_to_block_and_offset(uint64_t address) const {
         .offset = (address_adjusted % m_storage_unit_physical_size) / m_block_size};
 }
 
-size_t Bitmap::find_free(uint64_t &bitmap) {
+Result<size_t> Bitmap::find_free(uint64_t &bitmap) {
     for (int i = 0; i < 32; i++) {
         uint64_t mask = 0b11ull << (i * 2);
         if ((bitmap & mask) == 0) {
             return i;
         }
     }
-    return -1;
+    return Lib::Error::from_code(1);
 }
 
 uint64_t *Bitmap::get_bitmap_block(size_t block_index, uint64_t *storage_offset) {
