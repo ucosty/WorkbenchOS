@@ -13,6 +13,7 @@ SET(LIBRARY_SOURCES
         ../Library/VirtualAddress.h
         ../Library/PhysicalAddress.h
         ../Library/VirtualAddress.cpp
+        ../Library/NonNullPtr.h
         )
 SET(KERNEL_SOURCES
         main.cpp
