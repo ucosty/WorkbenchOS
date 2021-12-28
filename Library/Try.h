@@ -5,8 +5,6 @@
 
 #pragma once
 
-[[noreturn]] void panic(Lib::Error error);
-
 #define TRY(expression)                  \
     ({                                   \
         auto response = (expression);    \
