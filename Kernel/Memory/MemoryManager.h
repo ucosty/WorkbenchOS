@@ -44,6 +44,7 @@ public:
     Result<void> free_page(PhysicalAddress address);
     Result<PhysicalAddress> kernel_virtual_to_physical_address(const VirtualAddress &);
     Result<PageTableEntry *> get_kernel_pagetable_entry(const VirtualAddress &);
+    Result<PhysicalAddress> create_kernel_page_table();
 
     static Result<size_t> virtual_address_to_page_directory_index(VirtualAddress address);
     static Result<size_t> virtual_address_to_page_table_index(VirtualAddress address);

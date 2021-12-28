@@ -114,10 +114,13 @@ Result<PageTableEntry *> MemoryManager::get_kernel_pagetable_entry(const Virtual
     auto kernel_page_directory_index = TRY(virtual_address_to_page_directory_index(virtual_address));
     auto pde = &m_kernel_page_directory[kernel_page_directory_index];
     if (!pde->present) {
-        return Lib::Error::from_code(1);
+        auto page_table_physical_address = TRY(allocate_page());
+        pde->present = 1;
+        pde->writeable = 1;
+        pde->physical_address = page_table_physical_address.as_address() >> 12;
     }
-    uint64_t pagetable_address = static_cast<uint64_t>(pde->physical_address) << 12;
-    auto pagetable = reinterpret_cast<PageTableEntry *>(pagetable_address);
+    auto pagetable_physical_address = PhysicalAddress(static_cast<uint64_t>(pde->physical_address) << 12);
+    auto pagetable = pagetable_physical_address.as_ptr<PageTableEntry *>();
     auto page_table_index = TRY(virtual_address_to_page_table_index(virtual_address));
     return &pagetable[page_table_index];
 }
