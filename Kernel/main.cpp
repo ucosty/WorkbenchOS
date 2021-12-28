@@ -2,15 +2,16 @@
 // Copyright (c) 2021 Matthew Costa <ucosty@gmail.com>
 //
 // SPDX-License-Identifier: GPL-3.0-only
+#include "Heap/SlabAllocator.h"
 #include "Memory/MemoryManager.h"
 #include <BootState.h>
 #include <Descriptors.h>
 #include <LinearFramebuffer.h>
-#include <Try.h>
 #include <Types.h>
-#include <ConsoleIO.h>
 
 void configure_exceptions();
+
+Kernel::SlabAllocator g_slab_allocator{};
 
 extern "C" [[noreturn]] void kernel_stage2(const BootState &boot_state) {
     // TODO: Ensure C++ constructors are run
@@ -22,11 +23,8 @@ extern "C" [[noreturn]] void kernel_stage2(const BootState &boot_state) {
     // TODO: Kmalloc() for arbitrary/one-off kernel objects
     configure_exceptions();
 
-    auto &memory_manager = Kernel::MemoryManager::getInstance();
+    auto &memory_manager = Kernel::MemoryManager::get_instance();
     memory_manager.init(boot_state);
-
-    auto block = TRY_PANIC(memory_manager.allocate_kernel_heap_page()).as_ptr();
-    block[0] = '!';
 
     auto framebuffer = LinearFramebuffer(boot_state.kernel_address_space.framebuffer.virtual_base, 1280, 1024);
     framebuffer.rect(50, 50, 100, 100, 0x4455aa, true);

@@ -28,7 +28,7 @@ private:
 
 class MemoryManager {
 public:
-    static MemoryManager &getInstance() {
+    static MemoryManager &get_instance() {
         static MemoryManager instance;
         return instance;
     }
