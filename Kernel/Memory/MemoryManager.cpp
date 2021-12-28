@@ -124,7 +124,7 @@ Result<PageTableEntry *> MemoryManager::get_kernel_pagetable_entry(const Virtual
         pde->physical_address = page_table_physical_address.as_address() >> 12;
     }
     auto pagetable_physical_address = PhysicalAddress(static_cast<uint64_t>(pde->physical_address) << 12);
-    auto pagetable = pagetable_physical_address.as_ptr<PageTableEntry *>();
+    auto pagetable = pagetable_physical_address.as_ptr<PageTableEntry>();
     auto page_table_index = TRY(virtual_address_to_page_table_index(virtual_address));
     return &pagetable[page_table_index];
 }

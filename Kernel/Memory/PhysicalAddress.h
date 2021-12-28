@@ -19,8 +19,8 @@ public:
         return PhysicalAddress(base_address + (page_offset * Page));
     }
     template<typename T>
-    T as_ptr() const {
-        return reinterpret_cast<T>(as_mapped_address());
+    T *as_ptr() const {
+        return reinterpret_cast<T *>(as_mapped_address());
     }
 private:
     uint64_t m_address;
