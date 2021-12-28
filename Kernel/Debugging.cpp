@@ -7,7 +7,7 @@
 #include <ConsoleIO.h>
 
 [[noreturn]] void panic(Lib::Error error) {
-    printf("\u001b[31m;PANIC: Got error %d\u001b[0m;\n", error);
+    printf("\u001b[31mPANIC:\u001b[0m Got error %d\n", error);
     asm volatile("hlt");
     while (true) {}
 }
