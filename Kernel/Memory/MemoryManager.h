@@ -52,6 +52,7 @@ public:
     Result<void> unmap_kernel_page_directory(const VirtualAddress &);
 
     static void invalidate_tlb(const VirtualAddress &);
+    static void invalidate_entire_tlb();
 
 private:
     MemoryManager() = default;

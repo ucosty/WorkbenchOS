@@ -38,6 +38,13 @@ void MemoryManager::init(const BootState &boot_state) {
 
     m_kernel_page_directory = reinterpret_cast<PageDirectoryEntry *>(boot_state.kernel_address_space.kernel_page_directory_virtual_address);
 
+    // Unmap the identity mapped memory region
+    auto *pml4 = reinterpret_cast<PML4Entry *>(boot_state.kernel_address_space.initial_pages.virtual_base);
+    pml4[0].present = 0;
+    pml4[0].writeable = 0;
+    pml4[0].physical_address = 0;
+    invalidate_entire_tlb();
+
     // Set the start of the kernel heap virtual address space
     auto heap_virtual_base = VirtualAddress(boot_state.kernel_address_space.frame_allocator.virtual_base + boot_state.kernel_address_space.frame_allocator.size).offset(Page);
     auto heap_size = VirtualAddress(0xffffffffffffffff).difference(heap_virtual_base);
@@ -119,6 +126,16 @@ void MemoryManager::invalidate_tlb(const VirtualAddress &virtual_address) {
     asm volatile("invlpg (%0)"
                  : /* no output */
                  : "b"(virtual_address.as_address())
+                 : "memory");
+}
+
+void MemoryManager::invalidate_entire_tlb() {
+    asm volatile("push %%rax\n"
+                 "mov %%cr3, %%rax\n"
+                 "mov %%rax, %%cr3\n"
+                 "pop %%rax"
+                 : /* no output */
+                 : /* no input */
                  : "memory");
 }
 
