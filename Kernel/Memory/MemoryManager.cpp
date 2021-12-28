@@ -49,6 +49,10 @@ void MemoryManager::init(const BootState &boot_state) {
     auto heap_virtual_base = VirtualAddress(boot_state.kernel_address_space.frame_allocator.virtual_base + boot_state.kernel_address_space.frame_allocator.size).offset(Page);
     auto heap_size = VirtualAddress(0xffffffffffffffff).difference(heap_virtual_base);
     m_kernel_heap_address_space = VirtualAddressSpace(heap_virtual_base, heap_size);
+
+    // TODO: Remap kernel code as R+X
+    // TODO: Remap kernel data as R+W
+    // TODO: Remap kernel readonly data as R
 }
 
 Result<PhysicalAddress> MemoryManager::allocate_page() {
