@@ -26,6 +26,8 @@ SET(KERNEL_SOURCES
         CxxAbi.cpp
         Processor.cpp
         Processor.h
+        Heap/SlabAllocator.h
+        Heap/SlabAllocator.cpp
         )
 SET(SOURCES ${KERNEL_SOURCES} ${LIBRARY_SOURCES})
 
