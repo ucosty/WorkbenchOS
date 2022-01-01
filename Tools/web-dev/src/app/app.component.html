@@ -1,0 +1,34 @@
+<header>
+    <h1>WorkbenchOS Kernel Diagnostics</h1>
+</header>
+<router-outlet></router-outlet>
+
+<table *ngIf="registers">
+    <tr>
+        <th>Register</th>
+        <th>Value</th>
+    </tr>
+    <tr><td>RAX</td><td>{{ registers['RAX'] }}</td></tr>
+    <tr><td>RBX</td><td>{{ registers['RBX'] }}</td></tr>
+    <tr><td>RCX</td><td>{{ registers['RCX'] }}</td></tr>
+    <tr><td>RDX</td><td>{{ registers['RDX'] }}</td></tr>
+</table>
+
+<table *ngIf="idt">
+    <tr>
+        <th>#</th>
+        <th>Type</th>
+        <th>Offset</th>
+        <th>DPL</th>
+        <th>Present</th>
+        <th>Segment Selector</th>
+    </tr>
+    <tr *ngFor="let descriptor of idt; let i = index">
+        <td>{{ i }}</td>
+        <td>{{ descriptor.type }}</td>
+        <td>{{ descriptor.offset }}</td>
+        <td>{{ descriptor.descriptor_privilege_level }}</td>
+        <td>{{ descriptor.present }}</td>
+        <td>{{ descriptor.segment_selector }}</td>
+    </tr>
+</table>

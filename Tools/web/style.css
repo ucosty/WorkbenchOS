@@ -1,0 +1,26 @@
+/*
+ * WorkbenchOS
+ * Copyright (c) 2021 Matthew Costa <ucosty@gmail.com>
+ *
+ * SPDX-License-Identifier: GPL-3.0-only
+ */
+* {
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    background-color: #333;
+    font-family: "Gill Sans", "Gill Sans MT", Calibri, "Lucida Sans", "Noto Sans", sans-serif
+}
+
+header {
+    color: #fff;
+    border-bottom: 1px solid #111;
+}
+
+header h1 {
+    font-weight: normal;
+    font-size: 22px;
+    padding: 8px;
+}
