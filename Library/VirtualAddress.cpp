@@ -5,7 +5,11 @@
 #include "VirtualAddress.h"
 
 bool operator>(const VirtualAddress &lhs, const VirtualAddress &rhs) {
-    return rhs.m_address < lhs.m_address;
+    return lhs.m_address > rhs.m_address;
+}
+
+bool operator<(const VirtualAddress &lhs, const VirtualAddress &rhs) {
+    return lhs.m_address < rhs.m_address;
 }
 
 bool operator>(const VirtualAddress &lhs, const uint64_t rhs) {
@@ -32,6 +36,10 @@ size_t VirtualAddress::difference(VirtualAddress other) const {
 
 VirtualAddress VirtualAddress::offset(uint64_t offset) const {
     return VirtualAddress(m_address + offset);
+}
+
+VirtualAddress VirtualAddress::offset_pages(size_t page_count) const {
+    return VirtualAddress(m_address + (page_count * Page));
 }
 
 VirtualAddress VirtualAddress::from_base_and_page_offset(uint64_t base_address, uint64_t page_offset) {
