@@ -413,7 +413,9 @@ namespace EFI::Raw {
             void **event);
     };
 
-    struct RuntimeServices {
+    struct ConfigurationTable {
+        GUID vendor_guid;
+        void *vendor_table;
     };
 
     struct SystemTable {
@@ -429,7 +431,7 @@ namespace EFI::Raw {
         void *RuntimeServices;
         BootServices *boot_services;
         size_t NumberOfTableEntries;
-        void *ConfigurationTable;
+        ConfigurationTable *ConfigurationTable;
     };
 
     struct DevicePathProtocol {

@@ -35,6 +35,7 @@ struct KernelAddressSpace {
 
 struct BootState {
     uint64_t physical_memory_size;
+    uint64_t acpi_root_table_address;
     Framebuffer framebuffer;
     EFI::MemoryMap memory_map;
     KernelAddressSpace kernel_address_space;

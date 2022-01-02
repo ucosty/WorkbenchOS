@@ -2,6 +2,7 @@
 // Copyright (c) 2021 Matthew Costa <ucosty@gmail.com>
 //
 // SPDX-License-Identifier: GPL-3.0-only
+#include <ACPI/Tables.h>
 #include <BootState.h>
 #include <ConsoleIO.h>
 #include <EFI/Efi.h>
@@ -126,6 +127,34 @@ Result<EFI::GraphicsOutputProtocol> init_graphics(EFI::BootServices *boot_servic
     }
     graphics_output.set_mode(mode);
     return graphics_output;
+}
+
+bool verify_rsdp_checksum(RootSystemDescriptionPointer *rsdp) {
+    int32_t checksum = 0;
+    auto *bytes = (uint8_t *) rsdp;
+    for (int i = 0; i < 20; i++) {
+        checksum += bytes[i];
+    }
+    return (checksum & 0xFF) == 0;
+}
+
+Result<uint64_t> find_acpi_root_table(EFI::Raw::SystemTable *system_table) {
+    for (int i = 0; i < system_table->NumberOfTableEntries; i++) {
+        auto table = system_table->ConfigurationTable[i];
+        if (!table.vendor_guid.equals(EFI::acpi_root_table_guid))
+            continue;
+
+        auto rsdp = reinterpret_cast<RootSystemDescriptionPointer *>(table.vendor_table);
+        if (rsdp->signature != RSDP_SIGNATURE)
+            continue;
+
+        if (!verify_rsdp_checksum(rsdp))
+            continue;
+
+        return reinterpret_cast<uint64_t>(table.vendor_table);
+    }
+    printf("PANIC: Could not find ACPI configuration table!\n");
+    return Lib::Error::from_code(1);
 }
 
 Result<void> init(EFI::Raw::Handle image_handle, EFI::Raw::SystemTable *system_table) {
@@ -306,6 +335,7 @@ Result<void> init(EFI::Raw::Handle image_handle, EFI::Raw::SystemTable *system_t
 
     boot_state->kernel_address_space.base = 0xffffffff80000000;
     boot_state->kernel_address_space.size = 2 * GiB;
+    boot_state->acpi_root_table_address = TRY(find_acpi_root_table(system_table));
 
     // Kernel memory region
     boot_state->kernel_address_space.kernel.virtual_base = 0xffffffff80000000;
@@ -352,7 +382,7 @@ Result<void> init(EFI::Raw::Handle image_handle, EFI::Raw::SystemTable *system_t
 
     // Set up initial paging
     auto paging_physical_base = boot_state->kernel_address_space.initial_pages.physical_base;
-    auto pml4 = (PML4Entry *) paging_physical_base;                                       // 256 TiB / 512 GiB per entry
+    auto pml4 = (PML4Entry *) paging_physical_base;                                         // 256 TiB / 512 GiB per entry
     auto pdpt = (PageDirectoryPointerTableEntry *) (paging_physical_base + 0x1000);         // 512 GiB / 1 GiB per entry
     auto pdpt_identity = (PageDirectoryPointerTableEntry *) (paging_physical_base + 0x2000);// 512 GiB / 1 GiB per entry
     auto kernel_page_directory = (PageDirectoryEntry *) (paging_physical_base + 0x3000);    // 1 GiB / 2 MiB per entry.

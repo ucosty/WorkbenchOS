@@ -14,6 +14,12 @@ namespace EFI {
     const char *memory_type(MemoryType type);
     struct MemoryMap;
 
+    constexpr static const GUID acpi_root_table_guid = GUID{
+        .ms1 = 0x8868e871,
+        .ms2 = 0xe4f1,
+        .ms3 = 0x11d3,
+        .ms4 = {0xbc, 0x22, 0x00, 0x80, 0xc7, 0x3c, 0x88, 0x81}};
+
     class BootServices {
     public:
         explicit BootServices(Raw::BootServices *boot_services) : m_boot_services(boot_services) {}
@@ -140,4 +146,4 @@ namespace EFI {
             .ms3 = 0x11d2,
             .ms4 = {0x8e, 0x39, 0x00, 0xa0, 0xc9, 0x69, 0x72, 0x3b}};
     };
-}// namespace EFI
+    }// namespace EFI
