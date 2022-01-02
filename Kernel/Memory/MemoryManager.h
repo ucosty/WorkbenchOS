@@ -18,6 +18,7 @@ public:
     VirtualAddressSpace() = default;
     explicit VirtualAddressSpace(VirtualAddress base_address, size_t size) : m_base_address(base_address), m_next_address(base_address), m_size(size), m_free_pages(size / Page) {}
     [[nodiscard]] Result<VirtualAddress> take_page();
+    [[nodiscard]] Result<VirtualAddress> take_pages(size_t);
 
 private:
     VirtualAddress m_base_address;
@@ -38,13 +39,13 @@ public:
     void init(const BootState &boot_state);
 
     Result<VirtualAddress> allocate_kernel_heap_page();
+    Result<VirtualAddress> allocate_kernel_heap_pages(size_t page_count);
     Result<void> free_kernel_heap_page(VirtualAddress virtual_address);
 
-    Result<PhysicalAddress> allocate_page();
+    Result<PhysicalAddress> allocate_physical_page();
     Result<void> free_page(PhysicalAddress address);
     Result<PhysicalAddress> kernel_virtual_to_physical_address(const VirtualAddress &);
-    Result<PageTableEntry *> get_kernel_pagetable_entry(const VirtualAddress &);
-    Result<PhysicalAddress> create_kernel_page_table();
+    Result<PageTableEntry *> get_kernel_page_table_entry(const VirtualAddress &);
 
     static Result<size_t> virtual_address_to_page_directory_index(VirtualAddress address);
     static Result<size_t> virtual_address_to_page_table_index(VirtualAddress address);

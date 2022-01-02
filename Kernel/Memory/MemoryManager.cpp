@@ -55,7 +55,7 @@ void MemoryManager::init(const BootState &boot_state) {
     // TODO: Remap kernel readonly data as R
 }
 
-Result<PhysicalAddress> MemoryManager::allocate_page() {
+Result<PhysicalAddress> MemoryManager::allocate_physical_page() {
     return m_bitmap.allocate();
 }
 
@@ -64,10 +64,20 @@ Result<void> MemoryManager::free_page(PhysicalAddress address) {
 }
 
 Result<VirtualAddress> MemoryManager::allocate_kernel_heap_page() {
-    auto physical_address = TRY(allocate_page());
+    auto physical_address = TRY(allocate_physical_page());
     auto virtual_address = TRY(m_kernel_heap_address_space.take_page());
     TRY(map_kernel_page_directory(physical_address, virtual_address));
     return virtual_address;
+}
+
+Result<VirtualAddress> MemoryManager::allocate_kernel_heap_pages(size_t page_count) {
+    auto virtual_address_range = TRY(m_kernel_heap_address_space.take_pages(page_count));
+    for(size_t i = 0; i < page_count; i++) {
+        auto physical_address = TRY(allocate_physical_page());
+        auto page_virtual_address = virtual_address_range.offset_pages(i);
+        TRY(map_kernel_page_directory(physical_address, page_virtual_address));
+    }
+    return virtual_address_range;
 }
 
 Result<void> MemoryManager::free_kernel_heap_page(VirtualAddress virtual_address) {
@@ -77,7 +87,7 @@ Result<void> MemoryManager::free_kernel_heap_page(VirtualAddress virtual_address
 }
 
 Result<void> MemoryManager::map_kernel_page_directory(const PhysicalAddress &physical_address, const VirtualAddress &virtual_address) {
-    auto pte = TRY(get_kernel_pagetable_entry(virtual_address));
+    auto pte = TRY(get_kernel_page_table_entry(virtual_address));
     pte->present = 1;
     pte->writeable = 1;
     pte->physical_address = physical_address.as_address() >> 12;
@@ -86,7 +96,7 @@ Result<void> MemoryManager::map_kernel_page_directory(const PhysicalAddress &phy
 }
 
 Result<void> MemoryManager::unmap_kernel_page_directory(const VirtualAddress &virtual_address) {
-    auto pte = TRY(get_kernel_pagetable_entry(virtual_address));
+    auto pte = TRY(get_kernel_page_table_entry(virtual_address));
     pte->present = 0;
     pte->writeable = 0;
     pte->physical_address = 0;
@@ -114,11 +124,11 @@ Result<PhysicalAddress> MemoryManager::kernel_virtual_to_physical_address(const 
     return PhysicalAddress(0xdeadc0de);
 }
 
-Result<PageTableEntry *> MemoryManager::get_kernel_pagetable_entry(const VirtualAddress &virtual_address) {
+Result<PageTableEntry *> MemoryManager::get_kernel_page_table_entry(const VirtualAddress &virtual_address) {
     auto kernel_page_directory_index = TRY(virtual_address_to_page_directory_index(virtual_address));
     auto pde = &m_kernel_page_directory[kernel_page_directory_index];
     if (!pde->present) {
-        auto page_table_physical_address = TRY(allocate_page());
+        auto page_table_physical_address = TRY(allocate_physical_page());
         pde->present = 1;
         pde->writeable = 1;
         pde->physical_address = page_table_physical_address.as_address() >> 12;
@@ -155,4 +165,13 @@ Result<VirtualAddress> VirtualAddressSpace::take_page() {
     m_free_pages--;
     return result;
 }
+
+Result<VirtualAddress> VirtualAddressSpace::take_pages(size_t page_count) {
+    auto virtual_address = TRY(take_page());
+    for(int i = 1; i < page_count; i++) {
+        TRY(take_page());
+    }
+    return virtual_address;
+}
+
 }// namespace Kernel
