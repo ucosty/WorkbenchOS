@@ -2,19 +2,18 @@
 // Copyright (c) 2021 Matthew Costa <ucosty@gmail.com>
 //
 // SPDX-License-Identifier: GPL-3.0-only
-#include "Memory/MemoryManager.h"
+#include "Exceptions.h"
 #include "Heap/Kmalloc.h"
+#include "Memory/MemoryManager.h"
 #include <BootState.h>
 #include <Descriptors.h>
 #include <LinearFramebuffer.h>
 #include <Types.h>
 
-void configure_exceptions();
-
 extern "C" [[noreturn]] void kernel_stage2(const BootState &boot_state) {
     // TODO: Ensure C++ constructors are run
-    // TODO: Virtual page allocator
-    // TODO: Better page fault exception handler
+    // TODO: ACPI initial support to find devices
+    // TODO: xAPIC timer driver
     configure_exceptions();
 
     auto &memory_manager = Kernel::MemoryManager::get_instance();

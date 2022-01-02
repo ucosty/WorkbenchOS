@@ -4,6 +4,8 @@
 // SPDX-License-Identifier: GPL-3.0-only
 #pragma once
 
+void configure_exceptions();
+
 void divide_by_zero_exception();
 void debug_exception();
 void nmi_interrupt();
