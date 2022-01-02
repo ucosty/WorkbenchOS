@@ -5,6 +5,7 @@
 #pragma once
 
 #include "VirtualAddress.h"
+#include "Try.h"
 #include <NonNullPtr.h>
 #include <Result.h>
 #include <Types.h>
@@ -60,19 +61,33 @@ public:
     [[nodiscard]] bool is_slab_for(size_t size) const { return m_initialised && m_object_size == size; }
     [[nodiscard]] bool is_initialised() const { return m_initialised; }
     [[nodiscard]] Result<NonNullPtr<uint8_t>> allocate();
+    template<typename T>
+    Result<T *> allocate() {
+        auto result = TRY(allocate());
+        return reinterpret_cast<T *>(result.as_address());
+    }
     [[nodiscard]] Result<void> free(VirtualAddress address);
 
 private:
     SlabPage *m_head{nullptr};
     bool m_initialised{false};
     size_t m_object_size{0};
+    char *m_name{nullptr};
 };
 
 class SlabAllocator {
 public:
+    static SlabAllocator &get_instance() {
+        static SlabAllocator instance;
+        return instance;
+    }
+    SlabAllocator(SlabAllocator const &) = delete;
+    void operator=(SlabAllocator const &) = delete;
+
     Result<NonNullPtr<Slab>> get_or_create_slab(size_t size);
 
 private:
+    SlabAllocator() = default;
     Result<NonNullPtr<Slab>> find_slab(size_t size);
     Result<NonNullPtr<Slab>> create_slab(size_t size);
     Slab m_slabs[32];
