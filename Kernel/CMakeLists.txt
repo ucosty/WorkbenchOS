@@ -14,7 +14,11 @@ SET(LIBRARY_SOURCES
         ../Library/PhysicalAddress.h
         ../Library/VirtualAddress.cpp
         ../Library/NonNullPtr.h
-        )
+        ../Library/RefPtr.h
+        ../Library/UniquePtr.h
+        ../Library/VirtualAddressRange.h
+        ../Library/StringView.h
+        ../Library/String.h)
 SET(KERNEL_SOURCES
         main.cpp
         Exceptions.cpp
@@ -28,6 +32,8 @@ SET(KERNEL_SOURCES
         Processor.h
         Heap/SlabAllocator.h
         Heap/SlabAllocator.cpp
+        Heap/Kmalloc.cpp
+        Heap/Kmalloc.h
         )
 SET(SOURCES ${KERNEL_SOURCES} ${LIBRARY_SOURCES})
 
