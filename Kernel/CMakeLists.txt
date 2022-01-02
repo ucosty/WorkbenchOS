@@ -34,6 +34,8 @@ SET(KERNEL_SOURCES
         Heap/SlabAllocator.cpp
         Heap/Kmalloc.cpp
         Heap/Kmalloc.h
+        ACPI/DescriptorTables.cpp
+        ACPI/DescriptorTables.h
         )
 SET(SOURCES ${KERNEL_SOURCES} ${LIBRARY_SOURCES})
 
@@ -42,10 +44,12 @@ add_compile_options(-fPIC)
 add_compile_options(-mcmodel=kernel)
 add_compile_options(-mno-red-zone)
 add_compile_options(-fshort-wchar)
-add_compile_options(-fno-rtti -ffreestanding -fbuiltin)
+add_compile_options(-fno-rtti -ffreestanding -fno-builtin -nostdinc++)
 add_compile_options(-fno-exceptions)
 add_compile_options(-fno-asynchronous-unwind-tables)
 add_compile_options(-mno-80387 -mno-mmx -mno-sse -mno-sse2)
+#add_compile_options(-Wall -Wextra)
+add_compile_options(-fdiagnostics-color=always)
 
 add_link_options(-target x86_64-pc-none-elf)
 add_link_options(-nostdlib)

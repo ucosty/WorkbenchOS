@@ -2,6 +2,8 @@
 // Copyright (c) 2021 Matthew Costa <ucosty@gmail.com>
 //
 // SPDX-License-Identifier: GPL-3.0-only
+#include "ACPI/DescriptorTables.h"
+#include "Debugging.h"
 #include "Exceptions.h"
 #include "Heap/Kmalloc.h"
 #include "Memory/MemoryManager.h"
@@ -18,7 +20,8 @@ extern "C" [[noreturn]] void kernel_stage2(const BootState &boot_state) {
 
     auto &memory_manager = Kernel::MemoryManager::get_instance();
     memory_manager.init(boot_state);
-    g_malloc_heap.initialise();
+    TRY_PANIC(g_malloc_heap.initialise());
+    TRY_PANIC(g_acpi.initialise(PhysicalAddress(boot_state.acpi_root_table_address)));
 
     auto framebuffer = LinearFramebuffer(boot_state.kernel_address_space.framebuffer.virtual_base, 1280, 1024);
     framebuffer.rect(50, 50, 100, 100, 0x4455aa, true);
