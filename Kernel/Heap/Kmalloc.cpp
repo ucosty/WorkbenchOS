@@ -184,12 +184,18 @@ VirtualAddress AllocationMetadata::initialise(size_t _size) {
 
 void* operator new(size_t size) {
     auto allocation = g_malloc_heap.allocate(size);
-    if(allocation.is_error()) {
-        return nullptr;
-    }
+    return reinterpret_cast<void *>(allocation.get().as_ptr());
+}
+
+void* operator new[](size_t size) {
+    auto allocation = g_malloc_heap.allocate(size);
     return reinterpret_cast<void *>(allocation.get().as_ptr());
 }
 
 void operator delete(void *ptr) {
+    g_malloc_heap.free(VirtualAddress(ptr));
+}
+
+void __cdecl operator delete[](void *ptr) {
     g_malloc_heap.free(VirtualAddress(ptr));
 }
