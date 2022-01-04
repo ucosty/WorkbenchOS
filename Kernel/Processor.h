@@ -18,16 +18,20 @@ struct CpuidResponse {
 class Processor {
 public:
     [[noreturn]] static void halt();
-    static Result<CpuidResponse> cpuid(uint64_t cpuid_function);
+    static CpuidResponse cpuid(uint64_t cpuid_function);
 
-    static Result<bool> has_apic();
-    static Result<bool> has_x2apic();
-    static Result<bool> tsc_deadline();
+    static bool has_apic();
+    static bool has_x2apic();
+    static bool tsc_deadline();
+
+    static void disable_interrupts();
+    static void enable_interrupts();
+
     static void interrupt();
 
     static uint64_t read_msr(uint32_t id);
 
-    static Result<uint8_t> local_apic_id();
+    static uint8_t local_apic_id();
 
     static void disable_pic();
 };

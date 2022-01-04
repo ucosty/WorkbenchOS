@@ -11,7 +11,7 @@
 
 namespace Kernel {
 Result<void> APIC::initialise() {
-    auto has_apic = TRY(Kernel::Processor::has_apic());
+    auto has_apic = Kernel::Processor::has_apic();
     if (!has_apic) {
         printf("APIC not found\n");
     }

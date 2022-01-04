@@ -11,7 +11,7 @@ namespace Kernel {
     while (true) {}
 }
 
-Result<CpuidResponse> Processor::cpuid(uint64_t cpuid_function) {
+CpuidResponse Processor::cpuid(uint64_t cpuid_function) {
     auto response = CpuidResponse();
     asm volatile("cpuid"
                  : "=a"(response.rax), "=b"(response.rbx), "=c"(response.rcx), "=d"(response.rdx)
@@ -19,23 +19,23 @@ Result<CpuidResponse> Processor::cpuid(uint64_t cpuid_function) {
     return response;
 }
 
-Result<bool> Processor::has_apic() {
-    auto feature_bits = TRY(cpuid(1));
+bool Processor::has_apic() {
+    auto feature_bits = cpuid(1);
     return (feature_bits.rdx >> 9) & 1;
 }
 
-Result<bool> Processor::has_x2apic() {
-    auto feature_bits = TRY(cpuid(1));
+bool Processor::has_x2apic() {
+    auto feature_bits = cpuid(1);
     return (feature_bits.rcx >> 21) & 1;
 }
 
-Result<bool> Processor::tsc_deadline() {
-    auto feature_bits = TRY(cpuid(1));
+bool Processor::tsc_deadline() {
+    auto feature_bits = cpuid(1);
     return (feature_bits.rcx >> 24) & 1;
 }
 
-Result<uint8_t> Processor::local_apic_id() {
-    auto feature_bits = TRY(cpuid(1));
+uint8_t Processor::local_apic_id() {
+    auto feature_bits = cpuid(1);
     return (feature_bits.rbx >> 24) & 0xFF;
 }
 
