@@ -3,70 +3,15 @@
 //
 // SPDX-License-Identifier: GPL-3.0-only
 
-#include "Exceptions.h"
+#include "InterruptVectorTable.h"
 #include <ConsoleIO.h>
-#include <Descriptors.h>
 #include <Types.h>
 
-extern "C" [[noreturn]] void exception() {
-    asm volatile("mov $0xdeadc0de, %rax\n"
-                 "pop %rbp\n"
-                 "iretq");
-    while (true) {}
-}
-
-alignas(8) DescriptorTablePointer idt_pointer{};
-alignas(8) InterruptDescriptor interrupts[20];
-
-void set_exception_handler(int id, uint64_t handler) {
-    interrupts[id].offset = handler & 0xffff;
-    interrupts[id].offset_2 = (handler >> 16) & 0xffff;
-    interrupts[id].offset_3 = handler >> 32;
-    interrupts[id].segment_selector = 0x08;
-    interrupts[id].type = 0x0f;
-    interrupts[id].descriptor_privilege_level = 0;
-    interrupts[id].present = 1;
-}
-
-void NAKED divide_by_zero_exception() {
-    asm volatile("mov $0xdeadc0de, %rax\n"
-                 "mov $0x80000000, %rbx\n"
-                 "hlt");
-}
-
-struct StackFrame {
-    uint64_t rip;
-    uint64_t cs;
-    uint64_t rflags;
-    uint64_t rsp;
-    uint64_t ss;
-};
-
-struct StackFrameErrorCode {
-    uint64_t error;
-    uint64_t rip;
-    uint64_t cs;
-    uint64_t rflags;
-    uint64_t rsp;
-    uint64_t ss;
-};
-
-#define EXCEPTION_HANDLER(name) \
-    extern "C" void name##_handler(StackFrame); \
-    void NAKED name##_asm_wrapper() {           \
-        asm volatile("call " #name "_handler\n" \
-                     "hlt");                    \
-    }
-
-#define EXCEPTION_HANDLER_WITH_CODE(name) \
-    extern "C" void name##_handler(StackFrameErrorCode); \
-    void NAKED name##_asm_wrapper() {           \
-        asm volatile("call " #name "_handler\n" \
-                     "hlt");                    \
-    }
+extern uint64_t counter;
 
 EXCEPTION_HANDLER(divide_by_zero_exception);
 void divide_by_zero_exception_handler(StackFrame frame) {
+    printf("Divide by zero!\n");
 }
 
 EXCEPTION_HANDLER(debug_exception);
@@ -136,13 +81,26 @@ void stack_fault_exception_handler(StackFrameErrorCode frame) {
 
 EXCEPTION_HANDLER_WITH_CODE(general_protection_fault_exception);
 void general_protection_fault_exception_handler(StackFrameErrorCode frame) {
-    printf("General Protection Fault Exception!\n");
+    printf("\u001b[31mGeneral Protection Fault Exception!\u001b[0m\n");
+    printf("    rip = %X\n", frame.rip);
+    printf("     cs = %X\n", frame.cs);
+    printf(" rflags = %X\n", frame.rflags);
+    printf("    rsp = %X\n", frame.rsp);
+    printf("     ss = %X\n", frame.ss);
+    printf("  error = %X\n", frame.error);
 }
+
+struct PACKED BacktraceFrame {
+    BacktraceFrame *rbp;
+    uint64_t rip;
+};
+static_assert(sizeof(BacktraceFrame) == 16);
 
 EXCEPTION_HANDLER_WITH_CODE(page_fault_exception);
 void page_fault_exception_handler(StackFrameErrorCode frame) {
     uint64_t address = 0;
-    asm volatile("movq %%cr2, %%rax":"=a"(address));
+    asm volatile("movq %%cr2, %%rax"
+                 : "=a"(address));
     printf("\u001b[31mPage Fault Exception!\u001b[0m\n");
     printf("    rip = %X\n", frame.rip);
     printf("     cs = %X\n", frame.cs);
@@ -151,6 +109,21 @@ void page_fault_exception_handler(StackFrameErrorCode frame) {
     printf("     ss = %X\n", frame.ss);
     printf("  error = %X\n", frame.error);
     printf("address = %X\n", address);
+    printf("counter = %X\n", counter);
+
+    printf("\nBacktrace:\n");
+    volatile BacktraceFrame *stack_frame;
+    asm("movq %%rbp, %0"
+        : "=r"(stack_frame));
+
+    for (int i = 0; i < 10; i++) {
+        printf("%i: rip = %X\n", i, stack_frame->rip);
+
+        if(stack_frame->rbp == nullptr || stack_frame->rbp == stack_frame)
+            break;
+
+        stack_frame = stack_frame->rbp;
+    }
 }
 
 EXCEPTION_HANDLER(floating_point_error_exception);
@@ -178,29 +151,27 @@ void virtualisation_exception_handler(StackFrame frame) {
     printf("Virtualisation Exception!\n");
 }
 
-void configure_exceptions() {
-    set_exception_handler(0, reinterpret_cast<uint64_t>(&divide_by_zero_exception_asm_wrapper));
-    set_exception_handler(1, reinterpret_cast<uint64_t>(&debug_exception_asm_wrapper));
-    set_exception_handler(2, reinterpret_cast<uint64_t>(&nmi_interrupt_asm_wrapper));
-    set_exception_handler(3, reinterpret_cast<uint64_t>(&breakpoint_exception_asm_wrapper));
-    set_exception_handler(4, reinterpret_cast<uint64_t>(&overflow_exception_asm_wrapper));
-    set_exception_handler(5, reinterpret_cast<uint64_t>(&bound_range_exceeded_exception_asm_wrapper));
-    set_exception_handler(6, reinterpret_cast<uint64_t>(&invalid_opcode_exception_asm_wrapper));
-    set_exception_handler(7, reinterpret_cast<uint64_t>(&device_not_available_exception_asm_wrapper));
-    set_exception_handler(8, reinterpret_cast<uint64_t>(&double_fault_exception_asm_wrapper));
-    set_exception_handler(9, reinterpret_cast<uint64_t>(&coprocessor_segment_overrun_exception_asm_wrapper));
-    set_exception_handler(10, reinterpret_cast<uint64_t>(&invalid_tss_exception_asm_wrapper));
-    set_exception_handler(11, reinterpret_cast<uint64_t>(&segment_not_present_exception_asm_wrapper));
-    set_exception_handler(12, reinterpret_cast<uint64_t>(&stack_fault_exception_asm_wrapper));
-    set_exception_handler(13, reinterpret_cast<uint64_t>(&general_protection_fault_exception_asm_wrapper));
-    set_exception_handler(14, reinterpret_cast<uint64_t>(&page_fault_exception_asm_wrapper));
-    set_exception_handler(16, reinterpret_cast<uint64_t>(&floating_point_error_exception_asm_wrapper));
-    set_exception_handler(17, reinterpret_cast<uint64_t>(&alignment_check_exception_asm_wrapper));
-    set_exception_handler(18, reinterpret_cast<uint64_t>(&machine_check_exception_asm_wrapper));
-    set_exception_handler(19, reinterpret_cast<uint64_t>(&simd_floating_point_exception_asm_wrapper));
-    set_exception_handler(20, reinterpret_cast<uint64_t>(&virtualisation_exception_asm_wrapper));
-
-    idt_pointer.address = reinterpret_cast<uint64_t>(&interrupts);
-    idt_pointer.limit = sizeof(InterruptDescriptor) * 20;
-    asm volatile("lidt idt_pointer");
+void configure_exceptions(InterruptVectorTable &ivt) {
+    printf("configure_exceptions: ivt = %X\n", &ivt);
+    ivt.set_interrupt_gate(0, &divide_by_zero_exception_asm_wrapper);
+    ivt.set_interrupt_gate(0, &divide_by_zero_exception_asm_wrapper);
+    ivt.set_interrupt_gate(1, &debug_exception_asm_wrapper);
+    ivt.set_interrupt_gate(2, &nmi_interrupt_asm_wrapper);
+    ivt.set_interrupt_gate(3, &breakpoint_exception_asm_wrapper);
+    ivt.set_interrupt_gate(4, &overflow_exception_asm_wrapper);
+    ivt.set_interrupt_gate(5, &bound_range_exceeded_exception_asm_wrapper);
+    ivt.set_interrupt_gate(6, &invalid_opcode_exception_asm_wrapper);
+    ivt.set_interrupt_gate(7, &device_not_available_exception_asm_wrapper);
+    ivt.set_interrupt_gate(8, &double_fault_exception_asm_wrapper);
+    ivt.set_interrupt_gate(9, &coprocessor_segment_overrun_exception_asm_wrapper);
+    ivt.set_interrupt_gate(10, &invalid_tss_exception_asm_wrapper);
+    ivt.set_interrupt_gate(11, &segment_not_present_exception_asm_wrapper);
+    ivt.set_interrupt_gate(12, &stack_fault_exception_asm_wrapper);
+    ivt.set_interrupt_gate(13, &general_protection_fault_exception_asm_wrapper);
+    ivt.set_interrupt_gate(14, &page_fault_exception_asm_wrapper);
+    ivt.set_interrupt_gate(16, &floating_point_error_exception_asm_wrapper);
+    ivt.set_interrupt_gate(17, &alignment_check_exception_asm_wrapper);
+    ivt.set_interrupt_gate(18, &machine_check_exception_asm_wrapper);
+    ivt.set_interrupt_gate(19, &simd_floating_point_exception_asm_wrapper);
+    ivt.set_interrupt_gate(20, &virtualisation_exception_asm_wrapper);
 }

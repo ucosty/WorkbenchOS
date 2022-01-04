@@ -3,25 +3,42 @@
 //
 // SPDX-License-Identifier: GPL-3.0-only
 #include "ACPI/DescriptorTables.h"
+#include "APIC.h"
 #include "Debugging.h"
-#include "Exceptions.h"
 #include "Heap/Kmalloc.h"
+#include "InterruptVectorTable.h"
 #include "Memory/MemoryManager.h"
+#include "Processor.h"
 #include <BootState.h>
+#include <ConsoleIO.h>
 #include <Descriptors.h>
 #include <LinearFramebuffer.h>
 #include <Types.h>
 
+
 extern "C" [[noreturn]] void kernel_stage2(const BootState &boot_state) {
     // TODO: Ensure C++ constructors are run
     // TODO: ACPI initial support to find devices
-    // TODO: xAPIC timer driver
-    configure_exceptions();
+    auto &ivt = InterruptVectorTable::get_instance();
+    ivt.initialise();
 
     auto &memory_manager = Kernel::MemoryManager::get_instance();
     memory_manager.init(boot_state);
     TRY_PANIC(g_malloc_heap.initialise());
     TRY_PANIC(g_acpi.initialise(PhysicalAddress(boot_state.acpi_root_table_address)));
+
+    Kernel::APIC apic;
+    TRY_PANIC(apic.initialise());
+    auto apic_register_base = apic.register_base();
+
+    asm volatile("sti");
+    auto initial_count_register = PhysicalAddress(apic_register_base + 0x380).as_ptr<uint32_t>();
+    *initial_count_register = 512;
+
+    auto icr_high = PhysicalAddress(apic_register_base + 0x310).as_ptr<uint32_t>();
+    auto icr_low = PhysicalAddress(apic_register_base + 0x300).as_ptr<uint32_t>();
+    *icr_high = 0;
+    *icr_low = 0x22 | (0x2 << 18);
 
     auto framebuffer = LinearFramebuffer(boot_state.kernel_address_space.framebuffer.virtual_base, 1280, 1024);
     framebuffer.rect(50, 50, 100, 100, 0x4455aa, true);
@@ -54,6 +71,7 @@ extern "C" [[noreturn]] EFICALL void kernel_main(uint64_t boot_state_address) {
                  "mov %%rbx, %%es\n"
                  "mov %%rbx, %%fs\n"
                  "mov %%rbx, %%gs\n"
+                 "movq $0x0, %%rbp\n"
                  "pushq $0x08\n"         // Push CS
                  "pushq $kernel_stage2\n"// Push RIP
                  "lretq\n"

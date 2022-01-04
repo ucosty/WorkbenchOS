@@ -36,6 +36,10 @@ SET(KERNEL_SOURCES
         Heap/Kmalloc.h
         ACPI/DescriptorTables.cpp
         ACPI/DescriptorTables.h
+        InterruptVectorTable.cpp
+        InterruptVectorTable.h
+        APIC.cpp
+        APIC.h
         )
 SET(SOURCES ${KERNEL_SOURCES} ${LIBRARY_SOURCES})
 
@@ -48,7 +52,6 @@ add_compile_options(-fno-rtti -ffreestanding -fno-builtin -nostdinc++)
 add_compile_options(-fno-exceptions)
 add_compile_options(-fno-asynchronous-unwind-tables)
 add_compile_options(-mno-80387 -mno-mmx -mno-sse -mno-sse2)
-#add_compile_options(-Wall -Wextra)
 add_compile_options(-fdiagnostics-color=always)
 
 add_link_options(-target x86_64-pc-none-elf)
