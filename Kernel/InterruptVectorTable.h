@@ -22,6 +22,21 @@ private:
 };
 
 struct PACKED StackFrame {
+    uint64_t rax;
+    uint64_t rbp;
+    uint64_t rbx;
+    uint64_t rcx;
+    uint64_t rdi;
+    uint64_t rdx;
+    uint64_t rsi;
+    uint64_t r8;
+    uint64_t r9;
+    uint64_t r10;
+    uint64_t r11;
+    uint64_t r12;
+    uint64_t r13;
+    uint64_t r14;
+    uint64_t r15;
     uint64_t rip;
     uint64_t cs;
     uint64_t rflags;
@@ -30,6 +45,21 @@ struct PACKED StackFrame {
 };
 
 struct PACKED StackFrameErrorCode {
+    uint64_t rax;
+    uint64_t rbp;
+    uint64_t rbx;
+    uint64_t rcx;
+    uint64_t rdi;
+    uint64_t rdx;
+    uint64_t rsi;
+    uint64_t r8;
+    uint64_t r9;
+    uint64_t r10;
+    uint64_t r11;
+    uint64_t r12;
+    uint64_t r13;
+    uint64_t r14;
+    uint64_t r15;
     uint64_t error;
     uint64_t rip;
     uint64_t cs;
@@ -46,8 +76,6 @@ struct PACKED StackFrameErrorCode {
                  "push %rdi\n" \
                  "push %rdx\n" \
                  "push %rsi\n" \
-                 "push %rsp\n" \
-                 "push %rsp\n" \
                  "push %r8\n"  \
                  "push %r9\n"  \
                  "push %r10\n" \
@@ -66,8 +94,6 @@ struct PACKED StackFrameErrorCode {
                  "pop %r10\n" \
                  "pop %r9\n"  \
                  "pop %r8\n"  \
-                 "pop %rsp\n" \
-                 "pop %rsp\n" \
                  "pop %rsi\n" \
                  "pop %rdx\n" \
                  "pop %rdi\n" \

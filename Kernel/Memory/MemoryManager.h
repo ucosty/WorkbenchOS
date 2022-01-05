@@ -53,13 +53,17 @@ public:
     Result<void> map_kernel_page_directory(const PhysicalAddress &, const VirtualAddress &);
     Result<void> unmap_kernel_page_directory(const VirtualAddress &);
 
+    bool is_allocated(PhysicalAddress address);
+
     static void invalidate_tlb(const VirtualAddress &);
     static void invalidate_entire_tlb();
+    void unmap_identity_mapping();
 
 private:
     MemoryManager() = default;
     Bitmap m_bitmap{};
     VirtualAddressSpace m_kernel_heap_address_space;
     PageDirectoryEntry *m_kernel_page_directory{nullptr};
+    PML4Entry *m_initial_pml4{nullptr};
 };
 }// namespace Kernel

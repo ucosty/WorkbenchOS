@@ -4,18 +4,19 @@
 // SPDX-License-Identifier: GPL-3.0-only
 #pragma once
 
+#include "DescriptorTables.h"
 #include <ACPI/Tables.h>
 #include <PhysicalAddress.h>
 #include <Result.h>
 
 namespace Kernel {
-class ACPI {
+class SystemDescriptorTables {
 public:
     Result<void> initialise(PhysicalAddress rsdp_address);
+    Result<::Lib::SystemDescriptionTableHeader *> find_madt();
+    void parse_madt(::Lib::SystemDescriptionTableHeader *);
 
 private:
-    ::ACPI::SystemDescriptionTableHeader *m_xsdt;
+    ::Lib::SystemDescriptionTableHeader *m_xsdt{nullptr};
 };
-}
-
-extern Kernel::ACPI g_acpi;
+}// namespace Kernel

@@ -53,6 +53,12 @@ void Bitmap::set_allocated(BlockAndOffset block_and_offset) {
     m_storage[block_and_offset.block] |= mask;
 }
 
+bool Bitmap::is_allocated(PhysicalAddress address) {
+    auto block_and_offset = address_to_block_and_offset(address.as_address());
+    uint64_t mask = 3 << (block_and_offset.offset * 2);
+    return m_storage[block_and_offset.block] & mask;
+}
+
 BlockAndOffset Bitmap::address_to_block_and_offset(uint64_t address) const {
     auto address_adjusted = address - m_base_address;
     return BlockAndOffset{
@@ -68,11 +74,5 @@ Result<size_t> Bitmap::find_free(uint64_t &bitmap) {
         }
     }
     return Lib::Error::from_code(1);
-}
-
-uint64_t *Bitmap::get_bitmap_block(size_t block_index, uint64_t *storage_offset) {
-    auto storage_index = block_index / blocks_per_storage_unit;
-    *storage_offset = block_index - (storage_index * blocks_per_storage_unit);
-    return &m_storage[storage_index];
 }
 }// namespace Kernel

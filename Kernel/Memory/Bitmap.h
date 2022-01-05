@@ -24,6 +24,7 @@ public:
     [[nodiscard]] Result<void> free(PhysicalAddress address);
     void set_allocated(PhysicalAddress address);
     void set_allocated(BlockAndOffset block_and_offset);
+    bool is_allocated(PhysicalAddress address);
 
 private:
     static constexpr size_t blocks_per_storage_unit = 32;
@@ -37,6 +38,5 @@ private:
 
     [[nodiscard]] BlockAndOffset address_to_block_and_offset(uint64_t address) const;
     static Result<size_t> find_free(uint64_t &bitmap);
-    uint64_t *get_bitmap_block(size_t block_index, uint64_t *storage_offset);
 };
 }// namespace Kernel

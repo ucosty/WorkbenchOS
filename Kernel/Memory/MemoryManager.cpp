@@ -5,6 +5,7 @@
 
 #include "MemoryManager.h"
 #include "../Debugging.h"
+#include <ConsoleIO.h>
 #include <Try.h>
 
 namespace Kernel {
@@ -36,14 +37,14 @@ void MemoryManager::init(const BootState &boot_state) {
         }
     }
 
-    m_kernel_page_directory = reinterpret_cast<PageDirectoryEntry *>(boot_state.kernel_address_space.kernel_page_directory_virtual_address);
+    // Reserve all memory below 1 MiB for the APs
+    for (int i = 0; i < 256; i++) {
+        auto address = PhysicalAddress::from_base_and_page_offset(0, i);
+        m_bitmap.set_allocated(address);
+    }
 
-    // Unmap the identity mapped memory region
-    auto *pml4 = reinterpret_cast<PML4Entry *>(boot_state.kernel_address_space.initial_pages.virtual_base);
-    pml4[0].present = 0;
-    pml4[0].writeable = 0;
-    pml4[0].physical_address = 0;
-    invalidate_entire_tlb();
+    m_initial_pml4 = reinterpret_cast<PML4Entry *>(boot_state.kernel_address_space.initial_pages.virtual_base);
+    m_kernel_page_directory = reinterpret_cast<PageDirectoryEntry *>(boot_state.kernel_address_space.kernel_page_directory_virtual_address);
 
     // Set the start of the kernel heap virtual address space
     auto heap_virtual_base = VirtualAddress(boot_state.kernel_address_space.frame_allocator.virtual_base + boot_state.kernel_address_space.frame_allocator.size).offset(Page);
@@ -53,6 +54,13 @@ void MemoryManager::init(const BootState &boot_state) {
     // TODO: Remap kernel code as R+X
     // TODO: Remap kernel data as R+W
     // TODO: Remap kernel readonly data as R
+}
+
+void MemoryManager::unmap_identity_mapping() {
+    m_initial_pml4[0].present = 0;
+    m_initial_pml4[0].writeable = 0;
+    m_initial_pml4[0].physical_address = 0;
+    invalidate_entire_tlb();
 }
 
 Result<PhysicalAddress> MemoryManager::allocate_physical_page() {
@@ -72,7 +80,7 @@ Result<VirtualAddress> MemoryManager::allocate_kernel_heap_page() {
 
 Result<VirtualAddress> MemoryManager::allocate_kernel_heap_pages(size_t page_count) {
     auto virtual_address_range = TRY(m_kernel_heap_address_space.take_pages(page_count));
-    for(size_t i = 0; i < page_count; i++) {
+    for (size_t i = 0; i < page_count; i++) {
         auto physical_address = TRY(allocate_physical_page());
         auto page_virtual_address = virtual_address_range.offset_pages(i);
         TRY(map_kernel_page_directory(physical_address, page_virtual_address));
@@ -139,6 +147,10 @@ Result<PageTableEntry *> MemoryManager::get_kernel_page_table_entry(const Virtua
     return &pagetable[page_table_index];
 }
 
+bool MemoryManager::is_allocated(PhysicalAddress address) {
+    return m_bitmap.is_allocated(address);
+}
+
 void MemoryManager::invalidate_tlb(const VirtualAddress &virtual_address) {
     asm volatile("invlpg (%0)"
                  : /* no output */
@@ -168,7 +180,7 @@ Result<VirtualAddress> VirtualAddressSpace::take_page() {
 
 Result<VirtualAddress> VirtualAddressSpace::take_pages(size_t page_count) {
     auto virtual_address = TRY(take_page());
-    for(int i = 1; i < page_count; i++) {
+    for (int i = 1; i < page_count; i++) {
         TRY(take_page());
     }
     return virtual_address;

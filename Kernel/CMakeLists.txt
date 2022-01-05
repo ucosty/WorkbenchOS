@@ -34,12 +34,15 @@ SET(KERNEL_SOURCES
         Heap/SlabAllocator.cpp
         Heap/Kmalloc.cpp
         Heap/Kmalloc.h
+        ACPI/ACPI.cpp
+        ACPI/ACPI.h
         ACPI/DescriptorTables.cpp
         ACPI/DescriptorTables.h
         InterruptVectorTable.cpp
         InterruptVectorTable.h
         APIC.cpp
         APIC.h
+        ApInit.S
         )
 SET(SOURCES ${KERNEL_SOURCES} ${LIBRARY_SOURCES})
 

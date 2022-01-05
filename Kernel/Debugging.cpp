@@ -18,6 +18,11 @@ void inline outb(uint16_t port, uint8_t val) {
                  : "a"(val), "Nd"(port));
 }
 
+void delay(size_t microseconds) {
+    for(size_t i = 0; i < microseconds; i++)
+        outb(0x80, 0);
+}
+
 void debug_putstring(const char *string) {
     while (*string != '\0') {
         outb(0xe9, *string);

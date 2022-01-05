@@ -129,7 +129,7 @@ Result<EFI::GraphicsOutputProtocol> init_graphics(EFI::BootServices *boot_servic
     return graphics_output;
 }
 
-bool verify_rsdp_checksum(ACPI::RootSystemDescriptionPointer *rsdp) {
+bool verify_rsdp_checksum(Lib::RootSystemDescriptionPointer *rsdp) {
     int32_t checksum = 0;
     auto *bytes = (uint8_t *) rsdp;
     for (int i = 0; i < 20; i++) {
@@ -144,7 +144,7 @@ Result<uint64_t> find_acpi_root_table(EFI::Raw::SystemTable *system_table) {
         if (!table.vendor_guid.equals(EFI::acpi_root_table_guid))
             continue;
 
-        auto rsdp = reinterpret_cast<ACPI::RootSystemDescriptionPointer *>(table.vendor_table);
+        auto rsdp = reinterpret_cast<Lib::RootSystemDescriptionPointer *>(table.vendor_table);
         if (rsdp->signature != RSDP_SIGNATURE)
             continue;
 

@@ -3,12 +3,12 @@
 //
 // SPDX-License-Identifier: GPL-3.0-only
 #include "Processor.h"
-#include <Try.h>
 
 namespace Kernel {
 [[noreturn]] void Processor::halt() {
-    asm volatile("hlt");
-    while (true) {}
+    while (true) {
+        asm volatile("hlt");
+    }
 }
 
 CpuidResponse Processor::cpuid(uint64_t cpuid_function) {

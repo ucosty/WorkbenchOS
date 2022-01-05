@@ -5,9 +5,9 @@
 
 #include "APIC.h"
 #include "Processor.h"
-#include <Try.h>
-#include <PhysicalAddress.h>
 #include <ConsoleIO.h>
+#include <PhysicalAddress.h>
+#include <Try.h>
 
 namespace Kernel {
 Result<void> APIC::initialise() {
@@ -15,14 +15,14 @@ Result<void> APIC::initialise() {
     if (!has_apic) {
         printf("APIC not found\n");
     }
-//    printf("Local APIC ID = %d\n", TRY(Kernel::Processor::local_apic_id()));
+    //    printf("Local APIC ID = %d\n", TRY(Kernel::Processor::local_apic_id()));
     auto apic_base_msr = Kernel::Processor::read_msr(0x1B);
     m_register_base = apic_base_msr & ~0xfff;
-//    auto bsp = (apic_base_msr >> 8) & 1;
-//    auto enabled = (apic_base_msr >> 11) & 1;
+    //    auto bsp = (apic_base_msr >> 8) & 1;
+    //    auto enabled = (apic_base_msr >> 11) & 1;
 
-//    auto local_apic_id = PhysicalAddress(m_register_base + 0x20).as_ptr<uint32_t>();
-//    auto local_apic_version = PhysicalAddress(m_register_base + 0x30).as_ptr<uint32_t>();
+    //    auto local_apic_id = PhysicalAddress(m_register_base + 0x20).as_ptr<uint32_t>();
+    //    auto local_apic_version = PhysicalAddress(m_register_base + 0x30).as_ptr<uint32_t>();
 
     auto lvt_timer_register = PhysicalAddress(m_register_base + 0x320).as_ptr<TimerVector>();
     auto spurious_vector_register = PhysicalAddress(m_register_base + 0xf0).as_ptr<SpuriousVector>();
@@ -47,4 +47,40 @@ Result<void> APIC::initialise() {
 
     return {};
 }
-}// namespace Kernel::APIC
+
+void APIC::write_icr(const ICR &icr) {
+    auto icr_high = PhysicalAddress(apic_register_base() + 0x310).as_ptr<uint32_t>();
+    auto icr_low = PhysicalAddress(apic_register_base() + 0x300).as_ptr<uint32_t>();
+    *icr_high = icr.high();
+    *icr_low = icr.low();
+}
+
+void APIC::send_init(uint8_t cpu) {
+    write_icr(ICR{
+        0,
+        cpu,
+        DeliveryMode::INIT,
+        DestinationMode::Physical,
+        DestinationShorthand::NoShorthand,
+        AssertLevel::Assert,
+        TriggerMode::Edge,
+    });
+}
+
+void APIC::send_sipi(uint8_t cpu) {
+    write_icr(ICR{
+        0x08,
+        cpu,
+        DeliveryMode::SIPI,
+        DestinationMode::Physical,
+        DestinationShorthand::NoShorthand,
+        AssertLevel::Assert,
+        TriggerMode::Edge,
+    });
+}
+
+uint64_t APIC::apic_register_base() {
+    auto apic_base_msr = Kernel::Processor::read_msr(0x1B);
+    return apic_base_msr & ~0xfff;
+}
+}// namespace Kernel

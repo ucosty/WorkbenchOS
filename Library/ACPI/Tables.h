@@ -8,8 +8,9 @@
 
 #define RSDP_SIGNATURE 0x2052545020445352
 #define XSDT_SIGNATURE 0x54445358
+#define MADT_SIGNATURE 0x43495041
 
-namespace ACPI {
+namespace Lib {
 struct PACKED RootSystemDescriptionPointer {
     uint64_t signature;
     uint8_t checksum;
@@ -41,6 +42,7 @@ struct PACKED SystemDescriptionTableHeader {
     uint32_t creator_id;
     uint32_t creator_revision;
 };
+static_assert(sizeof(SystemDescriptionTableHeader) == 36);
 
 struct PACKED MultipleApicDescriptionTable {
     uint32_t local_interrupt_controller_address;
@@ -51,6 +53,15 @@ struct PACKED MultipleApicDescriptionEntry {
     uint8_t type;
     uint8_t length;
 };
+
+struct PACKED MadtLocalApicEntry {
+    uint8_t type;
+    uint8_t length;
+    uint8_t processor_id;
+    uint8_t apic_id;
+    uint32_t flags;
+};
+
 
 struct PACKED FixedAcpiDescriptionTable {
     uint32_t firmware_ctrl;
@@ -113,4 +124,4 @@ struct PACKED FixedAcpiDescriptionTable {
     ExtendedAddress x_gpe0_block;
     ExtendedAddress x_gpe1_block;
 };
-}// namespace ACPI
+}// namespace SystemDescriptorTables
