@@ -4,11 +4,9 @@
 // SPDX-License-Identifier: GPL-3.0-only
 #include "InterruptVectorTable.h"
 #include "Exceptions.h"
-#include "Processor.h"
+#include "Process/ProcessManager.h"
 #include <ConsoleIO.h>
-#include <Convert.h>
 #include <PhysicalAddress.h>
-#include <Variadic.h>
 
 uint64_t counter = 0;
 
@@ -40,17 +38,18 @@ struct PACKED BacktraceFrame {
     uint64_t rip;
 };
 
-INTERRUPT_HANDLER(cpu_init)
-void cpu_init_handler(StackFrame frame) {
-    printf("\u001b[42;97m CPU Init \u001b[0m\n");
-    printf("    rip = %X\n", frame.rip);
-    printf("     cs = %X\n", frame.cs);
-    printf(" rflags = %X\n", frame.rflags);
-    printf("    rsp = %X\n", frame.rsp);
-    printf("     ss = %X\n", frame.ss);
+INTERRUPT_HANDLER(schedule)
+void schedule_handler(StackFrame frame) {
+    auto &process_manager = Kernel::ProcessManager::get_instance();
 
-    auto eoi_register = PhysicalAddress(0xFEE00000 + 0xb0).as_ptr<uint32_t>();
-    *eoi_register = 0;
+    // FIXME: hack for now, let's just see if we can jump into user code
+    auto next_process = process_manager.next_process();
+
+    auto next_rsp = next_process->get_rsp().as_address();
+    asm volatile("mov %0, %%rsp" ::"b"(next_rsp)
+                 : "memory");
+    POP_REGISTERS();
+    asm volatile("iretq");
 }
 
 void InterruptVectorTable::initialise() {
@@ -67,7 +66,7 @@ void InterruptVectorTable::initialise() {
 }
 
 void InterruptVectorTable::set_interrupt_gate(uint8_t id, PrivilegeLevel dpl, void (*handler)()) {
-    auto descriptor_privilege_level = dpl == PrivilegeLevel::User? 3 : 0;
+    auto descriptor_privilege_level = dpl == PrivilegeLevel::User ? 3 : 0;
     auto address = reinterpret_cast<uint64_t>(handler);
     g_interrupts[id].offset = address & 0xffff;
     g_interrupts[id].offset_2 = (address >> 16) & 0xffff;

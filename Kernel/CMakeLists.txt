@@ -18,7 +18,11 @@ SET(LIBRARY_SOURCES
         ../Library/UniquePtr.h
         ../Library/VirtualAddressRange.h
         ../Library/StringView.h
-        ../Library/String.h)
+        ../Library/String.h
+        ../Library/Vector.h
+        ../Library/Stack.h
+        ../Library/Stack.cpp
+        )
 SET(KERNEL_SOURCES
         main.cpp
         Exceptions.cpp
@@ -43,6 +47,11 @@ SET(KERNEL_SOURCES
         APIC.cpp
         APIC.h
         ApInit.S
+        Process/Process.h
+        Process/Process.cpp
+        Process/ProcessManager.h
+        Process/ProcessManager.cpp
+        Process/StackFrame.h
         )
 SET(SOURCES ${KERNEL_SOURCES} ${LIBRARY_SOURCES})
 

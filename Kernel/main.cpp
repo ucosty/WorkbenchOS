@@ -8,6 +8,7 @@
 #include "Heap/Kmalloc.h"
 #include "InterruptVectorTable.h"
 #include "Memory/MemoryManager.h"
+#include "Process/ProcessManager.h"
 #include "Processor.h"
 #include <BootState.h>
 #include <ConsoleIO.h>
@@ -51,6 +52,15 @@ extern "C" [[noreturn]] void kernel_stage2(const BootState &boot_state) {
     APIC apic;
     TRY_PANIC(apic.initialise());
     acpi.start_application_processors();
+
+    auto stack = TRY_PANIC(memory_manager.allocate_kernel_heap_page());
+    tss0.rsp0 = stack.as_address() + Page;
+    Processor::load_task_register(0x28);
+
+    auto &process_manager = ProcessManager::get_instance();
+    TRY_PANIC(process_manager.initialise());
+    TRY_PANIC(process_manager.create_process());
+    Processor::interrupt();
 
     auto framebuffer = LinearFramebuffer(boot_state.kernel_address_space.framebuffer.virtual_base, 1280, 1024);
     framebuffer.rect(50, 50, 100, 100, 0x4455aa, true);
