@@ -43,7 +43,7 @@ void MemoryManager::init(const BootState &boot_state) {
         m_bitmap.set_allocated(address);
     }
 
-    m_initial_pml4 = reinterpret_cast<PML4Entry *>(boot_state.kernel_address_space.initial_pages.virtual_base);
+    m_pml4 = reinterpret_cast<PML4Entry *>(boot_state.kernel_address_space.initial_pages.virtual_base);
     m_kernel_page_directory = reinterpret_cast<PageDirectoryEntry *>(boot_state.kernel_address_space.kernel_page_directory_virtual_address);
 
     // Set the start of the kernel heap virtual address space
@@ -57,9 +57,9 @@ void MemoryManager::init(const BootState &boot_state) {
 }
 
 void MemoryManager::unmap_identity_mapping() {
-    m_initial_pml4[0].present = 0;
-    m_initial_pml4[0].writeable = 0;
-    m_initial_pml4[0].physical_address = 0;
+    m_pml4[0].present = 0;
+    m_pml4[0].writeable = 0;
+    m_pml4[0].physical_address = 0;
     invalidate_entire_tlb();
 }
 

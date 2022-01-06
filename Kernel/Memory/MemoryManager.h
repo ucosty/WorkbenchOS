@@ -66,6 +66,6 @@ private:
     Bitmap m_bitmap{};
     VirtualAddressSpace m_kernel_heap_address_space;
     PageDirectoryEntry *m_kernel_page_directory{nullptr};
-    PML4Entry *m_initial_pml4{nullptr};
+    PML4Entry *m_pml4{nullptr};
 };
 }// namespace Kernel
