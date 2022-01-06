@@ -152,26 +152,25 @@ void virtualisation_exception_handler(StackFrame frame) {
 }
 
 void configure_exceptions(InterruptVectorTable &ivt) {
-    printf("configure_exceptions: ivt = %X\n", &ivt);
-    ivt.set_interrupt_gate(0, &divide_by_zero_exception_asm_wrapper);
-    ivt.set_interrupt_gate(0, &divide_by_zero_exception_asm_wrapper);
-    ivt.set_interrupt_gate(1, &debug_exception_asm_wrapper);
-    ivt.set_interrupt_gate(2, &nmi_interrupt_asm_wrapper);
-    ivt.set_interrupt_gate(3, &breakpoint_exception_asm_wrapper);
-    ivt.set_interrupt_gate(4, &overflow_exception_asm_wrapper);
-    ivt.set_interrupt_gate(5, &bound_range_exceeded_exception_asm_wrapper);
-    ivt.set_interrupt_gate(6, &invalid_opcode_exception_asm_wrapper);
-    ivt.set_interrupt_gate(7, &device_not_available_exception_asm_wrapper);
-    ivt.set_interrupt_gate(8, &double_fault_exception_asm_wrapper);
-    ivt.set_interrupt_gate(9, &coprocessor_segment_overrun_exception_asm_wrapper);
-    ivt.set_interrupt_gate(10, &invalid_tss_exception_asm_wrapper);
-    ivt.set_interrupt_gate(11, &segment_not_present_exception_asm_wrapper);
-    ivt.set_interrupt_gate(12, &stack_fault_exception_asm_wrapper);
-    ivt.set_interrupt_gate(13, &general_protection_fault_exception_asm_wrapper);
-    ivt.set_interrupt_gate(14, &page_fault_exception_asm_wrapper);
-    ivt.set_interrupt_gate(16, &floating_point_error_exception_asm_wrapper);
-    ivt.set_interrupt_gate(17, &alignment_check_exception_asm_wrapper);
-    ivt.set_interrupt_gate(18, &machine_check_exception_asm_wrapper);
-    ivt.set_interrupt_gate(19, &simd_floating_point_exception_asm_wrapper);
-    ivt.set_interrupt_gate(20, &virtualisation_exception_asm_wrapper);
+    InterruptVectorTable::set_interrupt_gate(0, PrivilegeLevel::Kernel, &divide_by_zero_exception_asm_wrapper);
+    InterruptVectorTable::set_interrupt_gate(0, PrivilegeLevel::Kernel, &divide_by_zero_exception_asm_wrapper);
+    InterruptVectorTable::set_interrupt_gate(1, PrivilegeLevel::Kernel, &debug_exception_asm_wrapper);
+    InterruptVectorTable::set_interrupt_gate(2, PrivilegeLevel::Kernel, &nmi_interrupt_asm_wrapper);
+    InterruptVectorTable::set_interrupt_gate(3, PrivilegeLevel::Kernel, &breakpoint_exception_asm_wrapper);
+    InterruptVectorTable::set_interrupt_gate(4, PrivilegeLevel::Kernel, &overflow_exception_asm_wrapper);
+    InterruptVectorTable::set_interrupt_gate(5, PrivilegeLevel::Kernel, &bound_range_exceeded_exception_asm_wrapper);
+    InterruptVectorTable::set_interrupt_gate(6, PrivilegeLevel::Kernel, &invalid_opcode_exception_asm_wrapper);
+    InterruptVectorTable::set_interrupt_gate(7, PrivilegeLevel::Kernel, &device_not_available_exception_asm_wrapper);
+    InterruptVectorTable::set_interrupt_gate(8, PrivilegeLevel::Kernel, &double_fault_exception_asm_wrapper);
+    InterruptVectorTable::set_interrupt_gate(9, PrivilegeLevel::Kernel, &coprocessor_segment_overrun_exception_asm_wrapper);
+    InterruptVectorTable::set_interrupt_gate(10, PrivilegeLevel::Kernel, &invalid_tss_exception_asm_wrapper);
+    InterruptVectorTable::set_interrupt_gate(11, PrivilegeLevel::Kernel, &segment_not_present_exception_asm_wrapper);
+    InterruptVectorTable::set_interrupt_gate(12, PrivilegeLevel::Kernel, &stack_fault_exception_asm_wrapper);
+    InterruptVectorTable::set_interrupt_gate(13, PrivilegeLevel::Kernel, &general_protection_fault_exception_asm_wrapper);
+    InterruptVectorTable::set_interrupt_gate(14, PrivilegeLevel::Kernel, &page_fault_exception_asm_wrapper);
+    InterruptVectorTable::set_interrupt_gate(16, PrivilegeLevel::Kernel, &floating_point_error_exception_asm_wrapper);
+    InterruptVectorTable::set_interrupt_gate(17, PrivilegeLevel::Kernel, &alignment_check_exception_asm_wrapper);
+    InterruptVectorTable::set_interrupt_gate(18, PrivilegeLevel::Kernel, &machine_check_exception_asm_wrapper);
+    InterruptVectorTable::set_interrupt_gate(19, PrivilegeLevel::Kernel, &simd_floating_point_exception_asm_wrapper);
+    InterruptVectorTable::set_interrupt_gate(20, PrivilegeLevel::Kernel, &virtualisation_exception_asm_wrapper);
 }

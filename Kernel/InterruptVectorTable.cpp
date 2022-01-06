@@ -55,24 +55,25 @@ void cpu_init_handler(StackFrame frame) {
 
 void InterruptVectorTable::initialise() {
     for (int i = 0; i < 255; i++) {
-        set_interrupt_gate(i, &not_implemented_asm_wrapper);
+        set_interrupt_gate(i, PrivilegeLevel::Kernel, &not_implemented_asm_wrapper);
     }
     configure_exceptions(*this);
-    set_interrupt_gate(32, &timer_asm_wrapper);
-    set_interrupt_gate(34, &cpu_init_asm_wrapper);
+    set_interrupt_gate(32, PrivilegeLevel::User, &timer_asm_wrapper);
+    set_interrupt_gate(34, PrivilegeLevel::Kernel, &schedule_asm_wrapper);
 
     g_idt_pointer.address = reinterpret_cast<uint64_t>(&g_interrupts);
     g_idt_pointer.limit = sizeof(InterruptDescriptor) * 256;
     asm volatile("lidt g_idt_pointer");
 }
 
-void InterruptVectorTable::set_interrupt_gate(uint8_t id, void (*handler)()) {
+void InterruptVectorTable::set_interrupt_gate(uint8_t id, PrivilegeLevel dpl, void (*handler)()) {
+    auto descriptor_privilege_level = dpl == PrivilegeLevel::User? 3 : 0;
     auto address = reinterpret_cast<uint64_t>(handler);
     g_interrupts[id].offset = address & 0xffff;
     g_interrupts[id].offset_2 = (address >> 16) & 0xffff;
     g_interrupts[id].offset_3 = address >> 32;
     g_interrupts[id].segment_selector = 0x08;
     g_interrupts[id].type = 0x0f;
-    g_interrupts[id].descriptor_privilege_level = 0;
+    g_interrupts[id].descriptor_privilege_level = descriptor_privilege_level;
     g_interrupts[id].present = 1;
 }

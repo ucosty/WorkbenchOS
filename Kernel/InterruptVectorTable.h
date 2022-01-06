@@ -5,6 +5,10 @@
 #pragma once
 
 #include <Descriptors.h>
+enum class PrivilegeLevel {
+    Kernel = 0x00,
+    User = 0x03
+};
 
 class InterruptVectorTable {
 public:
@@ -15,7 +19,7 @@ public:
     InterruptVectorTable(InterruptVectorTable const &) = delete;
     void operator=(InterruptVectorTable const &) = delete;
     void initialise();
-    static void set_interrupt_gate(uint8_t id, void (*handler)());
+    static void set_interrupt_gate(uint8_t id, PrivilegeLevel dpl, void (*handler)());
 
 private:
     InterruptVectorTable() = default;
