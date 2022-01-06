@@ -8,6 +8,7 @@
 
 #define PACKED __attribute__((__packed__))
 #define NAKED __attribute__((__naked__))
+#define USER_TEXT __attribute__((section(".user_text")))
 
 using uint64_t = __UINT64_TYPE__;
 using uint32_t = __UINT32_TYPE__;
