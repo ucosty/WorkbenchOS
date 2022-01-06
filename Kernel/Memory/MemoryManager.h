@@ -53,7 +53,9 @@ public:
     Result<void> map_kernel_page_directory(const PhysicalAddress &, const VirtualAddress &);
     Result<void> unmap_kernel_page_directory(const VirtualAddress &);
 
-    bool is_allocated(PhysicalAddress address);
+    Result<PhysicalAddress> create_user_mode_directory();
+    Result<void> map_user_page(PhysicalAddress pdpt_physical_address, const PhysicalAddress &, const VirtualAddress &);
+    Result<void> set_user_directory(PhysicalAddress address);
 
     static void invalidate_tlb(const VirtualAddress &);
     static void invalidate_entire_tlb();

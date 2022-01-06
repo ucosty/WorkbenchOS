@@ -147,8 +147,64 @@ Result<PageTableEntry *> MemoryManager::get_kernel_page_table_entry(const Virtua
     return &pagetable[page_table_index];
 }
 
-bool MemoryManager::is_allocated(PhysicalAddress address) {
-    return m_bitmap.is_allocated(address);
+Result<PhysicalAddress> MemoryManager::create_user_mode_directory() {
+    // Allocate page for the PDPT
+    auto pdpt_physical_address = TRY(allocate_physical_page());
+    auto pdpt = pdpt_physical_address.as_ptr<PageDirectoryPointerTableEntry>();
+
+    // Allocate page for the page directory
+    auto page_directory_physical_address = TRY(allocate_physical_page());
+
+    // Configure the PDPT entry
+    pdpt[0].present = 1;
+    pdpt[0].physical_address = page_directory_physical_address.as_address() >> 12;
+    pdpt[0].writeable = 1;
+    pdpt[0].user_access = 1;
+
+    return pdpt_physical_address;
+}
+
+Result<void> MemoryManager::map_user_page(PhysicalAddress pdpt_physical_address, const PhysicalAddress &physical_address, const VirtualAddress &virtual_address) {
+    auto pdpt = pdpt_physical_address.as_ptr<PageDirectoryPointerTableEntry>();
+    auto pd = pdpt[0].get_physical_address().as_ptr<PageDirectoryEntry>();
+
+    auto user_page_directory_index = TRY(virtual_address_to_page_directory_index(virtual_address));
+    auto page_directory_entry = &pd[user_page_directory_index];
+
+    if (!page_directory_entry->present) {
+        auto page_table_physical_address = TRY(allocate_physical_page());
+        page_directory_entry->present = 1;
+        page_directory_entry->writeable = 1;
+        page_directory_entry->user_access = 1;
+        page_directory_entry->physical_address = page_table_physical_address.as_address() >> 12;
+    }
+
+    auto page_table_index = TRY(virtual_address_to_page_table_index(virtual_address));
+    auto page_table = page_directory_entry->get_physical_address().as_ptr<PageTableEntry>();
+
+    auto page = &page_table[page_table_index];
+    if (page->present) {
+        printf("FATAL: Page already allocated for %X to %X", virtual_address.as_address(), page->get_physical_address().as_address());
+        while (true) {}
+    }
+
+    page->present = 1;
+    page->writeable = 1;
+    page->user_access = 1;
+    page->physical_address = physical_address.as_address() >> 12;
+    invalidate_tlb(virtual_address);
+
+    printf("Mapped %X to %X\n", physical_address.as_address(), virtual_address.as_address());
+    return {};
+}
+
+Result<void> MemoryManager::set_user_directory(PhysicalAddress address) {
+    m_pml4[0].present = 1;
+    m_pml4[0].writeable = 1;
+    m_pml4[0].user_access = 1;
+    m_pml4[0].physical_address = address.as_address() >> 12;
+    invalidate_entire_tlb();
+    return {};
 }
 
 void MemoryManager::invalidate_tlb(const VirtualAddress &virtual_address) {
