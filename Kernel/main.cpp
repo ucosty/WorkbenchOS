@@ -17,20 +17,23 @@
 
 using namespace Kernel;
 
-static constexpr size_t gdt_descriptors = 5;
+static constexpr size_t gdt_descriptors = 7;
 alignas(8) DescriptorTablePointer gdt_pointer{};
-alignas(8) SegmentDescriptor segments[gdt_descriptors] = {
+alignas(8) uint64_t segments[gdt_descriptors] = {
     // Null segment
-    {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+    SegmentDescriptor{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}.descriptor(),
     // Kernel Code Segment
-    {0, 0, 0, SEGMENT_EXECUTE, 1, 0, 1, 0, 0, 1, 0, 0, 0},
+    SegmentDescriptor{0, 0, 0, SEGMENT_EXECUTE, 1, 0, 1, 0, 0, 1, 0, 0, 0}.descriptor(),
     // Kernel Data Segment
-    {0, 0, 0, SEGMENT_READ_WRITE, 1, 0, 1, 0, 0, 0, 0, 0, 0},
+    SegmentDescriptor{0, 0, 0, SEGMENT_READ_WRITE, 1, 0, 1, 0, 0, 0, 0, 0, 0}.descriptor(),
     // User Code Segment
-    {0, 0, 0, SEGMENT_EXECUTE, 1, 3, 1, 0, 0, 1, 0, 0, 0},
+    SegmentDescriptor{0, 0, 0, SEGMENT_EXECUTE, 1, 3, 1, 0, 0, 1, 0, 0, 0}.descriptor(),
     // User Data Segment
-    {0, 0, 0, SEGMENT_READ_WRITE, 1, 3, 1, 0, 0, 0, 0, 0, 0},
-};
+    SegmentDescriptor{0, 0, 0, SEGMENT_READ_WRITE, 1, 3, 1, 0, 0, 0, 0, 0, 0}.descriptor(),
+    // TSS 0
+    0, 0};
+
+alignas(16) TSS tss0;
 
 extern "C" [[noreturn]] void kernel_stage2(const BootState &boot_state) {
     // TODO: Ensure C++ constructors are run
@@ -58,6 +61,22 @@ extern "C" [[noreturn]] void kernel_stage2(const BootState &boot_state) {
 extern "C" [[noreturn]] EFICALL void kernel_main(uint64_t boot_state_address) {
     gdt_pointer.address = reinterpret_cast<uint64_t>(&segments);
     gdt_pointer.limit = sizeof(SegmentDescriptor) * gdt_descriptors;
+
+    auto tss0_address = reinterpret_cast<uint64_t>(&tss0);
+    TSSDescriptor tss_descriptor_0{
+        .segment_limit = sizeof(TSS) - 1,
+        .base_low = tss0_address & 0xffff,
+        .base_low_middle = (tss0_address >> 16) & 0xff,
+        .segment_type = 9,
+        .privilege_level = 0,
+        .present = 1,
+        .granularity = 0,
+        .base_high_middle = (tss0_address >> 24) & 0xff,
+        .base_high = (uint32_t)(tss0_address >> 32),
+    };
+
+    segments[5] = tss_descriptor_0.low;
+    segments[6] = tss_descriptor_0.high;
     asm volatile("lgdt gdt_pointer\n"
                  "mov %%rax, %%rdi\n"// Boot state block
                  "mov $0x10, %%rbx\n"
