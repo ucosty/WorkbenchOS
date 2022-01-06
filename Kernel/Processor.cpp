@@ -57,4 +57,8 @@ void Processor::interrupt() {
     asm volatile("int $0x22");
 }
 
+void Processor::load_task_register(uint16_t selector) {
+    asm("ltr %0" ::"r"(selector));
+}
+
 }// namespace Kernel

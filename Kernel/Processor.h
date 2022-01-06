@@ -26,6 +26,7 @@ public:
 
     static void disable_interrupts();
     static void enable_interrupts();
+    static void load_task_register(uint16_t selector);
 
     static void interrupt();
 
