@@ -7,8 +7,6 @@
 #include <ConsoleIO.h>
 #include <Types.h>
 
-extern uint64_t counter;
-
 EXCEPTION_HANDLER(divide_by_zero_exception);
 void divide_by_zero_exception_handler(StackFrame frame) {
     printf("Divide by zero!\n");
@@ -105,14 +103,14 @@ void page_fault_exception_handler(StackFrameErrorCode frame) {
     printf("    rip = %X\n", frame.rip);
     printf("     cs = %X\n", frame.cs);
     printf(" rflags = %X\n", frame.rflags);
+    printf("    rbp = %X\n", frame.rbp);
     printf("    rsp = %X\n", frame.rsp);
     printf("     ss = %X\n", frame.ss);
     printf("  error = %X\n", frame.error);
     printf("address = %X\n", address);
-    printf("counter = %X\n", counter);
 
     printf("\nBacktrace:\n");
-    volatile BacktraceFrame *stack_frame;
+    BacktraceFrame *stack_frame;
     asm("movq %%rbp, %0"
         : "=r"(stack_frame));
 
