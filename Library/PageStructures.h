@@ -9,7 +9,8 @@
 
 #pragma once
 
-#include "Types.h"
+#include <Types.h>
+#include <PhysicalAddress.h>
 
 struct PACKED PML4Entry {
     uint64_t present : 1;
@@ -25,6 +26,10 @@ struct PACKED PML4Entry {
     uint64_t reserved_1 : 12;
     uint64_t ignored_1 : 11;
     uint64_t execution_disabled : 1;
+
+    [[nodiscard]] PhysicalAddress get_physical_address() const {
+        return PhysicalAddress((uint64_t)physical_address << 12);
+    }
 };
 
 struct PACKED PageDirectoryPointerTableEntry {
@@ -42,6 +47,10 @@ struct PACKED PageDirectoryPointerTableEntry {
     uint64_t reserved_1 : 12;
     uint64_t ignored_1 : 11;
     uint64_t execution_disabled : 1;
+
+    [[nodiscard]] PhysicalAddress get_physical_address() const {
+        return PhysicalAddress((uint64_t)physical_address << 12);
+    }
 };
 
 struct PACKED PageDirectoryEntry {
@@ -59,6 +68,10 @@ struct PACKED PageDirectoryEntry {
     uint64_t reserved_1 : 12;
     uint64_t ignored_1 : 11;
     uint64_t execution_disabled : 1;
+
+    [[nodiscard]] PhysicalAddress get_physical_address() const {
+        return PhysicalAddress((uint64_t)physical_address << 12);
+    }
 };
 
 struct PACKED PageTableEntry {
@@ -76,6 +89,10 @@ struct PACKED PageTableEntry {
     uint64_t reserved_1 : 12;
     uint64_t ignored_1 : 11;
     uint64_t execution_disabled : 1;
+
+    [[nodiscard]] PhysicalAddress get_physical_address() const {
+        return PhysicalAddress((uint64_t)physical_address << 12);
+    }
 };
 
 static_assert(sizeof(PML4Entry) == 8);
