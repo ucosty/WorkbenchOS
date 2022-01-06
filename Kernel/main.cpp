@@ -107,7 +107,6 @@ extern "C" [[noreturn]] EFICALL void kernel_main(uint64_t boot_state_address) {
 extern "C" [[noreturn]] void ap_stage2() {
     ACPI::set_booted();
     auto cpu = Processor::local_apic_id();
-    printf("ap_stage2(): cpu = %d\n", cpu);
     Processor::halt();
 }
 

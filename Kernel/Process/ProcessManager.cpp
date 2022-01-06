@@ -76,8 +76,6 @@ Result<void> ProcessManager::create_process() {
     process_stack.push(initial_stack_frame.r15);
 
     process->set_rsp(process_stack.get_stack_ptr());
-
-    printf("Stack = %X\n", process_stack.get_stack_ptr());
     process_list.append(process);
     return {};
 }

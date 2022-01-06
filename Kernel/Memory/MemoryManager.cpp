@@ -208,8 +208,6 @@ Result<void> MemoryManager::map_user_page(PhysicalAddress pdpt_physical_address,
     page->user_access = 1;
     page->physical_address = physical_address.as_address() >> 12;
     invalidate_tlb(virtual_address);
-
-    printf("Mapped %X to %X\n", physical_address.as_address(), virtual_address.as_address());
     return {};
 }
 
