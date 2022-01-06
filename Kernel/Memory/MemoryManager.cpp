@@ -129,7 +129,22 @@ Result<size_t> MemoryManager::virtual_address_to_page_table_index(VirtualAddress
 }
 
 Result<PhysicalAddress> MemoryManager::kernel_virtual_to_physical_address(const VirtualAddress &virtual_address) {
-    return PhysicalAddress(0xdeadc0de);
+    auto page_directory_index = TRY(virtual_address_to_page_directory_index(virtual_address));
+    auto pde = &m_kernel_page_directory[page_directory_index];
+    VERIFY(pde->present);
+
+    // Get the page table from the page directory entry
+    auto pagetable_physical_address = PhysicalAddress(static_cast<uint64_t>(pde->physical_address) << 12);
+    auto pagetable = pagetable_physical_address.as_ptr<PageTableEntry>();
+    VERIFY(pagetable->present);
+
+    // Get the page table index for the virtual address
+    auto page_table_index = TRY(virtual_address_to_page_table_index(virtual_address));
+    auto page = &pagetable[page_table_index];
+    VERIFY(page->present);
+
+    auto address = ((uint64_t) page->physical_address) << 12;
+    return PhysicalAddress(address);
 }
 
 Result<PageTableEntry *> MemoryManager::get_kernel_page_table_entry(const VirtualAddress &virtual_address) {
