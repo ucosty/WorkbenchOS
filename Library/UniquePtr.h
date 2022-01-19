@@ -8,7 +8,7 @@ namespace Lib {
 template<typename T>
 class UniquePtr {
 public:
-    explicit UniquePtr(T *ptr) : m_ptr(ptr) {}
+    explicit UniquePtr(T *ptr) : m_ptr(move(ptr)) {}
 
     UniquePtr(UniquePtr &) = delete;
 
@@ -20,9 +20,9 @@ public:
         delete m_ptr;
     }
 
-    T *get() const { return m_ptr; }
+    [[nodiscard]] T *get() const { return m_ptr; }
 
-    T *operator->() const { return m_ptr; }
+    T *operator->() const { return get(); }
 
 private:
     T *m_ptr;

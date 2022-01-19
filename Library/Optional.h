@@ -10,7 +10,7 @@ template<typename T>
 class Optional {
 public:
     Optional(T value) : m_has_value(true) {
-        *((T *) m_value) = value;
+        new (m_value) T(move(value));
     }
     Optional() = default;
     ~Optional() {
@@ -20,7 +20,8 @@ public:
     T &get() const {
         return *((T *) m_value);
     }
+
 private:
-    alignas(T) uint8_t m_value[sizeof(T)] = { 0 };
-    bool m_has_value { false };
+    alignas(T) uint8_t m_value[sizeof(T)] = {0};
+    bool m_has_value{false};
 };
