@@ -6,15 +6,45 @@
 
 #include "DescriptorTables.h"
 #include <ACPI/Tables.h>
+#include <ConsoleIO.h>
 #include <PhysicalAddress.h>
 #include <Result.h>
+#include <StringView.h>
+
+using namespace Lib;
 
 namespace Kernel {
+
+template<typename T>
+class DescriptorTable {
+public:
+    DescriptorTable(::Lib::SystemDescriptionTableHeader *_header, T *_table)
+        : header(_header), table(_table) {}
+    ::Lib::SystemDescriptionTableHeader *header;
+    T *table;
+};
+
 class SystemDescriptorTables {
 public:
     Result<void> initialise(PhysicalAddress rsdp_address);
-    Result<::Lib::SystemDescriptionTableHeader *> find_madt();
-    void parse_madt(::Lib::SystemDescriptionTableHeader *);
+
+    template<typename T>
+    Result<DescriptorTable<T>> find_table(const StringView signature_to_find) {
+        auto entry_count = (m_xsdt->length - sizeof(SystemDescriptionTableHeader)) / sizeof(uint64_t);
+        auto *entries = reinterpret_cast<uint64_t *>(m_xsdt + 1);
+        for (int i = 0; i < entry_count; i++) {
+            auto entry_address = PhysicalAddress(entries[i]);
+            auto header = entry_address.as_ptr<SystemDescriptionTableHeader>();
+            auto table = reinterpret_cast<T *>(header + 1);
+            Lib::StringView signature{reinterpret_cast<const char *>(&header->signature), 4};
+            if (signature == signature_to_find) {
+                return DescriptorTable<T>(header, table);
+            }
+        }
+        return Lib::Error::from_code(1);
+    }
+
+    void list_tables();
 
 private:
     ::Lib::SystemDescriptionTableHeader *m_xsdt{nullptr};
