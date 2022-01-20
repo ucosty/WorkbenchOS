@@ -47,6 +47,19 @@ public:
         return true;
     }
 
+    friend bool operator== (const StringView& a, const StringView& b) {
+        if(a.m_length != b.m_length)
+            return false;
+
+        for(size_t i = 0; i < a.m_length; i++) {
+            if(a.m_characters[i] != b.m_characters[i])
+                return false;
+        }
+
+        return true;
+    }
+
+
 private:
     friend class String;
     const char *m_characters{nullptr};
