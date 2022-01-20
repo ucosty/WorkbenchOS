@@ -19,6 +19,12 @@ public:
     void operator=(ACPI const &) = delete;
 
     Result<void> initialise(PhysicalAddress rsdp_address);
+
+    // Device Discovery
+    [[nodiscard]] bool has_mcfg_table() const { return false; }
+    Result<void> find_devices();
+
+    // Multi-Processor Initialisation
     void start_application_processors();
     static void set_booted();
 
