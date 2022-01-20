@@ -7,6 +7,7 @@
 #include <EFI/Efi.h>
 #include <Types.h>
 #include <Variadic.h>
+#include "StringView.h"
 
 void printf(const char *fmt...) {
     va_list args;
@@ -14,7 +15,7 @@ void printf(const char *fmt...) {
 
     // TODO: Fixed buffer, let's allocate one later
     int output_index = 0;
-    char buffer[100];
+    char buffer[200];
     for (char &i: buffer)
         i = 0;
 
@@ -54,6 +55,14 @@ void printf(const char *fmt...) {
                     for (char i: temp) {
                         if (i == 0) continue;
                         buffer[output_index++] = i;
+                    }
+                    break;
+                }
+                case 'v': {
+                    // StringView
+                    auto string_view = va_arg(args, Lib::StringView*);
+                    for(size_t i = 0; i < string_view->length(); i++) {
+                        buffer[output_index++] = string_view->get(i);
                     }
                     break;
                 }
