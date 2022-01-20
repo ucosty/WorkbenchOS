@@ -15,7 +15,7 @@ Result<NonNullPtr<Slab>> SlabAllocator::get_or_create_slab(size_t size) {
     if (slab.is_error()) {
         return create_slab(size);
     }
-    return Lib::Error::from_code(1);
+    return slab;
 }
 
 Result<NonNullPtr<Slab>> SlabAllocator::find_slab(size_t size) {
