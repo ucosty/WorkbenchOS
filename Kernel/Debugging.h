@@ -9,14 +9,19 @@
 
 #pragma once
 
+#include <ConsoleIO.h>
 #include <Error.h>
 #include <Types.h>
 
-#define VERIFY(expression) ({      \
-    if (!(expression))             \
-        panic(Lib::Error::from_code(1)); \
+#define VERIFY(expression) ({                                             \
+    if (!(expression)) {                                                  \
+        printf("PANIC: " #expression " failed\n");                        \
+        printf("PANIC: %s in %s:%d\n", __PRETTY_FUNCTION__, __FILE__, __LINE__); \
+        panic();                                                          \
+    }                                                                     \
 })
 
+[[noreturn]] void panic();
 [[noreturn]] void panic(Lib::Error error);
 void delay(size_t microseconds);
 
