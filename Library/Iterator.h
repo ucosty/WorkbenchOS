@@ -20,5 +20,4 @@ public:
     friend bool operator!= (const Iterator& a, const Iterator& b) { return a.m_ptr != b.m_ptr; }
 private:
     T *m_ptr;
-    size_t m_size;
 };
