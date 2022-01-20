@@ -58,6 +58,27 @@ void Kernel::ACPI::start_application_processors() {
     memory_manager.unmap_identity_mapping();
 }
 
+Result<void> Kernel::ACPI::find_devices() {
+    auto fadt = TRY(m_descriptor_tables.find_table<FixedAcpiDescriptionTable>("FACP"_sv));
+    auto dsdt_address = PhysicalAddress(fadt.table->x_dsdt).as_mapped_address();
+    printf("fadt: revision = %d, length = %d, x_dsdt = %X\n", fadt.header->revision, fadt.header->length, dsdt_address);
+
+    auto *dsdt_header = reinterpret_cast<SystemDescriptionTableHeader *>(dsdt_address);
+    printf("dsdt_address: revision = %d, length = %d\n", dsdt_header->revision, dsdt_header->length - sizeof(SystemDescriptionTableHeader));
+
+    auto mcfg_or_error = m_descriptor_tables.find_table<MCFGTable>("MCFG"_sv);
+    if(!mcfg_or_error.is_error()) {
+        auto mcfg = mcfg_or_error.get();
+        printf("mcfg_address: revision = %d, length = %d\n", mcfg.header->revision, mcfg.header->length - sizeof(MCFGTable));
+    } else {
+        printf("MCFG table not found\n");
+    }
+
+    m_descriptor_tables.list_tables();
+
+    return {};
+}
+
 void Kernel::ACPI::start_application_processor(int id) {
     APIC::send_init(id);
     delay(10 * 1000);
