@@ -52,6 +52,9 @@ SET(KERNEL_SOURCES
         Process/ProcessManager.h
         Process/ProcessManager.cpp
         Process/StackFrame.h
+        Interfaces/PCI.cpp
+        Interfaces/PCI.h
+        Interfaces/Ports.h
         )
 SET(SOURCES ${KERNEL_SOURCES} ${LIBRARY_SOURCES})
 
@@ -70,6 +73,8 @@ add_link_options(-target x86_64-pc-none-elf)
 add_link_options(-nostdlib)
 add_link_options(-fuse-ld=lld)
 add_link_options(-Wl,-T${LINKER_SCRIPT})
+
+include_directories(.)
 
 add_executable(Kernel ${SOURCES})
 
