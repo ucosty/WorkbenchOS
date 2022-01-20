@@ -3,15 +3,15 @@
 //
 // SPDX-License-Identifier: GPL-3.0-only
 #include "ACPI.h"
-#include <Try.h>
+#include "../APIC.h"
 #include "../Debugging.h"
-#include <cstring.h>
 #include "../Memory/MemoryManager.h"
 #include "../Processor.h"
-#include "../APIC.h"
 #include <ConsoleIO.h>
+#include <Try.h>
+#include <cstring.h>
 
-static bool g_boot_spinlock = false;
+static volatile bool g_boot_spinlock = false;
 extern "C" void ap_main();
 extern "C" void *ap_trampoline;
 extern "C" void *end_ap_trampoline;
@@ -48,7 +48,7 @@ void Kernel::ACPI::start_application_processors() {
     auto cpus = 4;
 
     // Boot the processors
-    for(int i = 1; i < cpus; i++) {
+    for (int i = 1; i < cpus; i++) {
         *stack = stack_base + (i * Page);
         g_boot_spinlock = true;
         start_application_processor(i);
