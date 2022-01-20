@@ -8,7 +8,6 @@
 
 #define RSDP_SIGNATURE 0x2052545020445352
 #define XSDT_SIGNATURE 0x54445358
-#define MADT_SIGNATURE 0x43495041
 
 namespace Lib {
 struct PACKED RootSystemDescriptionPointer {
@@ -43,6 +42,9 @@ struct PACKED SystemDescriptionTableHeader {
     uint32_t creator_revision;
 };
 static_assert(sizeof(SystemDescriptionTableHeader) == 36);
+
+struct PACKED MCFGTable {
+};
 
 struct PACKED MultipleApicDescriptionTable {
     uint32_t local_interrupt_controller_address;
