@@ -6,6 +6,7 @@
 #include "APIC.h"
 #include "Debugging.h"
 #include "Heap/Kmalloc.h"
+#include "Interfaces/PCI.h"
 #include "InterruptVectorTable.h"
 #include "Memory/MemoryManager.h"
 #include "Process/ProcessManager.h"
@@ -57,10 +58,14 @@ extern "C" [[noreturn]] void kernel_stage2(const BootState &boot_state) {
     tss0.rsp0 = stack.as_address() + Page;
     Processor::load_task_register(0x28);
 
-    auto &process_manager = ProcessManager::get_instance();
-    TRY_PANIC(process_manager.initialise());
-    TRY_PANIC(process_manager.create_process());
-    Processor::interrupt();
+    auto pci = PCI();
+    TRY_PANIC(pci.initialise());
+
+//    auto &process_manager = ProcessManager::get_instance();
+//    TRY_PANIC(process_manager.initialise());
+//    TRY_PANIC(process_manager.create_process());
+//    Processor::interrupt();
+
 
     auto framebuffer = LinearFramebuffer(boot_state.kernel_address_space.framebuffer.virtual_base, 1280, 1024);
     framebuffer.rect(50, 50, 100, 100, 0x4455aa, true);
@@ -82,7 +87,7 @@ extern "C" [[noreturn]] EFICALL void kernel_main(uint64_t boot_state_address) {
         .present = 1,
         .granularity = 0,
         .base_high_middle = (tss0_address >> 24) & 0xff,
-        .base_high = (uint32_t)(tss0_address >> 32),
+        .base_high = (uint32_t) (tss0_address >> 32),
     };
 
     segments[5] = tss_descriptor_0.low;
