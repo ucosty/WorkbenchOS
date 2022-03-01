@@ -21,6 +21,9 @@ extern "C" void __cxa_guard_release(__guard *g) {
 extern "C" void __cxa_guard_abort(__guard *) {
 }
 
+extern "C" void __cxa_pure_virtual() {
+}
+
 extern "C" int __cxa_atexit(void (*destructor) (void *), void *arg, void *__dso_handle) {
     return 0;
 }
