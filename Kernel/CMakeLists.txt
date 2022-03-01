@@ -55,6 +55,10 @@ SET(KERNEL_SOURCES
         Interfaces/PCI.cpp
         Interfaces/PCI.h
         Interfaces/Ports.h
+        Memory/Region.cpp
+        Memory/Region.h
+        Memory/AddressSpace.cpp
+        Memory/AddressSpace.h
         )
 SET(SOURCES ${KERNEL_SOURCES} ${LIBRARY_SOURCES})
 
