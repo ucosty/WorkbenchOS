@@ -5,189 +5,244 @@
 #include "Kmalloc.h"
 #include "../Debugging.h"
 #include "../Memory/MemoryManager.h"
-#include <ConsoleIO.h>
 #include <Try.h>
 #include <cstring.h>
 
 Kernel::KmallocHeap g_malloc_heap{};
 
 namespace Kernel {
-Result<void> KmallocHeap::initialise() {
-    auto &slab_allocator = SlabAllocator::get_instance();
-    m_subheap_allocator = TRY(slab_allocator.get_or_create_slab(sizeof(KmallocSubheap))).as_ptr();
-    m_subheap_head = TRY(m_subheap_allocator->allocate<KmallocSubheap>());
-    m_subheap_end = m_subheap_head;
-    m_subheap_head->initialise();
-    return {};
-}
+void FreeBlock::coalesce_with_next_block() {
+    if (!can_coalesce_next())
+        return;
 
-Result<VirtualAddress> KmallocHeap::allocate(size_t size, int attempt = 0) {
-    if (attempt == 3)
-        return Lib::Error::from_code(1);
+    m_block_size += m_next->block_size();
 
-    auto *subheap = m_subheap_head;
-    while (subheap != nullptr) {
-        auto result = subheap->allocate(size);
-        if (!result.is_error()) {
-            return result;
-        }
-        subheap = subheap->next();
+    m_next = m_next->m_next;
+    if (m_next != nullptr) {
+        m_next->m_previous = this;
     }
-    TRY(new_subheap());
-    return allocate(size, attempt + 1);
 }
 
-Result<void> KmallocHeap::free(const VirtualAddress &address) {
-    auto *subheap = m_subheap_head;
-    while (subheap != nullptr) {
-        if (subheap->in_subheap(address)) {
-            return subheap->free(address);
-        }
-    }
-    printf("PANIC: Could not find block to free in heap %X\n", address.as_address());
-    return Lib::Error::from_code(1);
+void FreeBlock::coalesce_with_previous_block() {
+    if (!can_coalesce_previous())
+        return;
+
+    m_previous->coalesce_with_next_block();
 }
 
-Result<void> KmallocHeap::new_subheap() {
-    auto next_subheap = TRY(m_subheap_allocator->allocate<KmallocSubheap>());
-    m_subheap_end->set_next_subheap(next_subheap);
-    next_subheap->initialise();
-    return {};
+bool FreeBlock::can_coalesce_next() {
+    if (m_next == nullptr)
+        return false;
+    auto end_of_block = reinterpret_cast<FreeBlock *>(reinterpret_cast<uint8_t *>(this) + block_size());
+    return m_next == end_of_block;
 }
 
-Result<void> KmallocSubheap::initialise() {
-    auto &memory_manager = MemoryManager::get_instance();
-    m_storage = TRY(memory_manager.allocate_kernel_heap_pages(subheap_size_pages)).as_ptr();
-    m_free_list = reinterpret_cast<FreeBlock *>(m_storage);
-    m_free_list->canary = canary_free;
-    m_free_list->size = subheap_size - sizeof(FreeBlock);
-    m_free_list->previous = nullptr;
-    m_free_list->next = nullptr;
-    m_address_range = VirtualAddressRange(VirtualAddress(reinterpret_cast<uint64_t>(m_storage)), subheap_size_pages);
-    return {};
+bool FreeBlock::can_coalesce_previous() {
+    if (m_previous == nullptr)
+        return false;
+
+    auto end_of_previous_block = reinterpret_cast<FreeBlock *>(reinterpret_cast<uint8_t *>(m_previous) +
+                                                               m_previous->block_size());
+    return end_of_previous_block == this;
 }
 
-/*  Used Block               Free Block
- * +------------------------+---------------------------------+
- * | canary | size | <data> | canary | size | next_free       |
- * +------------------------+---------------------------------+
+/**
+ * Split this block into two parts, one with an allocatable_size == allocation_request,
+ * and another with the remainder of the allocatable allocation_request.
+ *
+ * @param allocation_request required allocatable allocation_request of the left-hand block
+ *
+ * Before:
+ *      +--------------------------------------------------------------------------+
+ *      | Metadata | Allocatable Space                                             |
+ *      +--------------------------------------------------------------------------+
+ *
+ * After:
+ *      +--------------------------------------------------------------------------+
+ *      | Metadata | (allocation_request) space | Metadata | remainder space       |
+ *      +--------------------------------------------------------------------------+
  */
-Result<VirtualAddress> KmallocSubheap::allocate(size_t size) {
-    if (m_free_list == nullptr)
-        return Lib::Error::from_code(1);
+void FreeBlock::split_if_required(size_t allocation_request) {
+    if (allocation_request == allocatable_size())
+        return;
 
-    auto remainder = size % ALLOC_BLOCK_SIZE;
-    if (remainder > 0) {
-        size += ALLOC_BLOCK_SIZE - remainder;
+    auto right_hand_size = allocatable_size() - allocation_request;
+
+    // Not enough space to warrant a split_if_required, the remainder can't hold the metadata
+    if (right_hand_size < sizeof(FreeBlock))
+        return;
+
+    // Resize the block
+    m_block_size = allocation_request + sizeof(FreeBlock);
+
+    auto *left_side_storage = reinterpret_cast<uint8_t *>(this) + sizeof(AllocatedBlock);
+    auto *rhs_pointer = reinterpret_cast<FreeBlock *>(left_side_storage + allocation_request);
+    auto right_hand_side = new (rhs_pointer) FreeBlock(right_hand_size);
+
+    right_hand_side->m_previous = this;
+    right_hand_side->m_next = this->m_next;
+    this->m_next = right_hand_side;
+}
+
+Result<void> KmallocSubHeap::initialise() {
+    auto sub_heap_size_pages = 0x100000 / Page;
+    auto &memory_manager = MemoryManager::get_instance();
+    m_storage = TRY(memory_manager.allocate_kernel_heap_pages(sub_heap_size_pages)).as_ptr();
+    m_capacity = 0x100000;
+    m_free_list = new (m_storage) FreeBlock(m_capacity);
+    m_available = m_capacity;
+    return {};
+}
+
+Result<void> KmallocSubHeap::initialise(KmallocSubHeap *next) {
+    m_next = next;
+    return initialise();
+}
+
+void KmallocSubHeap::remove_from_free_list(FreeBlock *free_block) {
+    auto next_free_block = free_block->m_next;
+    if (next_free_block != nullptr) {
+        next_free_block->m_previous = free_block->m_previous;
     }
 
-    FreeBlock *best_fit = m_free_list;
-    FreeBlock *current_block = m_free_list;
+    auto previous_free_block = free_block->m_previous;
+    if (previous_free_block != nullptr) {
+        previous_free_block->m_next = free_block->m_next;
+    }
 
-    // Walk the free list and find a block big enough to allocate
-    while (current_block != nullptr) {
-        if (current_block->canary != canary_free) {
-            printf("PANIC: invalid canary on free list block at %X, found %X\n", current_block, current_block->canary);
+    if (free_block == m_free_list) {
+        m_free_list = free_block->next();
+    }
+}
+
+void KmallocSubHeap::insert_into_free_list(FreeBlock *free_block_to_insert) {
+    if (m_free_list == nullptr) {
+        m_free_list = free_block_to_insert;
+        return;
+    }
+
+    if (free_block_to_insert < m_free_list) {
+        free_block_to_insert->m_next = m_free_list;
+        m_free_list->m_previous = free_block_to_insert;
+        m_free_list = free_block_to_insert;
+        return;
+    }
+
+    auto free_block = m_free_list;
+    while (free_block != nullptr) {
+        if (free_block_to_insert > free_block) {
+            if (free_block->m_next == nullptr || free_block_to_insert < free_block->m_next) {
+                free_block_to_insert->m_next = free_block->m_next;
+                free_block_to_insert->m_previous = free_block;
+                free_block->m_next = free_block_to_insert;
+            }
+        }
+        free_block = free_block->next();
+    }
+}
+
+Result<void> KmallocSubHeap::free(VirtualAddress address) {
+    if (address.as_ptr() == nullptr)
+        return {};
+
+    auto allocated_block = reinterpret_cast<AllocatedBlock *>(address.as_ptr() - sizeof(AllocatedBlock));
+
+    if (allocated_block->m_canary != 0xd1d1d1d1d1d1d1d1) {
+        return Lib::Error::from_code(1);
+    }
+
+    auto block_size = allocated_block->m_data_size + sizeof(AllocatedBlock);
+    auto free_block = new (allocated_block) FreeBlock(block_size);
+
+    insert_into_free_list(free_block);
+    free_block->coalesce_with_next_block();
+    free_block->coalesce_with_previous_block();
+    return {};
+}
+
+Result<VirtualAddress> KmallocSubHeap::allocate(size_t _size) {
+    size_t size = (_size < sizeof(FreeBlock)) ? sizeof(FreeBlock) : _size;
+    auto free_block = m_free_list;
+    while (free_block != nullptr) {
+        if (!free_block->is_canary_valid()) {
             return Lib::Error::from_code(1);
         }
 
-        if (current_block->size >= size && current_block->size < best_fit->size) {
-            best_fit = current_block;
+        if (size <= free_block->allocatable_size()) {
+            free_block->split_if_required(size);
+            remove_from_free_list(free_block);
+            auto allocated_block = new (free_block) AllocatedBlock(size);
+            return VirtualAddress(allocated_block + 1);
         }
-        current_block = current_block->next;
+
+        free_block = free_block->next();
     }
 
-    // Split the found free block
-    best_fit->split(size);
-
-    // Convert the free block into an allocated block
-    best_fit->remove_from_free_list();
-    if (best_fit == m_free_list) {
-        m_free_list = best_fit->next;
-    }
-
-    auto allocated_block = reinterpret_cast<AllocationMetadata *>(best_fit);
-    return allocated_block->initialise(size);
+    return Lib::Error::from_code(1);
 }
 
-Result<void> KmallocSubheap::free(const VirtualAddress &address) {
-    auto allocated_block = reinterpret_cast<AllocationMetadata *>(address.as_address() - sizeof(AllocationMetadata));
-    VERIFY(allocated_block->canary == canary_allocated);
-    auto free_block = reinterpret_cast<FreeBlock *>(allocated_block);
-    auto block_size = allocated_block->size;
+bool KmallocSubHeap::contains_allocation(VirtualAddress address) {
+    auto start = reinterpret_cast<void *>(m_storage);
+    auto end = reinterpret_cast<void *>(reinterpret_cast<uint8_t *>(m_storage) + m_capacity);
+    return address.as_ptr() >= start && address.as_ptr() < end;
+}
 
-    // If there is no free list, create one from this block
-    if (m_free_list == nullptr) {
-        free_block->add_to_free_list(nullptr, block_size);
-        m_free_list = free_block;
-        return {};
-    }
-
-    // An existing free list exists
-    VERIFY(m_free_list->previous == nullptr);
-    free_block->next = m_free_list;
-    m_free_list->previous = free_block;
-    free_block->add_to_free_list(m_free_list, block_size);
-    m_free_list = free_block;
+Result<void> KmallocHeap::initialise() {
+    auto &slab_allocator = SlabAllocator::get_instance();
+    m_subheap_allocator = TRY(slab_allocator.get_or_create_slab(sizeof(KmallocSubHeap))).as_ptr();
+    m_subheaps = TRY(m_subheap_allocator->allocate<KmallocSubHeap>());
+    m_subheaps->initialise();
     return {};
 }
 
-void KmallocSubheap::set_next_subheap(KmallocSubheap *next) {
-    if (m_next == nullptr)
-        m_next = next;
+Result<VirtualAddress> KmallocHeap::allocate(size_t size) {
+    return allocate(size, 0);
 }
 
-bool KmallocSubheap::in_subheap(const VirtualAddress &address) {
-    return m_address_range.in_range(address);
+#pragma clang diagnostic push
+#pragma ide diagnostic ignored "misc-no-recursion"
+Result<VirtualAddress> KmallocHeap::allocate(size_t size, int attempt) {
+    if (attempt == 3)
+        return Lib::Error::from_code(1);
+
+    auto sub_heap = m_subheaps;
+    while (sub_heap != nullptr) {
+        if (sub_heap->can_allocate(size)) {
+            return sub_heap->allocate(size);
+        }
+        sub_heap = sub_heap->next();
+    }
+
+    TRY(grow());
+    return allocate(size, attempt + 1);
+}
+#pragma clang diagnostic pop
+
+Result<void> KmallocHeap::free(VirtualAddress address) {
+    auto sub_heap = m_subheaps;
+    while (sub_heap != nullptr) {
+        if (sub_heap->contains_allocation(address)) {
+            return sub_heap->free(address);
+        }
+        sub_heap = sub_heap->next();
+    }
+    return Lib::Error::from_code(1);
 }
 
-void FreeBlock::split(size_t lhs_size) {
-    if (lhs_size == size)
-        return;
-
-    auto rhs_size = size - lhs_size;
-    size = lhs_size;
-
-    auto rhs_address = reinterpret_cast<uint64_t>(this) + sizeof(FreeBlock) + size;
-    auto rhs = reinterpret_cast<FreeBlock *>(rhs_address);
-    rhs->canary = canary_free;
-    rhs->size = rhs_size - sizeof(FreeBlock);
-
-    rhs->next = next;
-    rhs->previous = this;
-    next = rhs;
-}
-
-void FreeBlock::add_to_free_list(FreeBlock *_next, size_t _size) {
-    previous = nullptr;
-    next = _next;
-    size = _size;
-    canary = canary_free;
-}
-
-void FreeBlock::remove_from_free_list() const {
-    if (previous != nullptr)
-        previous->next = next;
-
-    if (next != nullptr)
-        next->previous = previous;
-}
-
-VirtualAddress AllocationMetadata::initialise(size_t _size) {
-    uint64_t address = reinterpret_cast<uint64_t>(this) + sizeof(AllocationMetadata);
-    canary = canary_allocated;
-    size = _size;
-    memset(reinterpret_cast<char *>(address), 0, size);
-    return VirtualAddress(address);
+Result<void> KmallocHeap::grow() {
+    auto next_subheap = TRY(m_subheap_allocator->allocate<KmallocSubHeap>());
+    next_subheap->initialise(m_subheaps);
+    m_subheaps = next_subheap;
+    return {};
 }
 }// namespace Kernel
 
-void* operator new(size_t size) {
+void *operator new(size_t size) {
     auto allocation = g_malloc_heap.allocate(size);
     return reinterpret_cast<void *>(allocation.get().as_ptr());
 }
 
-void* operator new[](size_t size) {
+void *operator new[](size_t size) {
     auto allocation = g_malloc_heap.allocate(size);
     return reinterpret_cast<void *>(allocation.get().as_ptr());
 }

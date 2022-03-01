@@ -13,61 +13,100 @@
 #define ALLOC_BLOCK_SIZE 8
 
 namespace Kernel {
-constexpr uint64_t canary_allocated = 0xf1f1f1f1f1f1f1f1;
-constexpr uint64_t canary_free = 0xfefefefefefefefe;
-
-struct FreeBlock {
-    uint64_t canary;
-    size_t size;
-    FreeBlock *previous;
-    FreeBlock *next;
-
-    void split(size_t lhs_size);
-    void remove_from_free_list() const;
-    void add_to_free_list(FreeBlock *_next, size_t _size);
-};
-
-struct AllocationMetadata {
-    uint64_t canary;
-    size_t size;
-
-    VirtualAddress initialise(size_t _size);
-};
-
-static_assert(sizeof(AllocationMetadata) == 16);
-static_assert(sizeof(FreeBlock) == 32);
-
-class KmallocSubheap {
+class AllocatedBlock {
 public:
-    Result<void> initialise();
-    Result<VirtualAddress> allocate(size_t size);
-    Result<void> free(const VirtualAddress &);
-    [[nodiscard]] KmallocSubheap *next() const { return m_next; }
-    void set_next_subheap(KmallocSubheap *);
-    bool in_subheap(const VirtualAddress &);
+    AllocatedBlock(size_t data_size) : m_data_size(data_size) {}
 
 private:
-    static constexpr size_t subheap_size = 10 * MiB;
-    static constexpr size_t subheap_size_pages = subheap_size / Page;
+    friend class KmallocSubHeap;
 
-    VirtualAddressRange m_address_range{};
-    uint8_t *m_storage{nullptr};
-    KmallocSubheap *m_next{nullptr};
-    FreeBlock *m_free_list{nullptr};
+    uint64_t m_canary{0xd1d1d1d1d1d1d1d1};
+    size_t m_data_size;
+};
+
+class FreeBlock {
+public:
+    FreeBlock(size_t size) : m_block_size(size) {}
+
+    [[nodiscard]] FreeBlock *next() const { return m_next; };
+
+    [[nodiscard]] size_t allocatable_size() const { return m_block_size - sizeof(AllocatedBlock); }
+
+    void coalesce_with_next_block();
+
+    void coalesce_with_previous_block();
+
+    [[nodiscard]] size_t block_size() const {
+        return m_block_size;
+    }
+
+    [[nodiscard]] bool is_canary_valid() const {
+        return m_canary == 0xfefefefefefefefe;
+    }
+
+    bool can_coalesce_next();
+
+    bool can_coalesce_previous();
+
+    void split_if_required(size_t allocation_request);
+
+private:
+    friend class KmallocSubHeap;
+
+    uint64_t m_canary{0xfefefefefefefefe};
+    uint64_t m_block_size;
+    FreeBlock *m_previous{nullptr};
+    FreeBlock *m_next{nullptr};
+};
+
+
+class KmallocSubHeap {
+public:
+    Result<void> initialise();
+
+    Result<void> initialise(KmallocSubHeap *next);
+
+    Result<VirtualAddress> allocate(size_t _size);
+
+    Result<void> free(VirtualAddress address);
+
+    void insert_into_free_list(FreeBlock *free_block_to_insert);
+
+    void remove_from_free_list(FreeBlock *free_block);
+
+    bool can_allocate(size_t size) { return m_available >= size; }
+
+    KmallocSubHeap *next() { return m_next; }
+
+    bool contains_allocation(VirtualAddress address);
+
+private:
+    uint8_t *m_storage;
+    FreeBlock *m_free_list;
+    KmallocSubHeap *m_previous{nullptr};
+    KmallocSubHeap *m_next{nullptr};
+    size_t m_capacity;
+    size_t m_available;
 };
 
 class KmallocHeap {
 public:
     Result<void> initialise();
-    Result<VirtualAddress> allocate(size_t size, int);
-    Result<void> free(const VirtualAddress &);
-    Result<void> new_subheap();
+
+    Result<VirtualAddress> allocate(size_t size);
+
+    Result<VirtualAddress> allocate(size_t _size, int attempt);
+
+    Result<void> free(VirtualAddress address);
 
 private:
-    KmallocSubheap *m_subheap_head{nullptr};
-    KmallocSubheap *m_subheap_end{nullptr};
+    Result<void> grow();
+
+    KmallocSubHeap *m_subheaps;
+
     Slab *m_subheap_allocator{nullptr};
 };
+
 }// namespace Kernel
 
 extern Kernel::KmallocHeap g_malloc_heap;
