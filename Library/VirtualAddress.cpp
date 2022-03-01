@@ -8,8 +8,16 @@ bool operator>(const VirtualAddress &lhs, const VirtualAddress &rhs) {
     return lhs.m_address > rhs.m_address;
 }
 
+bool operator>=(const VirtualAddress &lhs, const VirtualAddress &rhs) {
+    return lhs.m_address >= rhs.m_address;
+}
+
 bool operator<(const VirtualAddress &lhs, const VirtualAddress &rhs) {
     return lhs.m_address < rhs.m_address;
+}
+
+bool operator<=(const VirtualAddress &lhs, const VirtualAddress &rhs) {
+    return lhs.m_address <= rhs.m_address;
 }
 
 bool operator>(const VirtualAddress &lhs, const uint64_t rhs) {

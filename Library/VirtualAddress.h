@@ -18,7 +18,9 @@ public:
     [[nodiscard]] size_t difference(VirtualAddress other) const;
     [[nodiscard]] uint8_t *as_ptr() const;
     friend bool operator>(const VirtualAddress &lhs, const VirtualAddress &rhs);
+    friend bool operator>=(const VirtualAddress &lhs, const VirtualAddress &rhs);
     friend bool operator<(const VirtualAddress &lhs, const VirtualAddress &rhs);
+    friend bool operator<=(const VirtualAddress &lhs, const VirtualAddress &rhs);
     friend bool operator>(const VirtualAddress &lhs, uint64_t rhs);
     friend size_t operator-(const VirtualAddress &lhs, const VirtualAddress &rhs);
     friend size_t operator-(const VirtualAddress &lhs, uint64_t rhs);
