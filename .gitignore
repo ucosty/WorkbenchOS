@@ -3,6 +3,7 @@
 
 # Build output files
 _disk_image
+_ramdisk
 *.elf
 *.efi
 *.o
@@ -31,3 +32,9 @@ _disk_image
 
 # CMake
 cmake-build-*/
+
+# Ramdisk temporary directory
+/Ramdisk
+
+# Ignore the Toolchain director for now
+/Toolchain

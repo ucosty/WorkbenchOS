@@ -59,8 +59,15 @@ SET(KERNEL_SOURCES
         Memory/Region.h
         Memory/AddressSpace.cpp
         Memory/AddressSpace.h
+        Devices/BlockDevice.h
+        Devices/MemoryBlockDevice.cpp
+        Devices/MemoryBlockDevice.h
+        Filesystems/SquashFS.cpp
+        Filesystems/SquashFS.h
+        Filesystems/VFS.cpp
+        Filesystems/VFS.h
         )
-SET(SOURCES ${KERNEL_SOURCES} ${LIBRARY_SOURCES})
+SET(SOURCES ${KERNEL_SOURCES} ${LIBRARY_SOURCES} )
 
 add_compile_options(-target x86_64-pc-none-elf)
 add_compile_options(-fno-pie)
