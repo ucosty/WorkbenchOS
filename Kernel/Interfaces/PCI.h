@@ -11,7 +11,12 @@
 
 class Device {
 public:
-    Device(uint16_t vendor_id, uint16_t device_id) : m_vendor_id(vendor_id), m_device_id(device_id) {}
+    Device(uint16_t vendor_id, uint16_t device_id, uint32_t bar0, uint32_t bar1, uint32_t bar2, uint32_t bar3) : m_vendor_id(vendor_id)
+                                                                    , m_device_id(device_id)
+                                                                    , m_bar0(bar0)
+                                                                    , m_bar1(bar1)
+                                                                    , m_bar2(bar2)
+                                                                    , m_bar3(bar3) {}
 
     void *operator new(size_t size) noexcept {
         auto &slab_allocator = Kernel::SlabAllocator::get_instance();
@@ -45,15 +50,29 @@ public:
         }
     }
 
+    uint16_t vendor_id() const { return m_vendor_id; }
+    uint16_t device_id() const { return m_device_id; }
+    uint32_t bar0() const { return m_bar0; }
+    uint32_t bar1() const { return m_bar1; }
+    uint32_t bar2() const { return m_bar2; }
+    uint32_t bar3() const { return m_bar3; }
+
 private:
     uint16_t m_vendor_id;
     uint16_t m_device_id;
+    uint32_t m_bar0;
+    uint32_t m_bar1;
+    uint32_t m_bar2;
+    uint32_t m_bar3;
+    uint32_t m_bar4;
+    uint32_t m_bar5;
     Lib::Vector<Device *> m_children;
 };
 
 class PCI {
 public:
     Result<void> initialise();
+    Optional<Device *> find_device(uint16_t vendor_id, uint16_t device_id);
 
 private:
     Result<void> initialise_legacy();
@@ -61,7 +80,7 @@ private:
 
     Result<void> read_device_function(uint8_t bus, uint8_t device, uint8_t function);
     uint16_t config_read_word(uint8_t bus, uint8_t slot, uint8_t function, uint8_t offset);
-    uint32_t config_read_dword(uint8_t bus, uint8_t slot, uint8_t function, uint8_t offset);
+    static uint32_t config_read_dword(uint8_t bus, uint8_t slot, uint8_t function, uint8_t offset);
 
     union Address {
          struct {
