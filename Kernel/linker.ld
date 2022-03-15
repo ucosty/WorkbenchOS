@@ -1,47 +1,41 @@
 ENTRY(kernel_main)
 
-kernel_vaddr = 0xffffffff80000000;
+kernel_base = 0xffffffff80000000;
 
 PHDRS {
   text PT_LOAD FLAGS(0x4 | 0x1);
-  user_text PT_LOAD FLAGS(0x4 | 0x1);
   rodata PT_LOAD FLAGS(0x4);
   data PT_LOAD FLAGS(0x4 | 0x2);
+  init_array PT_LOAD FLAGS(0x4 | 0x2);
   dynamic_segment PT_LOAD FLAGS(0x4 | 0x2);
   dynamic PT_DYNAMIC FLAGS(0x4 | 0x2);
   bss PT_LOAD FLAGS(0x4 | 0x2);
 }
 
 SECTIONS {
-    . = kernel_vaddr;
+    . = kernel_base;
 
-    .text ALIGN(4K) : AT(ADDR(.text)) {
+    .text ALIGN(4K) : AT(ADDR(.text) - kernel_base) {
         *(.text*)
     } :text
 
-    .user_text ALIGN(4k) : AT(ADDR(.user_text)) {
-        user_text_start = .;
-       *(.user_text*)
-       user_text_end = .;
-    } :user_text
-
-    .rodata ALIGN(4k) : AT(ADDR(.rodata)) {
+    .rodata ALIGN(4k) : AT(ADDR(.rodata) - kernel_base) {
         *(.rodata*)
-        start_ctors = .;
-        *(.ctors)
-        end_ctors = .;
         (.shstrtab*)
     } :rodata
 
-    .data ALIGN(4k) : AT(ADDR(.data)) {
+    .data ALIGN(4k) : AT(ADDR(.data) - kernel_base) {
         *(.data*)
     } :data
 
-    .dynamic ALIGN(4K) : AT (ADDR(.dynamic)) {
+    .init_array : AT(ADDR(.init_array) - kernel_base) {
+    } :init_array
+
+    .dynamic ALIGN(4K) : AT (ADDR(.dynamic) - kernel_base) {
         *(.dynamic)
     } :dynamic_segment :dynamic
 
-    .bss ALIGN(4K) : AT(ADDR(.bss)) {
+    .bss ALIGN(4K) : AT(ADDR(.bss) - kernel_base) {
         *(.bss*)
         *(COMMON)
     } :bss
