@@ -3,6 +3,8 @@
 //
 // SPDX-License-Identifier: GPL-3.0-only
 
+#include <Processor.h>
+
 namespace __cxxabiv1 {
 __extension__ typedef int __guard __attribute__((mode(__DI__)));
 
@@ -21,7 +23,11 @@ extern "C" void __cxa_guard_release(__guard *g) {
 extern "C" void __cxa_guard_abort(__guard *) {
 }
 
+extern "C" void __dso_handle() {
+}
+
 extern "C" void __cxa_pure_virtual() {
+    Kernel::Processor::halt();
 }
 
 extern "C" int __cxa_atexit(void (*destructor) (void *), void *arg, void *__dso_handle) {
