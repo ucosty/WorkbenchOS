@@ -45,6 +45,12 @@ void bound_range_exceeded_exception_handler(StackFrame frame) {
 EXCEPTION_HANDLER(invalid_opcode_exception);
 void invalid_opcode_exception_handler(StackFrame frame) {
     printf("Invalid Opcode Exception!\n");
+    printf("    rip = %X\n", frame.rip);
+    printf("     cs = %X\n", frame.cs);
+    printf(" rflags = %X\n", frame.rflags);
+    printf("    rbp = %X\n", frame.rbp);
+    printf("    rsp = %X\n", frame.rsp);
+    printf("     ss = %X\n", frame.ss);
 }
 
 EXCEPTION_HANDLER(device_not_available_exception);
