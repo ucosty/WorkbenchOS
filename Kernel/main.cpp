@@ -37,11 +37,19 @@ alignas(8) uint64_t segments[gdt_descriptors] = {
 
 alignas(16) TSS tss0;
 
+typedef void (*constructor_function)();
+extern constructor_function __init_array_start[];
+extern constructor_function __init_array_end[];
+
 extern "C" [[noreturn]] void kernel_stage2(const BootState &boot_state) {
     // TODO: Ensure C++ constructors are run
     // TODO: SystemDescriptorTables initial support to find devices
     auto &ivt = InterruptVectorTable::get_instance();
     ivt.initialise();
+
+    for (auto init = __init_array_start; init < __init_array_end; init++) {
+        (*init)();
+    }
 
     auto &memory_manager = MemoryManager::get_instance();
     memory_manager.init(boot_state);
