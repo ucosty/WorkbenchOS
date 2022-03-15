@@ -6,7 +6,7 @@
 #include <ConsoleIO.h>
 
 namespace VirtualMemory {
-Region::Region(Region *next, VirtualAddress start, size_t size_in_pages) : m_next(next), m_start(start), m_size_in_pages(size_in_pages) {
+Region::Region(Region *next, VirtualAddress start, size_t size_in_pages) : m_start(start), m_size_in_pages(size_in_pages), m_next(next) {
 }
 
 bool Region::in_region(VirtualAddress address) {
