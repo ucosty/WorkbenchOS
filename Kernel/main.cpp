@@ -9,11 +9,11 @@
 #include "Interfaces/PCI.h"
 #include "InterruptVectorTable.h"
 #include "Memory/MemoryManager.h"
-#include "Process/ProcessManager.h"
 #include "Processor.h"
 #include <BootState.h>
-#include <ConsoleIO.h>
 #include <Descriptors.h>
+#include <Devices/MemoryBlockDevice.h>
+#include <Filesystems/SquashFS.h>
 #include <LinearFramebuffer.h>
 #include <Types.h>
 
@@ -69,11 +69,9 @@ extern "C" [[noreturn]] void kernel_stage2(const BootState &boot_state) {
     auto pci = PCI();
     TRY_PANIC(pci.initialise());
 
-//    auto &process_manager = ProcessManager::get_instance();
-//    TRY_PANIC(process_manager.initialise());
-//    TRY_PANIC(process_manager.create_process());
-//    Processor::interrupt();
-
+    auto ram_block_device = MemoryBlockDevice(boot_state.ramdisk.address.as_virtual_address(), boot_state.ramdisk.size);
+    auto squash_fs = SquashFS::Filesystem(&ram_block_device);
+    TRY_PANIC(squash_fs.init());
 
     auto framebuffer = LinearFramebuffer(boot_state.kernel_address_space.framebuffer.virtual_base, 1280, 1024);
     framebuffer.rect(50, 50, 100, 100, 0x4455aa, true);
