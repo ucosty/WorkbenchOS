@@ -4,8 +4,9 @@
 // SPDX-License-Identifier: GPL-3.0-only
 #pragma once
 
-#include <Types.h>
 #include <EFI/MemoryMap.h>
+#include <PhysicalAddress.h>
+#include <Types.h>
 
 struct Framebuffer {
     uint64_t base_address;
@@ -33,10 +34,16 @@ struct KernelAddressSpace {
     VirtualMapping frame_allocator;
 };
 
+struct Ramdisk {
+    PhysicalAddress address;
+    size_t size;
+};
+
 struct BootState {
     uint64_t physical_memory_size;
     uint64_t acpi_root_table_address;
     Framebuffer framebuffer;
     EFI::MemoryMap memory_map;
     KernelAddressSpace kernel_address_space;
+    Ramdisk ramdisk;
 };

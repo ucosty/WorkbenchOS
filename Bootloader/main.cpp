@@ -174,6 +174,11 @@ Result<void> init(EFI::Raw::Handle image_handle, EFI::Raw::SystemTable *system_t
     auto kernel_info = TRY(kernel.get_info<EFI::FileInfo>());
     auto kernel_bytes = TRY(kernel.read_bytes(kernel_info.file_size()));
 
+    // Load the init ramdisk
+    auto ramdisk = TRY(root.open(L"ramdisk.bin", EFI_FILE_MODE_READ, EFI_FILE_MODE_READ));
+    auto ramdisk_info = TRY(ramdisk.get_info<EFI::FileInfo>());
+    auto ramdisk_bytes = TRY(ramdisk.read_bytes(ramdisk_info.file_size()));
+
     // Let's poke at the ELF elf_header
     auto elf_header = static_cast<ELF::Elf64_Ehdr *>(kernel_bytes);
     if (elf_header->ei_magic != ELF_MAGIC) {
@@ -327,6 +332,9 @@ Result<void> init(EFI::Raw::Handle image_handle, EFI::Raw::SystemTable *system_t
     TRY(boot_services.exit_boot_services(image_handle, memory_map.m_key));
 
     boot_state->physical_memory_size = memory_size;
+
+    boot_state->ramdisk.address = PhysicalAddress(reinterpret_cast<uint64_t>(ramdisk_bytes));
+    boot_state->ramdisk.size = ramdisk_info.file_size();
 
     boot_state->framebuffer.base_address = gfx.mode()->framebuffer_base;
     boot_state->framebuffer.size = gfx.mode()->framebuffer_size;
