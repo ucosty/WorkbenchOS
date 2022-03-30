@@ -7,7 +7,8 @@
 #include <EFI/Efi.h>
 #include <Types.h>
 #include <Variadic.h>
-#include "StringView.h"
+#include <StringView.h>
+#include <String.h>
 
 void printf(const char *fmt...) {
     va_list args;
@@ -30,6 +31,11 @@ void printf(const char *fmt...) {
         // Handle string
         if (is_formatting) {
             switch (*fmt) {
+                case 'c': {
+                    char character = va_arg(args, int);
+                    buffer[output_index++] = character;
+                    break;
+                }
                 case 's': {
                     char *str = va_arg(args, char *);
                     while (*str != '\0') {
@@ -63,6 +69,14 @@ void printf(const char *fmt...) {
                     auto string_view = va_arg(args, Lib::StringView*);
                     for(size_t i = 0; i < string_view->length(); i++) {
                         buffer[output_index++] = string_view->get(i);
+                    }
+                    break;
+                }
+                case 'V': {
+                    // String
+                    auto string = va_arg(args, Lib::String*);
+                    for(size_t i = 0; i < string->length(); i++) {
+                        buffer[output_index++] = string->get(i);
                     }
                     break;
                 }
