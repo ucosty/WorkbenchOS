@@ -44,6 +44,8 @@ public:
 
     [[nodiscard]] Iterator<T> end() const { return {&m_storage[m_items]}; }
 
+    [[nodiscard]] size_t length() const { return m_items; }
+
 private:
     size_t m_capacity{0};
     size_t m_items{0};
