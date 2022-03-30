@@ -8,8 +8,14 @@
 
 namespace Lib {
 class String;
+
+template<typename T>
+class Vector;
+
 class StringView {
 public:
+    StringView() {}
+
     explicit StringView(const char *characters) : m_characters(characters) {}
 
     constexpr StringView(const char *characters, size_t length) : m_characters(characters),
@@ -61,6 +67,7 @@ public:
         return true;
     }
 
+    Vector<StringView> split(char);
 
 private:
     friend class String;
