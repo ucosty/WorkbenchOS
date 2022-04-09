@@ -19,3 +19,10 @@ extern "C" void *memcpy(void *destination, const void *source, size_t num) {
     }
     return destination;
 }
+
+extern "C" size_t strlen(const char *str) {
+    size_t count = 0;
+    for(; *str != '\0'; str++)
+        count++;
+    return count;
+}
