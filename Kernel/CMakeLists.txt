@@ -1,29 +1,7 @@
 project(Kernel)
 
 SET(LINKER_SCRIPT ${CMAKE_CURRENT_SOURCE_DIR}/linker.ld)
-SET(LIBRARY_SOURCES
-        ../Library/cstring.cpp
-        ../Library/LinearFramebuffer.cpp
-        ../Library/PageStructures.h
-        ../Library/Descriptors.h
-        ../Library/Convert.cpp
-        ../Library/ConsoleIO.cpp
-        ../Library/ConsoleIO.h
-        ../Library/EFI/MemoryMap.h
-        ../Library/VirtualAddress.h
-        ../Library/PhysicalAddress.h
-        ../Library/VirtualAddress.cpp
-        ../Library/NonNullPtr.h
-        ../Library/RefPtr.h
-        ../Library/UniquePtr.h
-        ../Library/VirtualAddressRange.h
-        ../Library/StringView.h
-        ../Library/String.h
-        ../Library/Vector.h
-        ../Library/Stack.h
-        ../Library/Stack.cpp
-        )
-SET(KERNEL_SOURCES
+SET(SOURCES
         main.cpp
         Exceptions.cpp
         Debugging.cpp
@@ -66,8 +44,15 @@ SET(KERNEL_SOURCES
         Filesystems/SquashFS.h
         Filesystems/VFS.cpp
         Filesystems/VFS.h
+        Filesystems/RamdiskFS.cpp
+        Filesystems/RamdiskFS.h
+        Devices/BlockDeviceReader.cpp
+        Devices/BlockDeviceReader.h
+        ../Library/ConsoleIO.cpp
+        ../Library/LinearFramebuffer.cpp
+        ../Library/VirtualAddress.cpp
         )
-SET(SOURCES ${KERNEL_SOURCES} ${LIBRARY_SOURCES} )
+SET(SOURCES ${SOURCES})
 
 add_compile_options(-target x86_64-pc-none-elf)
 add_compile_options(-fno-pie)
@@ -92,5 +77,7 @@ add_link_options(-Wl,-T${LINKER_SCRIPT})
 include_directories(.)
 
 add_executable(Kernel ${SOURCES})
+
+target_link_libraries(Kernel PRIVATE Std)
 
 set_target_properties(Kernel PROPERTIES OUTPUT_NAME kernel.elf)

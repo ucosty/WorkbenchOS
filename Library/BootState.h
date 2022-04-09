@@ -6,7 +6,7 @@
 
 #include <EFI/MemoryMap.h>
 #include <PhysicalAddress.h>
-#include <Types.h>
+#include "LibStd/Types.h"
 
 struct Framebuffer {
     uint64_t base_address;

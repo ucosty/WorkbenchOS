@@ -5,12 +5,12 @@
 
 #pragma once
 
-#include <Types.h>
-#include <Result.h>
+#include <LibStd/Types.h>
+#include <LibStd/Result.h>
 
 class BlockDevice {
 public:
-    virtual Result<void> read(size_t offset, size_t size, uint8_t *buffer) = 0;
+    virtual Std::Result<void> read(size_t offset, size_t size, uint8_t *buffer) = 0;
 
-    virtual Result<void> write(size_t offset, size_t size, uint8_t *buffer) = 0;
+    virtual Std::Result<void> write(size_t offset, size_t size, uint8_t *buffer) = 0;
 };

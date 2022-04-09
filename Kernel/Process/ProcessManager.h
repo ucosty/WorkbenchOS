@@ -7,8 +7,8 @@
 #include "../Heap/SlabAllocator.h"
 #include "Process.h"
 #include "StackFrame.h"
-#include <Result.h>
-#include <Vector.h>
+#include "LibStd/Result.h"
+#include "LibStd/Vector.h"
 
 namespace Kernel {
 class ProcessManager {
@@ -20,8 +20,8 @@ public:
     ProcessManager(ProcessManager const &) = delete;
     void operator=(ProcessManager const &) = delete;
 
-    Result<void> initialise();
-    Result<void> create_process();
+    Std::Result<void> initialise();
+    Std::Result<void> create_process();
     Process * current_process();
     Process * next_process();
 
@@ -29,6 +29,6 @@ private:
     ProcessManager() = default;
     Slab *m_allocator{nullptr};
     size_t m_current_process{0};
-    Lib::Vector<Process *> process_list;
+    Std::Vector<Process *> process_list;
 };
 }// namespace Kernel

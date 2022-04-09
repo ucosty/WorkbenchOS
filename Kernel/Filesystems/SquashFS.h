@@ -6,6 +6,7 @@
 #pragma once
 
 #include <Devices/BlockDevice.h>
+#include "LibStd/StringView.h"
 
 namespace SquashFS {
 
@@ -46,19 +47,42 @@ enum Flags : uint16_t {
     UncompressedIds = 0x0800,
 };
 
+enum InodeType : uint16_t {
+    BasicDirectory = 1,
+    BasicFile = 2,
+    BasicSymlink = 3,
+    BasicBlockDevice = 4,
+    BasicCharDevice = 5,
+    BasicFifo = 6,
+    BasicSocket = 7,
+    ExtendedDirectory = 8,
+    ExtendedFile = 9,
+    ExtendedSymlink = 10,
+    ExtendedBlockDevice = 11,
+    ExtendedCharDevice = 12,
+    ExtendedFifo = 13,
+    ExtendedSocket = 14,
+};
+
 struct DirectoryHeader {
     uint32_t count{0};
     uint32_t start{0};
     uint32_t inode_number{0};
 };
 
-struct DirectoryEntry {
+struct DirectoryEntryHeader {
     uint16_t offset;
     uint16_t inode_offset;
     uint16_t type;
     uint16_t name_size;
+};
+
+struct DirectoryEntry {
+    DirectoryEntryHeader header;
     char *name;
 };
+
+static_assert(sizeof(DirectoryEntryHeader) == 8);
 
 struct PACKED CommonInodeHeader {
     uint16_t type;
@@ -87,19 +111,36 @@ struct PACKED FileInode {
     uint32_t block_sizes;
 };
 
+class OpenFile {
+public:
+    OpenFile(FileInode inode) : m_inode(inode) {}
+
+private:
+    FileInode m_inode;
+    size_t m_read_offset{0};
+};
+
 static_assert(sizeof(FileInode) == 0x24);
 
 class Filesystem {
 public:
     Filesystem(BlockDevice *block_device);
 
-    Result<void> init();
+    Std::Result<void> init();
+
+    Std::Result<OpenFile> open(Std::StringView filename);
+
+    Std::Result<void> list(size_t directory_start);
+
+    Std::Result<FileInode> find_file_by_filename(Std::StringView filename);
+
+    Std::Result<FileInode> find_file_in_directory(Std::StringView filename, size_t directory_start);
 
 private:
     BlockDevice *m_block_device;
     Superblock m_superblock;
 
-    DirectoryEntry read_directory_entry();
+    Std::Result<DirectoryHeader> read_directory_header(size_t directory_start);
 };
 
 }// namespace SquashFS

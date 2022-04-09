@@ -5,7 +5,7 @@
 
 #include "InterruptVectorTable.h"
 #include <ConsoleIO.h>
-#include <Types.h>
+#include "LibStd/Types.h"
 
 EXCEPTION_HANDLER(divide_by_zero_exception);
 void divide_by_zero_exception_handler(StackFrame frame) {

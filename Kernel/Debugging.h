@@ -3,15 +3,11 @@
 //
 // SPDX-License-Identifier: GPL-3.0-only
 
-//
-// Created by matthew on 23/12/2021.
-//
-
 #pragma once
 
 #include <ConsoleIO.h>
-#include <Error.h>
-#include <Types.h>
+#include <LibStd/Error.h>
+#include <LibStd/Types.h>
 
 #define VERIFY(expression) ({                                             \
     if (!(expression)) {                                                  \
@@ -22,7 +18,7 @@
 })
 
 [[noreturn]] void panic();
-[[noreturn]] void panic(Lib::Error error);
+[[noreturn]] void panic(Std::Error error);
 void delay(size_t microseconds);
 
 namespace Kernel {

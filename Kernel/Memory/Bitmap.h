@@ -4,9 +4,9 @@
 // SPDX-License-Identifier: GPL-3.0-only
 #pragma once
 
-#include "PhysicalAddress.h"
-#include <Result.h>
-#include <Types.h>
+#include <PhysicalAddress.h>
+#include <LibStd/Result.h>
+#include <LibStd/Types.h>
 
 namespace Kernel {
 constexpr uint64_t BITMAP_FULL = 0xffffffffffffffff;
@@ -20,8 +20,8 @@ class Bitmap {
 public:
     void init(size_t page_size, size_t ram_size, uint64_t base_address, uint64_t storage);
 
-    [[nodiscard]] Result<PhysicalAddress> allocate();
-    [[nodiscard]] Result<void> free(PhysicalAddress address);
+    [[nodiscard]] Std::Result<PhysicalAddress> allocate();
+    [[nodiscard]] Std::Result<void> free(PhysicalAddress address);
     void set_allocated(PhysicalAddress address);
     void set_allocated(BlockAndOffset block_and_offset);
     bool is_allocated(PhysicalAddress address);
@@ -37,6 +37,6 @@ private:
     uint64_t m_base_address;
 
     [[nodiscard]] BlockAndOffset address_to_block_and_offset(uint64_t address) const;
-    static Result<size_t> find_free(uint64_t bitmap);
+    static Std::Result<size_t> find_free(uint64_t bitmap);
 };
 }// namespace Kernel

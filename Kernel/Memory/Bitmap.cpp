@@ -2,9 +2,12 @@
 // Copyright (c) 2021 Matthew Costa <ucosty@gmail.com>
 //
 // SPDX-License-Identifier: GPL-3.0-only
-#include "Bitmap.h"
-#include <Try.h>
-#include <cstring.h>
+
+#include <LibStd/CString.h>
+#include <LibStd/Try.h>
+#include <Memory/Bitmap.h>
+
+using namespace Std;
 
 namespace Kernel {
 void Bitmap::init(size_t page_size, size_t ram_size, uint64_t base_address, uint64_t storage_address) {
@@ -22,7 +25,7 @@ void Bitmap::init(size_t page_size, size_t ram_size, uint64_t base_address, uint
 
 Result<PhysicalAddress> Bitmap::allocate() {
     if (m_free_pages == 0)
-        return Lib::Error::from_code(1);
+        return Error::from_code(1);
 
     for (uint64_t i = 0; i < m_block_count; i++) {
         if (m_storage[i] != BITMAP_FULL) {
@@ -34,7 +37,7 @@ Result<PhysicalAddress> Bitmap::allocate() {
             return address;
         }
     }
-    return Lib::Error::from_code(1);
+    return Error::from_code(1);
 }
 
 Result<void> Bitmap::free(PhysicalAddress address) {
@@ -76,6 +79,6 @@ Result<size_t> Bitmap::find_free(uint64_t bitmap) {
             return i;
         }
     }
-    return Lib::Error::from_code(1);
+    return Error::from_code(1);
 }
 }// namespace Kernel

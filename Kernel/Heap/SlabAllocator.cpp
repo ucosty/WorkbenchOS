@@ -5,7 +5,9 @@
 #include "SlabAllocator.h"
 #include "../Debugging.h"
 #include "../Memory/MemoryManager.h"
-#include <Try.h>
+#include "LibStd/Try.h"
+
+using namespace Std;
 
 namespace Kernel {
 constexpr size_t MAX_OBJECT_SIZE = Page - sizeof(SlabPage);
@@ -24,7 +26,7 @@ Result<NonNullPtr<Slab>> SlabAllocator::find_slab(size_t size) {
             return NonNullPtr<Slab>::from(&slab);
         }
     }
-    return Lib::Error::from_code(1);
+    return Error::from_code(1);
 }
 
 Result<NonNullPtr<Slab>> SlabAllocator::create_slab(size_t size) {
@@ -34,7 +36,7 @@ Result<NonNullPtr<Slab>> SlabAllocator::create_slab(size_t size) {
             return NonNullPtr<Slab>::from(&slab);
         }
     }
-    return Lib::Error::from_code(1);
+    return Error::from_code(1);
 }
 
 Result<void> Slab::initialise(size_t size) {
@@ -65,7 +67,7 @@ Result<void> Slab::free(VirtualAddress address) {
             return {};
         }
     }
-    return Lib::Error::from_code(1);
+    return Error::from_code(1);
 }
 
 Result<void> SlabPage::initialise(size_t size) {
@@ -84,7 +86,7 @@ Result<void> SlabPage::initialise(size_t size) {
 
 Result<uint8_t *> SlabPage::allocate() {
     if (m_free_list == nullptr) {
-        return Lib::Error::from_code(1);
+        return Error::from_code(1);
     }
     auto free_object = m_free_list;
     m_free_list = free_object->next;

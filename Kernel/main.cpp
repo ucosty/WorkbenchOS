@@ -15,7 +15,7 @@
 #include <Devices/MemoryBlockDevice.h>
 #include <Filesystems/SquashFS.h>
 #include <LinearFramebuffer.h>
-#include <Types.h>
+#include "LibStd/Types.h"
 
 using namespace Kernel;
 

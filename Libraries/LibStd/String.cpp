@@ -3,10 +3,10 @@
 //
 // SPDX-License-Identifier: GPL-3.0-only
 
-#include <ConsoleIO.h>
-#include <String.h>
+#include "ConsoleIO.h"
+#include <LibStd/String.h>
 
-namespace Lib {
+namespace Std {
 String::~String() {
     delete[] m_characters;
 }

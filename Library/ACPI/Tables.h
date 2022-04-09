@@ -4,12 +4,12 @@
 // SPDX-License-Identifier: GPL-3.0-only
 #pragma once
 
-#include <Types.h>
+#include <LibStd/Types.h>
 
 #define RSDP_SIGNATURE 0x2052545020445352
 #define XSDT_SIGNATURE 0x54445358
 
-namespace Lib {
+namespace Std {
 struct PACKED RootSystemDescriptionPointer {
     uint64_t signature;
     uint8_t checksum;

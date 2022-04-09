@@ -2,16 +2,16 @@
 // Copyright (c) 2021 Matthew Costa <ucosty@gmail.com>
 //
 // SPDX-License-Identifier: GPL-3.0-only
-#include "Debugging.h"
-#include "Error.h"
 #include <ConsoleIO.h>
+#include <Debugging.h>
+#include <LibStd/Error.h>
 
 [[noreturn]] void panic() {
     asm volatile("hlt");
     while (true) {}
 }
 
-[[noreturn]] void panic(Lib::Error error) {
+[[noreturn]] void panic(Std::Error error) {
     printf("\u001b[31mPANIC:\u001b[0m Got error %d\n", error);
     asm volatile("hlt");
     while (true) {}
@@ -24,7 +24,7 @@ void inline outb(uint16_t port, uint8_t val) {
 }
 
 void delay(size_t microseconds) {
-    for(size_t i = 0; i < microseconds; i++)
+    for (size_t i = 0; i < microseconds; i++)
         outb(0x80, 0);
 }
 

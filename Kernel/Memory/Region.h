@@ -4,11 +4,11 @@
 // SPDX-License-Identifier: GPL-3.0-only
 #pragma once
 
-#include <String.h>
+#include <LibStd/String.h>
 #include <VirtualAddress.h>
-#include <Result.h>
+#include "LibStd/Result.h"
 
-using namespace Lib;
+using namespace Std;
 
 namespace VirtualMemory {
 enum class RegionType {

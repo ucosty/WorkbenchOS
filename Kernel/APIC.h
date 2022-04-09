@@ -5,8 +5,8 @@
 
 #pragma once
 
-#include <Result.h>
-#include <Types.h>
+#include "LibStd/Result.h"
+#include "LibStd/Types.h"
 
 namespace Kernel {
 struct PACKED TimerVector {
@@ -93,7 +93,7 @@ static_assert(ICR{0x08, 1, DeliveryMode::INIT, DestinationMode::Physical, Destin
 
 class APIC {
 public:
-    Result<void> initialise();
+    Std::Result<void> initialise();
     [[nodiscard]] uint64_t register_base() const { return m_register_base; };
     static void write_icr(const ICR &icr) ;
     static void send_init(uint8_t cpu);

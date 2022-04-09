@@ -2,14 +2,14 @@
 // Copyright (c) 2021 Matthew Costa <ucosty@gmail.com>
 //
 // SPDX-License-Identifier: GPL-3.0-only
-#include <Convert.h>
-#include <Types.h>
+#include <LibStd/Convert.h>
+#include <LibStd/Types.h>
 #include <UnbufferedConsole.h>
 
 void select(Formatter *formatter, uint32_t n) {
     debug_putchar('#');
     char buffer[32] = {0};
-    Lib::uint32_t_to_cstring(n, 10, 32, buffer);
+    Std::uint32_t_to_cstring(n, 10, 32, buffer);
     for (char c: buffer) {
         if (c == 0) continue;
         debug_putchar(c);
@@ -19,7 +19,7 @@ void select(Formatter *formatter, uint32_t n) {
 void select(Formatter *formatter, uint64_t n) {
     debug_putchar('!');
     char buffer[32] = {0};
-    Lib::uint64_t_to_cstring(n, 10, 32, buffer);
+    Std::uint64_t_to_cstring(n, 10, 32, buffer);
     for (char i: buffer) {
         if (i == 0) continue;
         debug_putchar(i);

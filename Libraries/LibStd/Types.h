@@ -1,5 +1,5 @@
 // WorkbenchOS
-// Copyright (c) 2021 Matthew Costa <ucosty@gmail.com>
+// Copyright (c) 2022 Matthew Costa <ucosty@gmail.com>
 //
 // SPDX-License-Identifier: GPL-3.0-only
 #pragma once
@@ -8,7 +8,6 @@
 
 #define PACKED __attribute__((__packed__))
 #define NAKED __attribute__((__naked__))
-#define USER_TEXT __attribute__((section(".user_text")))
 
 using uint64_t = __UINT64_TYPE__;
 using uint32_t = __UINT32_TYPE__;

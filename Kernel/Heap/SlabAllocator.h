@@ -4,11 +4,11 @@
 // SPDX-License-Identifier: GPL-3.0-only
 #pragma once
 
+#include "LibStd/NonNullPtr.h"
+#include "LibStd/Result.h"
+#include "LibStd/Try.h"
+#include "LibStd/Types.h"
 #include "VirtualAddress.h"
-#include "Try.h"
-#include <NonNullPtr.h>
-#include <Result.h>
-#include <Types.h>
 
 namespace Kernel {
 
@@ -25,7 +25,7 @@ static_assert(sizeof(FreeObject) == 8);
 // +------------------------------------------------------------+
 class SlabPage {
 public:
-    Result<void> initialise(size_t size);
+    Std::Result<void> initialise(size_t size);
     [[nodiscard]] SlabPage *next() const { return m_next_page; }
     [[nodiscard]] SlabPage *previous() const { return m_previous_page; }
     [[nodiscard]] bool has_next() const { return m_next_page != nullptr; }
@@ -36,12 +36,12 @@ public:
         auto page_address = reinterpret_cast<size_t>(this);
         return VirtualAddress(page_address + sizeof(SlabPage) + (m_object_size * index));
     }
-    [[nodiscard]] Result<uint8_t *> allocate();
-    Result<void> free(VirtualAddress address);
+    [[nodiscard]] Std::Result<uint8_t *> allocate();
+    Std::Result<void> free(VirtualAddress address);
     [[nodiscard]] bool contains_object_at_address(VirtualAddress address) const {
         auto base_address = reinterpret_cast<uint64_t>(this);
         return (address.as_address() > base_address) &&
-            (address.as_address() < base_address + 0x1000);
+               (address.as_address() < base_address + 0x1000);
     }
 
 private:
@@ -57,16 +57,16 @@ static_assert(sizeof(SlabPage) == 48);
 
 class Slab {
 public:
-    Result<void> initialise(size_t size);
+    Std::Result<void> initialise(size_t size);
     [[nodiscard]] bool is_slab_for(size_t size) const { return m_initialised && m_object_size == size; }
     [[nodiscard]] bool is_initialised() const { return m_initialised; }
-    [[nodiscard]] Result<NonNullPtr<uint8_t>> allocate();
+    [[nodiscard]] Std::Result<Std::NonNullPtr<uint8_t>> allocate();
     template<typename T>
-    Result<T *> allocate() {
+    Std::Result<T *> allocate() {
         auto result = TRY(allocate());
         return reinterpret_cast<T *>(result.as_address());
     }
-    [[nodiscard]] Result<void> free(VirtualAddress address);
+    [[nodiscard]] Std::Result<void> free(VirtualAddress address);
 
 private:
     SlabPage *m_head{nullptr};
@@ -84,12 +84,12 @@ public:
     SlabAllocator(SlabAllocator const &) = delete;
     void operator=(SlabAllocator const &) = delete;
 
-    Result<NonNullPtr<Slab>> get_or_create_slab(size_t size);
+    Std::Result<Std::NonNullPtr<Slab>> get_or_create_slab(size_t size);
 
 private:
     SlabAllocator() = default;
-    Result<NonNullPtr<Slab>> find_slab(size_t size);
-    Result<NonNullPtr<Slab>> create_slab(size_t size);
+    Std::Result<Std::NonNullPtr<Slab>> find_slab(size_t size);
+    Std::Result<Std::NonNullPtr<Slab>> create_slab(size_t size);
     Slab m_slabs[32];
 };
 }// namespace Kernel

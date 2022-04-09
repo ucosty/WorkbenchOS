@@ -5,8 +5,7 @@
 
 #include "Stack.h"
 
-namespace Lib {
-
+namespace Std {
 void Stack::push(uint64_t value) {
     m_stack[--m_index] = value;
 }

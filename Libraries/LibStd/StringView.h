@@ -1,12 +1,12 @@
 // WorkbenchOS
-// Copyright (c) 2021 Matthew Costa <ucosty@gmail.com>
+// Copyright (c) 2022 Matthew Costa <ucosty@gmail.com>
 //
 // SPDX-License-Identifier: GPL-3.0-only
 #pragma once
 
-#include <Types.h>
+#include <LibStd/Types.h>
 
-namespace Lib {
+namespace Std {
 class String;
 
 template<typename T>
@@ -76,6 +76,6 @@ private:
 };
 }// namespace Lib
 
-constexpr Lib::StringView operator"" _sv(const char *characters, size_t length) {
+constexpr Std::StringView operator"" _sv(const char *characters, size_t length) {
     return {characters, length};
 }

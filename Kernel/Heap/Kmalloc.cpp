@@ -5,8 +5,10 @@
 #include "Kmalloc.h"
 #include "../Debugging.h"
 #include "../Memory/MemoryManager.h"
-#include <Try.h>
-#include <cstring.h>
+#include "LibStd/Try.h"
+#include "LibStd/CString.h"
+
+using namespace Std;
 
 Kernel::KmallocHeap g_malloc_heap{};
 
@@ -148,7 +150,7 @@ Result<void> KmallocSubHeap::free(VirtualAddress address) {
     auto allocated_block = reinterpret_cast<AllocatedBlock *>(address.as_ptr() - sizeof(AllocatedBlock));
 
     if (allocated_block->m_canary != 0xd1d1d1d1d1d1d1d1) {
-        return Lib::Error::from_code(1);
+        return Error::from_code(1);
     }
 
     auto block_size = allocated_block->m_data_size + sizeof(AllocatedBlock);
@@ -165,7 +167,7 @@ Result<VirtualAddress> KmallocSubHeap::allocate(size_t _size) {
     auto free_block = m_free_list;
     while (free_block != nullptr) {
         if (!free_block->is_canary_valid()) {
-            return Lib::Error::from_code(1);
+            return Error::from_code(1);
         }
 
         if (size <= free_block->allocatable_size()) {
@@ -178,7 +180,7 @@ Result<VirtualAddress> KmallocSubHeap::allocate(size_t _size) {
         free_block = free_block->next();
     }
 
-    return Lib::Error::from_code(1);
+    return Error::from_code(1);
 }
 
 bool KmallocSubHeap::contains_allocation(VirtualAddress address) {
@@ -203,7 +205,7 @@ Result<VirtualAddress> KmallocHeap::allocate(size_t size) {
 #pragma ide diagnostic ignored "misc-no-recursion"
 Result<VirtualAddress> KmallocHeap::allocate(size_t size, int attempt) {
     if (attempt == 3)
-        return Lib::Error::from_code(1);
+        return Error::from_code(1);
 
     auto sub_heap = m_subheaps;
     while (sub_heap != nullptr) {
@@ -226,7 +228,7 @@ Result<void> KmallocHeap::free(VirtualAddress address) {
         }
         sub_heap = sub_heap->next();
     }
-    return Lib::Error::from_code(1);
+    return Error::from_code(1);
 }
 
 Result<void> KmallocHeap::grow() {

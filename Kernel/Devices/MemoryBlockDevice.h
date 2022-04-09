@@ -12,9 +12,9 @@ class MemoryBlockDevice : public BlockDevice {
 public:
     MemoryBlockDevice(VirtualAddress address, size_t size);
 
-    Result<void> read(size_t offset, size_t size, uint8_t *buffer) override;
+    Std::Result<void> read(size_t offset, size_t size, uint8_t *buffer) override;
 
-    Result<void> write(size_t offset, size_t size, uint8_t *buffer) override;
+    Std::Result<void> write(size_t offset, size_t size, uint8_t *buffer) override;
 
 private:
     VirtualAddress m_address;

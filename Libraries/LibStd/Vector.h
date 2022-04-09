@@ -1,10 +1,15 @@
+// WorkbenchOS
+// Copyright (c) 2022 Matthew Costa <ucosty@gmail.com>
+//
+// SPDX-License-Identifier: GPL-3.0-only
+
 #pragma once
 
-#include "Iterator.h"
-#include "Types.h"
-#include <cstring.h>
+#include <LibStd/Iterator.h>
+#include <LibStd/Types.h>
+#include <LibStd/CString.h>
 
-namespace Lib {
+namespace Std {
 template<typename T>
 class Vector {
 public:
@@ -51,4 +56,4 @@ private:
     size_t m_items{0};
     T *m_storage{nullptr};
 };
-}// namespace Lib
+}// namespace Std

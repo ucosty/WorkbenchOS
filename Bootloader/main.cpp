@@ -7,11 +7,13 @@
 #include <ConsoleIO.h>
 #include <EFI/Efi.h>
 #include <EFI/EfiWrapper.h>
-#include <ELF.h>
+#include "LibELF/ELF.h"
 #include <PageStructures.h>
-#include <Try.h>
+#include "LibStd/Try.h"
 #include <UnbufferedConsole.h>
-#include <cstring.h>
+#include "LibStd/CString.h"
+
+using namespace Std;
 
 constexpr uint64_t GUARD_PAGE = 1;
 constexpr uint64_t kernel_virtual_base = 0xffffffff80000000;
@@ -129,7 +131,7 @@ Result<EFI::GraphicsOutputProtocol> init_graphics(EFI::BootServices *boot_servic
     return graphics_output;
 }
 
-bool verify_rsdp_checksum(Lib::RootSystemDescriptionPointer *rsdp) {
+bool verify_rsdp_checksum(RootSystemDescriptionPointer *rsdp) {
     int32_t checksum = 0;
     auto *bytes = (uint8_t *) rsdp;
     for (int i = 0; i < 20; i++) {
@@ -144,7 +146,7 @@ Result<uint64_t> find_acpi_root_table(EFI::Raw::SystemTable *system_table) {
         if (!table.vendor_guid.equals(EFI::acpi_root_table_guid))
             continue;
 
-        auto rsdp = reinterpret_cast<Lib::RootSystemDescriptionPointer *>(table.vendor_table);
+        auto rsdp = reinterpret_cast<RootSystemDescriptionPointer *>(table.vendor_table);
         if (rsdp->signature != RSDP_SIGNATURE)
             continue;
 
@@ -154,7 +156,7 @@ Result<uint64_t> find_acpi_root_table(EFI::Raw::SystemTable *system_table) {
         return reinterpret_cast<uint64_t>(table.vendor_table);
     }
     printf("PANIC: Could not find ACPI configuration table!\n");
-    return Lib::Error::from_code(1);
+    return Error::from_code(1);
 }
 
 Result<void> init(EFI::Raw::Handle image_handle, EFI::Raw::SystemTable *system_table) {

@@ -4,8 +4,8 @@
 // SPDX-License-Identifier: GPL-3.0-only
 #pragma once
 
-#include <Result.h>
-#include <Types.h>
+#include "LibStd/Result.h"
+#include "LibStd/Types.h"
 
 namespace Kernel {
 struct CpuidResponse {

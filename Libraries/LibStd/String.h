@@ -1,14 +1,15 @@
 // WorkbenchOS
-// Copyright (c) 2021 Matthew Costa <ucosty@gmail.com>
+// Copyright (c) 2022 Matthew Costa <ucosty@gmail.com>
 //
 // SPDX-License-Identifier: GPL-3.0-only
+
 #pragma once
 
-#include <StringView.h>
-#include <Types.h>
-#include <Vector.h>
+#include <LibStd/StringView.h>
+#include <LibStd/Types.h>
+#include <LibStd/Vector.h>
 
-namespace Lib {
+namespace Std {
 class String {
 public:
     String() = default;
@@ -34,4 +35,12 @@ private:
     const char *m_characters{nullptr};
     size_t m_length{0};
 };
-}// namespace Lib
+
+inline bool operator==(const String &lhs, const StringView &rhs) {
+    if (lhs.length() != rhs.length()) return false;
+    for (int i = 0; i < lhs.length(); i++) {
+        if (lhs.get(i) != rhs.get(i)) return false;
+    }
+    return true;
+}
+}// namespace Std

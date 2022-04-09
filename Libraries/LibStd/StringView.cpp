@@ -3,11 +3,10 @@
 //
 // SPDX-License-Identifier: GPL-3.0-only
 
-#include <ConsoleIO.h>
-#include <StringView.h>
-#include <Vector.h>
+#include "StringView.h"
+#include "Vector.h"
 
-namespace Lib {
+namespace Std {
 Vector<StringView> StringView::split(char c) {
     Vector<StringView> result;
     auto substring_start = 0;
@@ -24,4 +23,4 @@ Vector<StringView> StringView::split(char c) {
 
     return result;
 }
-}// namespace Lib
+}// namespace Std

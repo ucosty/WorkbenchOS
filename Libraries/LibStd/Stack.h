@@ -2,12 +2,13 @@
 // Copyright (c) 2022 Matthew Costa <ucosty@gmail.com>
 //
 // SPDX-License-Identifier: GPL-3.0-only
+
 #pragma once
 
-#include <Types.h>
+#include <LibStd/Types.h>
 #include <VirtualAddress.h>
 
-namespace Lib {
+namespace Std {
 class Stack {
 public:
     Stack() = default;
@@ -15,8 +16,9 @@ public:
     void push(uint64_t value);
     uint64_t pop();
     VirtualAddress get_stack_ptr();
+
 private:
     uint64_t *m_stack{nullptr};
     size_t m_index{0};
 };
-}
+}// namespace Std

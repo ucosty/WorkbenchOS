@@ -4,9 +4,9 @@
 // SPDX-License-Identifier: GPL-3.0-only
 #pragma once
 
-#include <Result.h>
+#include "LibStd/Result.h"
 #include <Heap/SlabAllocator.h>
-#include <Vector.h>
+#include "LibStd/Vector.h"
 #include <ConsoleIO.h>
 
 class Device {
@@ -66,19 +66,19 @@ private:
     uint32_t m_bar3;
     uint32_t m_bar4;
     uint32_t m_bar5;
-    Lib::Vector<Device *> m_children;
+    Std::Vector<Device *> m_children;
 };
 
 class PCI {
 public:
-    Result<void> initialise();
-    Optional<Device *> find_device(uint16_t vendor_id, uint16_t device_id);
+    Std::Result<void> initialise();
+    Std::Optional<Device *> find_device(uint16_t vendor_id, uint16_t device_id);
 
 private:
-    Result<void> initialise_legacy();
-    Lib::Vector<Device *> m_devices;
+    Std::Result<void> initialise_legacy();
+    Std::Vector<Device *> m_devices;
 
-    Result<void> read_device_function(uint8_t bus, uint8_t device, uint8_t function);
+    Std::Result<void> read_device_function(uint8_t bus, uint8_t device, uint8_t function);
     uint16_t config_read_word(uint8_t bus, uint8_t slot, uint8_t function, uint8_t offset);
     static uint32_t config_read_dword(uint8_t bus, uint8_t slot, uint8_t function, uint8_t offset);
 

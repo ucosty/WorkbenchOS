@@ -5,8 +5,8 @@
 #pragma once
 
 #include "SlabAllocator.h"
-#include <Result.h>
-#include <Types.h>
+#include "LibStd/Result.h"
+#include "LibStd/Types.h"
 #include <VirtualAddress.h>
 #include <VirtualAddressRange.h>
 
@@ -62,13 +62,13 @@ private:
 
 class KmallocSubHeap {
 public:
-    Result<void> initialise();
+    Std::Result<void> initialise();
 
-    Result<void> initialise(KmallocSubHeap *next);
+    Std::Result<void> initialise(KmallocSubHeap *next);
 
-    Result<VirtualAddress> allocate(size_t _size);
+    Std::Result<VirtualAddress> allocate(size_t _size);
 
-    Result<void> free(VirtualAddress address);
+    Std::Result<void> free(VirtualAddress address);
 
     void insert_into_free_list(FreeBlock *free_block_to_insert);
 
@@ -91,16 +91,16 @@ private:
 
 class KmallocHeap {
 public:
-    Result<void> initialise();
+    Std::Result<void> initialise();
 
-    Result<VirtualAddress> allocate(size_t size);
+    Std::Result<VirtualAddress> allocate(size_t size);
 
-    Result<VirtualAddress> allocate(size_t _size, int attempt);
+    Std::Result<VirtualAddress> allocate(size_t _size, int attempt);
 
-    Result<void> free(VirtualAddress address);
+    Std::Result<void> free(VirtualAddress address);
 
 private:
-    Result<void> grow();
+    Std::Result<void> grow();
 
     KmallocSubHeap *m_subheaps;
 

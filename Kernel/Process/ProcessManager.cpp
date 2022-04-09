@@ -5,8 +5,10 @@
 
 #include "ProcessManager.h"
 #include "../Memory/MemoryManager.h"
-#include "Stack.h"
+#include "LibStd/Stack.h"
 #include <ConsoleIO.h>
+
+using namespace Std;
 
 namespace Kernel {
 Result<void> ProcessManager::initialise() {
@@ -48,7 +50,7 @@ Result<void> ProcessManager::create_process() {
 //    memory_manager.map_user_page(page_directory, physical_address, VirtualAddress(0x100000));
     memory_manager.set_user_directory(page_directory);
 
-    Lib::Stack process_stack(user_stack_virtual, Page);
+    Std::Stack process_stack(user_stack_virtual, Page);
     process_stack.push(initial_stack_frame.ss);
     process_stack.push(initial_stack_frame.rsp);
     process_stack.push(initial_stack_frame.rflags);

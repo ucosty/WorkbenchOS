@@ -6,6 +6,8 @@
 #include <ACPI/ACPI.h>
 #include <Interfaces/Ports.h>
 
+using namespace Std;
+
 const char *class_name[] = {
     "Unclassified",
     "Mass Storage Controller",

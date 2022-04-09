@@ -2,11 +2,12 @@
 // Copyright (c) 2022 Matthew Costa <ucosty@gmail.com>
 //
 // SPDX-License-Identifier: GPL-3.0-only
-#include "InterruptVectorTable.h"
-#include "Exceptions.h"
-#include "Process/ProcessManager.h"
+
 #include <ConsoleIO.h>
+#include <Exceptions.h>
+#include <InterruptVectorTable.h>
 #include <PhysicalAddress.h>
+#include <Process/ProcessManager.h>
 
 uint64_t counter = 0;
 

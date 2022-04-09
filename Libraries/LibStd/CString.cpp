@@ -1,13 +1,9 @@
 // WorkbenchOS
-// Copyright (c) 2021 Matthew Costa <ucosty@gmail.com>
+// Copyright (c) 2022 Matthew Costa <ucosty@gmail.com>
 //
 // SPDX-License-Identifier: GPL-3.0-only
 
-//
-// Created by matthew on 20/12/2021.
-//
-
-#include <cstring.h>
+#include <LibStd/CString.h>
 
 extern "C" void *memset(char *buffer, int value, size_t count) {
     for (size_t i = 0; i < count; i++)

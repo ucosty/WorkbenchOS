@@ -2,13 +2,16 @@
 // Copyright (c) 2021 Matthew Costa <ucosty@gmail.com>
 //
 // SPDX-License-Identifier: GPL-3.0-only
+
 #include <ConsoleIO.h>
-#include <Convert.h>
 #include <EFI/Efi.h>
-#include <Types.h>
-#include <Variadic.h>
-#include <StringView.h>
-#include <String.h>
+#include <LibStd/Convert.h>
+#include <LibStd/String.h>
+#include <LibStd/StringView.h>
+#include <LibStd/Types.h>
+#include <LibStd/Variadic.h>
+
+using namespace Std;
 
 void printf(const char *fmt...) {
     va_list args;
@@ -57,7 +60,7 @@ void printf(const char *fmt...) {
                     // Max length value "-2147483648" ~11 chars
                     char temp[12] = {0};
                     int d = va_arg(args, int);
-                    Lib::int32_t_to_cstring(d, 10, 12, temp);
+                    int32_t_to_cstring(d, 10, 12, temp);
                     for (char i: temp) {
                         if (i == 0) continue;
                         buffer[output_index++] = i;
@@ -66,16 +69,16 @@ void printf(const char *fmt...) {
                 }
                 case 'v': {
                     // StringView
-                    auto string_view = va_arg(args, Lib::StringView*);
-                    for(size_t i = 0; i < string_view->length(); i++) {
+                    auto string_view = va_arg(args, StringView *);
+                    for (size_t i = 0; i < string_view->length(); i++) {
                         buffer[output_index++] = string_view->get(i);
                     }
                     break;
                 }
                 case 'V': {
                     // String
-                    auto string = va_arg(args, Lib::String*);
-                    for(size_t i = 0; i < string->length(); i++) {
+                    auto string = va_arg(args, String *);
+                    for (size_t i = 0; i < string->length(); i++) {
                         buffer[output_index++] = string->get(i);
                     }
                     break;
@@ -84,7 +87,7 @@ void printf(const char *fmt...) {
                     // Max length value "FFFFFFFF" ~8 characters
                     char temp[8] = {0};
                     uint32_t d = va_arg(args, uint32_t);
-                    Lib::uint32_t_to_cstring(d, 16, 8, temp);
+                    uint32_t_to_cstring(d, 16, 8, temp);
                     for (char i: temp) {
                         if (i == 0) continue;
                         buffer[output_index++] = i;
@@ -95,7 +98,7 @@ void printf(const char *fmt...) {
                     // Max length value "FFFFFFFFFFFFFFFF" ~16 characters
                     char temp[16] = {0};
                     uint64_t d = va_arg(args, uint64_t);
-                    Lib::uint64_t_to_cstring(d, 16, 16, temp);
+                    uint64_t_to_cstring(d, 16, 16, temp);
                     for (char i: temp) {
                         if (i == 0) continue;
                         buffer[output_index++] = i;

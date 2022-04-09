@@ -6,7 +6,7 @@
 
 #include <EFI/GUID.h>
 #include <EFI/MemoryMap.h>
-#include <Types.h>
+#include "LibStd/Types.h"
 
 #define EFI_FILE_MODE_READ 0x01
 

@@ -1,12 +1,14 @@
 // WorkbenchOS
-// Copyright (c) 2021 Matthew Costa <ucosty@gmail.com>
+// Copyright (c) 2022 Matthew Costa <ucosty@gmail.com>
 //
 // SPDX-License-Identifier: GPL-3.0-only
+
 #pragma once
 
-#include <Error.h>
-#include <Optional.h>
+#include <LibStd/Error.h>
+#include <LibStd/Optional.h>
 
+namespace Std {
 template<typename T, typename E>
 class Result {
 public:
@@ -35,5 +37,6 @@ private:
     Optional<E> m_error;
 };
 
-template<typename T, typename E = Lib::Error>
+template<typename T, typename E = Std::Error>
 class Result;
+}// namespace Std

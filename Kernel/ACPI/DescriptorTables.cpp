@@ -5,21 +5,21 @@
 #include "DescriptorTables.h"
 #include <ConsoleIO.h>
 
-using namespace Lib;
+using namespace Std;
 
 namespace Kernel {
 Result<void> SystemDescriptorTables::initialise(PhysicalAddress rsdp_address) {
     auto rsdp = rsdp_address.as_ptr<RootSystemDescriptionPointer>();
     if (rsdp->revision != 2) {
         printf("PANIC: SystemDescriptorTables revision %d found, expected 2\n", rsdp->revision);
-        return Lib::Error::from_code(1);
+        return Error::from_code(1);
     }
 
     auto xsdt_address = PhysicalAddress(rsdp->xsdt_address);
     m_xsdt = xsdt_address.as_ptr<SystemDescriptionTableHeader>();
     if (m_xsdt->signature != XSDT_SIGNATURE) {
         printf("PANIC: XSDT signature expected, found %x\n", m_xsdt->signature);
-        return Lib::Error::from_code(1);
+        return Error::from_code(1);
     }
 
     return {};
@@ -31,7 +31,7 @@ void SystemDescriptorTables::list_tables() {
     for (int i = 0; i < entry_count; i++) {
         auto entry_address = PhysicalAddress(entries[i]);
         auto header = entry_address.as_ptr<SystemDescriptionTableHeader>();
-        Lib::StringView signature{reinterpret_cast<const char *>(&header->signature), 4};
+        StringView signature{reinterpret_cast<const char *>(&header->signature), 4};
         printf("Found table: signature = %v, length = %d\n", &signature, header->length);
     }
 }

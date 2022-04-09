@@ -7,10 +7,10 @@
 #include "Processor.h"
 #include <ConsoleIO.h>
 #include <PhysicalAddress.h>
-#include <Try.h>
+#include "LibStd/Try.h"
 
 namespace Kernel {
-Result<void> APIC::initialise() {
+Std::Result<void> APIC::initialise() {
     auto has_apic = Kernel::Processor::has_apic();
     if (!has_apic) {
         printf("APIC not found\n");

@@ -3,7 +3,7 @@ project(Bootloader)
 SET(LINK_FLAGS -target x86_64-unknown-windows -nostdlib -Wl,-entry:efi_main -Wl,-subsystem:efi_application -fuse-ld=lld-link)
 
 SET(LIBRARY_SOURCES
-        ../Library/Convert.cpp
+        ../Libraries/LibStd/Convert.cpp
         ../Library/EFI/EfiWrapper.cpp
         ../Library/EFI/EfiWrapper.h
         ../Library/EFI/GUID.h
@@ -12,12 +12,12 @@ SET(LIBRARY_SOURCES
         ../Library/LinearFramebuffer.cpp
         ../Library/LinearFramebuffer.h
         ../Library/ConsoleFont.h
-        ../Library/Error.h
-        ../Library/Optional.h
-        ../Library/Try.h
-        ../Library/cstring.cpp
-        ../Library/cstring.h
-        ../Library/Iterator.h
+        ../Libraries/LibStd/Error.h
+        ../Libraries/LibStd/Optional.h
+        ../Libraries/LibStd/Try.h
+        ../Libraries/LibStd/CString.cpp
+        ../Libraries/LibStd/CString.h
+        ../Libraries/LibStd/Iterator.h
         ../Library/BootState.h
         ../Library/EFI/MemoryMap.h
         ../Library/ACPI/Tables.h)

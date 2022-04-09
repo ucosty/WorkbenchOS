@@ -8,8 +8,10 @@
 #include "../Memory/MemoryManager.h"
 #include "../Processor.h"
 #include <ConsoleIO.h>
-#include <Try.h>
-#include <cstring.h>
+#include <LibStd/CString.h>
+#include <LibStd/Try.h>
+
+using namespace Std;
 
 static volatile bool g_boot_spinlock = false;
 extern "C" void ap_main();
@@ -67,7 +69,7 @@ Result<void> Kernel::ACPI::find_devices() {
     printf("dsdt_address: revision = %d, length = %d\n", dsdt_header->revision, dsdt_header->length - sizeof(SystemDescriptionTableHeader));
 
     auto mcfg_or_error = m_descriptor_tables.find_table<MCFGTable>("MCFG"_sv);
-    if(!mcfg_or_error.is_error()) {
+    if (!mcfg_or_error.is_error()) {
         auto mcfg = mcfg_or_error.get();
         printf("mcfg_address: revision = %d, length = %d\n", mcfg.header->revision, mcfg.header->length - sizeof(MCFGTable));
     } else {

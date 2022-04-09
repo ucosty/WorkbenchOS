@@ -5,8 +5,8 @@
 
 #pragma once
 
-#include "DescriptorTables.h"
-#include <Result.h>
+#include <ACPI/DescriptorTables.h>
+#include <LibStd/Result.h>
 
 namespace Kernel {
 class ACPI {
@@ -18,11 +18,11 @@ public:
     ACPI(ACPI const &) = delete;
     void operator=(ACPI const &) = delete;
 
-    Result<void> initialise(PhysicalAddress rsdp_address);
+    Std::Result<void> initialise(PhysicalAddress rsdp_address);
 
     // Device Discovery
     [[nodiscard]] bool has_mcfg_table() const { return false; }
-    Result<void> find_devices();
+    Std::Result<void> find_devices();
 
     // Multi-Processor Initialisation
     void start_application_processors();

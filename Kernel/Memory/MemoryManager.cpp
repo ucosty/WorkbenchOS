@@ -6,7 +6,9 @@
 #include "MemoryManager.h"
 #include "../Debugging.h"
 #include <ConsoleIO.h>
-#include <Try.h>
+#include "LibStd/Try.h"
+
+using namespace Std;
 
 namespace Kernel {
 void MemoryManager::init(const BootState &boot_state) {
@@ -115,7 +117,7 @@ Result<void> MemoryManager::unmap_kernel_page_directory(const VirtualAddress &vi
 Result<size_t> MemoryManager::virtual_address_to_page_directory_index(VirtualAddress address) {
     auto result = (address.as_address() & 0x3fe00000) >> 21;
     if (result > 511) {
-        return Lib::Error::from_code(1);
+        return Error::from_code(1);
     }
     return result;
 }
@@ -123,7 +125,7 @@ Result<size_t> MemoryManager::virtual_address_to_page_directory_index(VirtualAdd
 Result<size_t> MemoryManager::virtual_address_to_page_table_index(VirtualAddress address) {
     auto result = (address.as_address() & 0x1ff000) >> 12;
     if (result > 511) {
-        return Lib::Error::from_code(1);
+        return Error::from_code(1);
     }
     return result;
 }
@@ -239,7 +241,7 @@ void MemoryManager::invalidate_entire_tlb() {
 
 Result<VirtualAddress> VirtualAddressSpace::take_page() {
     if (m_free_pages == 0)
-        return Lib::Error::from_code(1);
+        return Error::from_code(1);
 
     auto result = m_next_address;
     m_next_address = m_next_address.offset(Page);

@@ -10,15 +10,15 @@
 #include <BootState.h>
 #include <EFI/MemoryMap.h>
 #include <PageStructures.h>
-#include <Result.h>
+#include "LibStd/Result.h"
 
 namespace Kernel {
 class VirtualAddressSpace {
 public:
     VirtualAddressSpace() = default;
     explicit VirtualAddressSpace(VirtualAddress base_address, size_t size) : m_base_address(base_address), m_next_address(base_address), m_size(size), m_free_pages(size / Page) {}
-    [[nodiscard]] Result<VirtualAddress> take_page();
-    [[nodiscard]] Result<VirtualAddress> take_pages(size_t);
+    [[nodiscard]] Std::Result<VirtualAddress> take_page();
+    [[nodiscard]] Std::Result<VirtualAddress> take_pages(size_t);
 
 private:
     VirtualAddress m_base_address;
@@ -38,24 +38,24 @@ public:
 
     void init(const BootState &boot_state);
 
-    Result<VirtualAddress> allocate_kernel_heap_page();
-    Result<VirtualAddress> allocate_kernel_heap_pages(size_t page_count);
-    Result<void> free_kernel_heap_page(VirtualAddress virtual_address);
+    Std::Result<VirtualAddress> allocate_kernel_heap_page();
+    Std::Result<VirtualAddress> allocate_kernel_heap_pages(size_t page_count);
+    Std::Result<void> free_kernel_heap_page(VirtualAddress virtual_address);
 
-    Result<PhysicalAddress> allocate_physical_page();
-    Result<void> free_page(PhysicalAddress address);
-    Result<PhysicalAddress> kernel_virtual_to_physical_address(const VirtualAddress &);
-    Result<PageTableEntry *> get_kernel_page_table_entry(const VirtualAddress &);
+    Std::Result<PhysicalAddress> allocate_physical_page();
+    Std::Result<void> free_page(PhysicalAddress address);
+    Std::Result<PhysicalAddress> kernel_virtual_to_physical_address(const VirtualAddress &);
+    Std::Result<PageTableEntry *> get_kernel_page_table_entry(const VirtualAddress &);
 
-    static Result<size_t> virtual_address_to_page_directory_index(VirtualAddress address);
-    static Result<size_t> virtual_address_to_page_table_index(VirtualAddress address);
+    static Std::Result<size_t> virtual_address_to_page_directory_index(VirtualAddress address);
+    static Std::Result<size_t> virtual_address_to_page_table_index(VirtualAddress address);
 
-    Result<void> map_kernel_page_directory(const PhysicalAddress &, const VirtualAddress &);
-    Result<void> unmap_kernel_page_directory(const VirtualAddress &);
+    Std::Result<void> map_kernel_page_directory(const PhysicalAddress &, const VirtualAddress &);
+    Std::Result<void> unmap_kernel_page_directory(const VirtualAddress &);
 
-    Result<PhysicalAddress> create_user_mode_directory();
-    Result<void> map_user_page(PhysicalAddress pdpt_physical_address, const PhysicalAddress &, const VirtualAddress &);
-    Result<void> set_user_directory(PhysicalAddress address);
+    Std::Result<PhysicalAddress> create_user_mode_directory();
+    Std::Result<void> map_user_page(PhysicalAddress pdpt_physical_address, const PhysicalAddress &, const VirtualAddress &);
+    Std::Result<void> set_user_directory(PhysicalAddress address);
 
     static void invalidate_tlb(const VirtualAddress &);
     static void invalidate_entire_tlb();

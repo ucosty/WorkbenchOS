@@ -5,7 +5,7 @@
 
 #pragma once
 
-#include "Types.h"
+#include "LibStd/Types.h"
 #include <VirtualAddress.h>
 
 constexpr uint64_t PHYSICAL_MAPPING_BASE = 0xffffff0000000000;
