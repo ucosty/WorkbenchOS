@@ -4,6 +4,8 @@
 // SPDX-License-Identifier: GPL-3.0-only
 #pragma once
 
+#include <LibStd/String.h>
+
 void debug_putchar(char c);
 
 struct Formatter {
@@ -11,15 +13,15 @@ struct Formatter {
     size_t index;
 };
 
-void select(Formatter *formatter, uint32_t n);
 void select(Formatter *formatter, uint64_t n);
-void _println_internal(Formatter *formatter);
+void select(Formatter *formatter, Std::String &string);
+void select(Formatter *formatter, Std::String *string);
+void select(Formatter *formatter, const Std::String *string);
+void select(Formatter *formatter, Std::StringView sv);
+void select(Formatter *formatter, const char *string);
+void select(Formatter *formatter, void *string);
 
-template <class T>
-void _println_internal(Formatter *formatter, T a) {
-    select(formatter, a);
-    _println_internal(formatter);
-}
+void _println_internal(Formatter *formatter);
 
 template <class T, class ...Args>
 void _println_internal(Formatter *formatter, T a, Args... args) {
@@ -38,7 +40,5 @@ void println(const char *fmt, Args... args) {
 
     _println_internal(&formatter);
     _println_internal(&formatter, args...);
-    debug_putchar('\r');
     debug_putchar('\n');
 }
-

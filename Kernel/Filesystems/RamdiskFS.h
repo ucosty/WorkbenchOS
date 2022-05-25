@@ -7,7 +7,7 @@
 
 #include <Devices/BlockDevice.h>
 #include <Devices/BlockDeviceReader.h>
-#include "LibStd/StringView.h"
+#include <LibStd/String.h>
 
 namespace RamdiskFS {
 
@@ -51,25 +51,35 @@ private:
     size_t m_read_offset{0};
 };
 
+struct Entry {
+    Std::String name;
+    DirectoryEntryType type;
+    uint32_t data_inode;
+};
+
 class Filesystem {
 public:
     explicit Filesystem(BlockDevice *block_device);
 
     Std::Result<void> init();
 
-    Std::Result<OpenFile> open(Std::StringView filename);
+    Std::Result<OpenFile> open(const Std::String &filename);
+
+    Std::Result<Std::Vector<Entry>> read_directory(BlockDeviceReader &reader, uint32_t directory_inode_number);
 
 private:
-    Std::Result<uint32_t> find_file_in_directory(uint32_t directory_inode_index, Std::StringView filename);
+    Std::Result<uint32_t> find_file_in_directory(uint32_t directory_inode_index, const Std::String &filename);
 
     Std::Result<Std::String> read_filename_inode(BlockDeviceReader &reader, uint32_t index);
 
-    Std::Result<Inode> read_inode(BlockDeviceReader &reader, uint32_t index);
+    Std::Result<Inode> read_inode(BlockDeviceReader &reader, uint32_t index) const;
 
-    Std::Result<uint32_t> find_file(BlockDeviceReader &reader, Std::StringView filename);
+    Std::Result<uint32_t> find_file(BlockDeviceReader &reader, Std::String filename);
 
     BlockDevice *m_block_device;
 
     Superblock m_superblock{};
+
+    static size_t get_directory_entry_offset(size_t base, size_t index);
 };
 };// namespace RamdiskFS

@@ -198,6 +198,9 @@ Result<void> KmallocHeap::initialise() {
 }
 
 Result<VirtualAddress> KmallocHeap::allocate(size_t size) {
+    if(size == 0) {
+        return Error::with_message("Cannot allocate zero byte buffer"_sv);
+    }
     return allocate(size, 0);
 }
 
@@ -241,18 +244,24 @@ Result<void> KmallocHeap::grow() {
 
 void *operator new(size_t size) {
     auto allocation = g_malloc_heap.allocate(size);
+    if(allocation.is_error()) {
+        return nullptr;
+    }
     return reinterpret_cast<void *>(allocation.get().as_ptr());
 }
 
 void *operator new[](size_t size) {
     auto allocation = g_malloc_heap.allocate(size);
+    if(allocation.is_error()) {
+        return nullptr;
+    }
     return reinterpret_cast<void *>(allocation.get().as_ptr());
 }
 
-void operator delete(void *ptr) {
+void operator delete(void *ptr) noexcept {
     g_malloc_heap.free(VirtualAddress(ptr));
 }
 
-void __cdecl operator delete[](void *ptr) {
+void operator delete[](void *ptr) noexcept {
     g_malloc_heap.free(VirtualAddress(ptr));
 }

@@ -30,9 +30,9 @@ SET(SOURCES
         Process/ProcessManager.h
         Process/ProcessManager.cpp
         Process/StackFrame.h
-        Interfaces/PCI.cpp
-        Interfaces/PCI.h
-        Interfaces/Ports.h
+        Bus/PCI.cpp
+        Bus/PCI.h
+        Bus/Ports.h
         Memory/Region.cpp
         Memory/Region.h
         Memory/AddressSpace.cpp
@@ -49,6 +49,7 @@ SET(SOURCES
         Devices/BlockDeviceReader.cpp
         Devices/BlockDeviceReader.h
         ../Library/ConsoleIO.cpp
+        ../Library/UnbufferedConsole.cpp
         ../Library/LinearFramebuffer.cpp
         ../Library/VirtualAddress.cpp
         )

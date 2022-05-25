@@ -28,6 +28,10 @@ void delay(size_t microseconds) {
         outb(0x80, 0);
 }
 
+void debug_putchar(char c) {
+    outb(0xe9, c);
+}
+
 void debug_putstring(const char *string) {
     while (*string != '\0') {
         outb(0xe9, *string);

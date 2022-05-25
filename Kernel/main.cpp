@@ -2,20 +2,21 @@
 // Copyright (c) 2021 Matthew Costa <ucosty@gmail.com>
 //
 // SPDX-License-Identifier: GPL-3.0-only
-#include "ACPI/ACPI.h"
-#include "APIC.h"
-#include "Debugging.h"
-#include "Heap/Kmalloc.h"
-#include "Interfaces/PCI.h"
-#include "InterruptVectorTable.h"
-#include "Memory/MemoryManager.h"
-#include "Processor.h"
+#include <ACPI/ACPI.h>
+#include <APIC.h>
 #include <BootState.h>
+#include <Debugging.h>
 #include <Descriptors.h>
 #include <Devices/MemoryBlockDevice.h>
-#include <Filesystems/SquashFS.h>
+#include <Filesystems/RamdiskFS.h>
+#include <Heap/Kmalloc.h>
+#include <Bus/PCI.h>
+#include <InterruptVectorTable.h>
+#include <LibStd/Types.h>
 #include <LinearFramebuffer.h>
-#include "LibStd/Types.h"
+#include <Memory/MemoryManager.h>
+#include <Processor.h>
+#include <UnbufferedConsole.h>
 
 using namespace Kernel;
 
@@ -70,11 +71,14 @@ extern "C" [[noreturn]] void kernel_stage2(const BootState &boot_state) {
     TRY_PANIC(pci.initialise());
 
     auto ram_block_device = MemoryBlockDevice(boot_state.ramdisk.address.as_virtual_address(), boot_state.ramdisk.size);
-    auto squash_fs = SquashFS::Filesystem(&ram_block_device);
-    TRY_PANIC(squash_fs.init());
+    auto ramdisk_fs = RamdiskFS::Filesystem(&ram_block_device);
+    TRY_PANIC(ramdisk_fs.init());
 
-    auto framebuffer = LinearFramebuffer(boot_state.kernel_address_space.framebuffer.virtual_base, 1280, 1024);
-    framebuffer.rect(50, 50, 100, 100, 0x4455aa, true);
+    auto file = TRY_PANIC(ramdisk_fs.open("test.txt"));
+
+
+    //    auto framebuffer = LinearFramebuffer(boot_state.kernel_address_space.framebuffer.virtual_base, 1280, 1024);
+    //    framebuffer.rect(50, 50, 100, 100, 0x4455aa, true);
 
     Processor::halt();
 }

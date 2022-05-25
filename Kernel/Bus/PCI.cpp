@@ -4,7 +4,7 @@
 // SPDX-License-Identifier: GPL-3.0-only
 #include "PCI.h"
 #include <ACPI/ACPI.h>
-#include <Interfaces/Ports.h>
+#include <Bus/Ports.h>
 
 using namespace Std;
 

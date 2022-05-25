@@ -14,10 +14,10 @@ void load_elf_sections(void *bytes, ELF::Elf64_Ehdr * elf_header) {
             continue;
         }
 
-        auto load_pages = bytes_to_pages(program_header->p_memsz);
-        auto physical_address = kernel_virtual_to_physical(kernel_physical_base, program_header->p_vaddr);
-        auto load_address = (void *) ((char *) bytes + program_header->p_offset);
-        memset((char *) physical_address, 0, load_pages * 0x1000);
-        memcpy((void *) physical_address, load_address, program_header->p_filesz);
+//        auto load_pages = bytes_to_pages(program_header->p_memsz);
+//        auto physical_address = kernel_virtual_to_physical(kernel_physical_base, program_header->p_vaddr);
+//        auto load_address = (void *) ((char *) bytes + program_header->p_offset);
+//        memset((char *) physical_address, 0, load_pages * 0x1000);
+//        memcpy((void *) physical_address, load_address, program_header->p_filesz);
     }
 }

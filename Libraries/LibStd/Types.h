@@ -44,10 +44,10 @@ constexpr uint64_t GiB = 1024 * MiB;
 constexpr uint64_t TiB = 1024 * GiB;
 constexpr uint64_t Page = 4 * KiB;
 
-inline void *operator new(size_t, void *ptr) {
+inline void *operator new(size_t, void *ptr) noexcept {
     return ptr;
 }
 
-inline void *operator new[](size_t, void *ptr) {
+inline void *operator new[](size_t, void *ptr) noexcept {
     return ptr;
 }

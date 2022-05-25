@@ -9,6 +9,7 @@
 #include <Filesystems/SquashFS.h>
 #include "LibStd/StringView.h"
 #include "LibStd/Try.h"
+#include <LibStd/Vector.h>
 
 using namespace Std;
 
