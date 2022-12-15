@@ -9,7 +9,6 @@
 #include "LibStd/Types.h"
 
 struct Framebuffer {
-    uint64_t base_address;
     size_t size;
     uint64_t width, height;
 };
