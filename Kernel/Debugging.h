@@ -21,6 +21,3 @@
 [[noreturn]] void panic(Std::Error error);
 void delay(size_t microseconds);
 
-namespace Kernel {
-const char *memory_map_type(uint8_t memory_type);
-}
