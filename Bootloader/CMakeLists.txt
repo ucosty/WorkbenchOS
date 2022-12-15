@@ -20,6 +20,7 @@ SET(LIBRARY_SOURCES
         ../Libraries/LibStd/Iterator.h
         ../Library/BootState.h
         ../Library/EFI/MemoryMap.h
+        ../Library/EFI/Error.cpp
         ../Library/ACPI/Tables.h)
 SET(SOURCES main.cpp ConsoleFont.h BootConsole.cpp BootConsole.h ${LIBRARY_SOURCES})
 
