@@ -40,7 +40,7 @@ void select(Formatter *formatter, const Std::String *string) {
 }
 
 
-void _println_internal(Formatter *formatter) {
+void println_internal(Formatter *formatter) {
     while (formatter->fmt[formatter->index] != '\0' && formatter->fmt[formatter->index] != '{') {
         debug_putchar(formatter->fmt[formatter->index++]);
     }

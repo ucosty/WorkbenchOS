@@ -21,14 +21,14 @@ void select(Formatter *formatter, Std::StringView sv);
 void select(Formatter *formatter, const char *string);
 void select(Formatter *formatter, void *string);
 
-void _println_internal(Formatter *formatter);
+void println_internal(Formatter *formatter);
 
 template <class T, class ...Args>
-void _println_internal(Formatter *formatter, T a, Args... args) {
+void println_internal(Formatter *formatter, T a, Args... args) {
     select(formatter, a);
     formatter->index +=2;
-    _println_internal(formatter);
-    _println_internal(formatter, args...);
+    println_internal(formatter);
+    println_internal(formatter, args...);
 }
 
 template <class ...Args>
@@ -38,7 +38,7 @@ void println(const char *fmt, Args... args) {
         .index = 0,
     };
 
-    _println_internal(&formatter);
-    _println_internal(&formatter, args...);
+    println_internal(&formatter);
+    println_internal(&formatter, args...);
     debug_putchar('\n');
 }
