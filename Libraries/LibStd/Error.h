@@ -7,6 +7,7 @@
 
 #include <LibStd/Types.h>
 #include <LibStd/StringView.h>
+#include <LibStd/String.h>
 
 namespace Std {
 class Error {
@@ -16,6 +17,7 @@ public:
 
     [[nodiscard]] bool is_code() const { return m_code > 0; }
     [[nodiscard]] uint64_t get_code() const { return m_code; }
+    [[nodiscard]] StringView get_message() const { return m_message; }
 
 protected:
     explicit Error(uint64_t code) : m_code(code) {}

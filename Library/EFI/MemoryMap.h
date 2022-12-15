@@ -5,7 +5,6 @@
 #pragma once
 #include <LibStd/Iterator.h>
 #include <LibStd/Types.h>
-#include <LibStd/Result.h>
 
 namespace EFI {
 enum MemoryType {
@@ -45,6 +44,5 @@ struct MemoryMap {
 
     [[nodiscard]] Std::Iterator<MemoryDescriptor> begin() const { return {&m_descriptors[0]}; }
     [[nodiscard]] Std::Iterator<MemoryDescriptor> end() const { return {&m_descriptors[m_descriptor_count]}; }
-    Std::Result<void> sanity_check();
 };
 }// namespace EFI

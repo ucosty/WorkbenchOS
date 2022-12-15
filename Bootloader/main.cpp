@@ -273,7 +273,7 @@ Result<void> init(EFI::Raw::Handle image_handle, EFI::Raw::SystemTable *system_t
      *       ------------------------------
      */
     auto memory_map = TRY(boot_services.get_memory_map());
-    TRY(memory_map.sanity_check());
+//    TRY(memory_map.sanity_check());
 
     // Allocate for the initial frame allocator
     auto memory_size = get_physical_memory_extent(memory_map);
