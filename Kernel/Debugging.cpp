@@ -5,6 +5,9 @@
 #include <ConsoleIO.h>
 #include <Debugging.h>
 #include <LibStd/Error.h>
+#include <BootConsole/Console.h>
+
+extern Console g_console;
 
 [[noreturn]] void panic() {
     asm volatile("hlt");
@@ -12,7 +15,9 @@
 }
 
 [[noreturn]] void panic(Std::Error error) {
-    printf("\u001b[31mPANIC:\u001b[0m Got error %d\n", error);
+//    printf("\u001b[31mPANIC:\u001b[0m Got error %d\n", error);
+    printf("PANIC: Got error %d\n", error);
+//    g_console.println("PANIC: Got error %d", error.get_code());
     asm volatile("hlt");
     while (true) {}
 }
@@ -33,6 +38,7 @@ void debug_putchar(char c) {
 }
 
 void debug_putstring(const char *string) {
+    g_console.print(string);
     while (*string != '\0') {
         outb(0xe9, *string);
         string++;

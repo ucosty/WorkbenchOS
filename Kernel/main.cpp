@@ -17,6 +17,7 @@
 #include <Memory/MemoryManager.h>
 #include <Processor.h>
 #include <UnbufferedConsole.h>
+#include <BootConsole/Console.h>
 
 using namespace Kernel;
 
@@ -42,15 +43,22 @@ typedef void (*constructor_function)();
 extern constructor_function __init_array_start[];
 extern constructor_function __init_array_end[];
 
+Console g_console;
+
 extern "C" [[noreturn]] void kernel_stage2(const BootState &boot_state) {
+    for (auto init = __init_array_start; init < __init_array_end; init++) {
+        (*init)();
+    }
+
     // TODO: Ensure C++ constructors are run
     // TODO: SystemDescriptorTables initial support to find devices
     auto &ivt = InterruptVectorTable::get_instance();
     ivt.initialise();
 
-    for (auto init = __init_array_start; init < __init_array_end; init++) {
-        (*init)();
-    }
+    auto framebuffer = LinearFramebuffer(boot_state.kernel_address_space.framebuffer.virtual_base, boot_state.framebuffer.width, boot_state.framebuffer.height);
+    framebuffer.rect(50, 50, 100, 100, 0x4455aa, true);
+    g_console.initialise(boot_state.kernel_address_space.framebuffer.virtual_base, boot_state.framebuffer.width, boot_state.framebuffer.height);
+    g_console.println("\n\nKernel loaded!");
 
     auto &memory_manager = MemoryManager::get_instance();
     memory_manager.init(boot_state);
@@ -75,10 +83,6 @@ extern "C" [[noreturn]] void kernel_stage2(const BootState &boot_state) {
     TRY_PANIC(ramdisk_fs.init());
 
     auto file = TRY_PANIC(ramdisk_fs.open("test.txt"));
-
-
-    //    auto framebuffer = LinearFramebuffer(boot_state.kernel_address_space.framebuffer.virtual_base, 1280, 1024);
-    //    framebuffer.rect(50, 50, 100, 100, 0x4455aa, true);
 
     Processor::halt();
 }

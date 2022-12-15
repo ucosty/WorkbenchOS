@@ -52,6 +52,9 @@ SET(SOURCES
         ../Library/UnbufferedConsole.cpp
         ../Library/LinearFramebuffer.cpp
         ../Library/VirtualAddress.cpp
+        BootConsole/Console.cpp
+        BootConsole/Console.h
+        BootConsole/ConsoleFont.h
         )
 SET(SOURCES ${SOURCES})
 
