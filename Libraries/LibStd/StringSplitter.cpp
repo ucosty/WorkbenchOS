@@ -3,10 +3,6 @@
 //
 // SPDX-License-Identifier: GPL-3.0-only
 
-//
-// Created by matthew on 20/04/2022.
-//
-
 #include "StringSplitter.h"
 
 namespace Std::StringSplitter {

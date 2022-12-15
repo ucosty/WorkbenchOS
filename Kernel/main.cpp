@@ -5,18 +5,17 @@
 #include <ACPI/ACPI.h>
 #include <APIC.h>
 #include <BootState.h>
+#include <Bus/PCI.h>
 #include <Debugging.h>
 #include <Descriptors.h>
 #include <Devices/MemoryBlockDevice.h>
 #include <Filesystems/RamdiskFS.h>
 #include <Heap/Kmalloc.h>
-#include <Bus/PCI.h>
 #include <InterruptVectorTable.h>
 #include <LibStd/Types.h>
 #include <LinearFramebuffer.h>
 #include <Memory/MemoryManager.h>
 #include <Processor.h>
-#include <UnbufferedConsole.h>
 #include <BootConsole/Console.h>
 
 using namespace Kernel;
