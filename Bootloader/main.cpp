@@ -405,6 +405,13 @@ Result<void> init(EFI::Raw::Handle image_handle, EFI::Raw::SystemTable *system_t
     auto kernel_page_directory = (PageDirectoryEntry *) (paging_physical_base + 0x3000);    // 1 GiB / 2 MiB per entry.
     auto kernel_page_tables = (PageTableEntry *) (paging_physical_base + 0x4000);           // 2 MiB / 4 KiB per entry
 
+    // Zeroise page structures
+    memset((char *)pml4, 0, 0x1000);
+    memset((char *)pdpt, 0, 0x1000);
+    memset((char *)pdpt_identity, 0, 0x1000);
+    memset((char *)kernel_page_directory, 0, 0x1000);
+    memset((char *)kernel_page_tables, 0, 0x1000);
+
     boot_state->kernel_address_space.kernel_page_directory_virtual_address = boot_state->kernel_address_space.initial_pages.virtual_base + 0x3000;
 
     pml4[511].present = 1;
@@ -418,15 +425,15 @@ Result<void> init(EFI::Raw::Handle image_handle, EFI::Raw::SystemTable *system_t
     for (int i = 0; i < 512; i++) {
         pdpt_identity[i].present = 1;
         pdpt_identity[i].writeable = 1;
+        pdpt_identity[i].user_access = 0;
         pdpt_identity[i].size = 1;
         pdpt_identity[i].global = 1;
         pdpt_identity[i].physical_address = (i * GiB) >> 12;
     }
 
-    // Map 512 GiB of memory to the 510th PML4 entry (-1536 GiB to -1024 GiB)
+    // Map 512 GiB of memory to the 511th PML4 entry (-1024 GiB to -512 GiB)
     pml4[510].present = 1;
     pml4[510].writeable = 1;
-    pml4[510].execution_disabled = 1;
     pml4[510].physical_address = ((uint64_t) pdpt_identity) >> 12;
 
     pdpt[510].present = 1;
