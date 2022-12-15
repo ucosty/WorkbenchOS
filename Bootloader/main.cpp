@@ -12,11 +12,14 @@
 #include "LibStd/Try.h"
 #include <UnbufferedConsole.h>
 #include "LibStd/CString.h"
+#include "BootConsole.h"
 
 using namespace Std;
 
 constexpr uint64_t GUARD_PAGE = 1;
 constexpr uint64_t kernel_virtual_base = 0xffffffff80000000;
+
+BootConsole g_boot_console;
 
 void inline outb(uint16_t port, uint8_t val) {
     asm volatile("outb %0, %1"
@@ -25,6 +28,7 @@ void inline outb(uint16_t port, uint8_t val) {
 }
 
 void debug_putstring(const char *string) {
+    g_boot_console.print(string);
     while (*string != '\0') {
         outb(0xe9, *string);
         string++;
@@ -36,7 +40,7 @@ void debug_putchar(char c) {
 }
 
 [[noreturn]] void panic(const char *message) {
-    println(message);
+    g_boot_console.println(message);
     while (true) {};
 }
 
@@ -166,13 +170,17 @@ Result<void> init(EFI::Raw::Handle image_handle, EFI::Raw::SystemTable *system_t
     boot_services.set_watchdog_timer(0, 0, 0, nullptr);
 
     auto gfx = TRY(init_graphics(&boot_services));
-    memset((char *) gfx.mode()->framebuffer_base, 0x88, 1280 * 1024 * 4);
+    memset((char *) gfx.mode()->framebuffer_base, 0x77, 1280 * 1024 * 4);
+
+    g_boot_console.initialise(reinterpret_cast<uint32_t *>(gfx.mode()->framebuffer_base), 1280, 1024);
+    g_boot_console.println("WorkbenchOS is booting..."_sv);
 
     // All the bits needed to load the kernel from disk
     auto loaded_image = TRY(boot_services.handle_protocol<EFI::LoadedImageProtocol>(image_handle));
     auto file_system = TRY(boot_services.handle_protocol<EFI::SimpleFileSystemProtcol>(loaded_image.device_handle()));
     auto root = TRY(file_system.open_volume());
     auto kernel = TRY(root.open(L"kernel.elf", EFI_FILE_MODE_READ, EFI_FILE_MODE_READ));
+
     auto kernel_info = TRY(kernel.get_info<EFI::FileInfo>());
     auto kernel_bytes = TRY(kernel.read_bytes(kernel_info.file_size()));
 
@@ -338,7 +346,6 @@ Result<void> init(EFI::Raw::Handle image_handle, EFI::Raw::SystemTable *system_t
     boot_state->ramdisk.address = PhysicalAddress(reinterpret_cast<uint64_t>(ramdisk_bytes));
     boot_state->ramdisk.size = ramdisk_info.file_size();
 
-    boot_state->framebuffer.base_address = gfx.mode()->framebuffer_base;
     boot_state->framebuffer.size = gfx.mode()->framebuffer_size;
     boot_state->framebuffer.width = gfx.mode()->info->width;
     boot_state->framebuffer.height = gfx.mode()->info->height;
@@ -482,8 +489,8 @@ Result<void> init(EFI::Raw::Handle image_handle, EFI::Raw::SystemTable *system_t
 extern "C" [[noreturn]] EFI::Raw::Status efi_main(EFI::Raw::Handle *image_handle, EFI::Raw::SystemTable *system_table) {
     auto response = init(image_handle, system_table);
     if (response.is_error()) {
-        auto error_code = response.get_error().get_code();
-        printf("Got error: %s (%d)\r\n", EFI::status_code(error_code), error_code);
+        printf("Got error: %v\r\n", response.get_error().get_message());
+        g_boot_console.println(response.get_error().get_message());
     }
     panic("You should not be here");
 }

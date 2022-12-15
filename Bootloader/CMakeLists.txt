@@ -21,7 +21,7 @@ SET(LIBRARY_SOURCES
         ../Library/BootState.h
         ../Library/EFI/MemoryMap.h
         ../Library/ACPI/Tables.h)
-SET(SOURCES main.cpp ${LIBRARY_SOURCES})
+SET(SOURCES main.cpp ConsoleFont.h BootConsole.cpp BootConsole.h ${LIBRARY_SOURCES})
 
 add_compile_options(-MTd)
 add_compile_options(-target x86_64-unknown-windows)
