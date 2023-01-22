@@ -8,18 +8,18 @@
 #include <PhysicalAddress.h>
 #include "LibStd/Types.h"
 
-struct Framebuffer {
+struct PACKED Framebuffer {
     size_t size;
     uint64_t width, height;
 };
 
-struct VirtualMapping {
+struct PACKED VirtualMapping {
     uint64_t physical_base;
     uint64_t virtual_base;
     size_t size;
 };
 
-struct KernelAddressSpace {
+struct PACKED KernelAddressSpace {
     uint64_t kernel_page_directory_virtual_address;
     uint64_t base;
     size_t size;
@@ -33,12 +33,12 @@ struct KernelAddressSpace {
     VirtualMapping frame_allocator;
 };
 
-struct Ramdisk {
+struct PACKED Ramdisk {
     PhysicalAddress address;
     size_t size;
 };
 
-struct BootState {
+struct PACKED BootState {
     uint64_t physical_memory_size;
     uint64_t acpi_root_table_address;
     Framebuffer framebuffer;
