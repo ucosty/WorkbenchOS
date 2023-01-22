@@ -5,19 +5,46 @@
 
 #include "Console.h"
 #include "ConsoleFont.h"
+#include <LibStd/CString.h>
+
+void Console::initialise(uint64_t framebuffer, uint64_t framebuffer_width, uint64_t framebuffer_height) {
+    m_framebuffer = reinterpret_cast<uint32_t *>(framebuffer);
+    m_framebuffer_width = framebuffer_width;
+    m_framebuffer_height = framebuffer_height;
+
+    m_double_buffer = new uint32_t[framebuffer_width * framebuffer_height];
+    memset(reinterpret_cast<char *>(m_double_buffer), 0x77, m_framebuffer_height * m_framebuffer_width * 4);
+    m_framebuffer_size = m_framebuffer_width * m_framebuffer_height * 4;
+}
+
 
 void Console::write_character(char c) {
-    if(c == '\n') {
+    if (c == '\n') {
         m_cursor_y += 16;
         m_cursor_x = 0;
+        if (m_cursor_y + 16 > m_framebuffer_height) {
+            m_cursor_y = m_framebuffer_height - 16;
+            scroll(16);
+        }
         return;
     }
 
     auto glyph = font_basic[c];
-    for(int y = 0; y < 16; y++) {
+
+    if (m_cursor_x + glyph.width > m_framebuffer_width) {
+        m_cursor_x = 0;
+        m_cursor_y += 16;
+    }
+
+    if (m_cursor_y + 16 > m_framebuffer_height) {
+        m_cursor_y = m_framebuffer_height - 16;
+        scroll(16);
+    }
+
+    for (int y = 0; y < 16; y++) {
         auto row = glyph.row[y];
-        for(int x = 0; x < glyph.width; x++) {
-            if(row & (1 << x)) {
+        for (int x = 0; x < glyph.width; x++) {
+            if (row & (1 << x)) {
                 put_pixel(m_cursor_x + x, m_cursor_y + y, 0);
             }
         }
@@ -26,19 +53,20 @@ void Console::write_character(char c) {
     m_cursor_x += glyph.width;
 }
 
-void Console::put_pixel(int x, int y, uint32_t colour) {
-    if(m_framebuffer == nullptr) return;
+inline void Console::put_pixel(int x, int y, uint32_t colour) {
+    if (m_double_buffer == nullptr) return;
 
     auto offset = x + (m_framebuffer_width * y);
-    m_framebuffer[offset] = colour;
+    m_double_buffer[offset] = colour;
 }
 
 void Console::println(Std::StringView message) {
-    for(int i = 0; i < message.length(); i++) {
+    for (int i = 0; i < message.length(); i++) {
         write_character(message.get(i));
     }
     m_cursor_y += 16;
     m_cursor_x = 0;
+    flip_buffer_screen();
 }
 
 void Console::println(const char *message) {
@@ -48,6 +76,7 @@ void Console::println(const char *message) {
     }
     m_cursor_y += 16;
     m_cursor_x = 0;
+    flip_buffer_screen();
 }
 
 void Console::print(const char *message) {
@@ -55,4 +84,19 @@ void Console::print(const char *message) {
         write_character(*message);
         message++;
     }
+    flip_buffer_screen();
+}
+
+void Console::scroll(int lines) {
+    auto area_to_scroll = m_framebuffer_width * (m_framebuffer_height - lines);
+
+    auto new_area = lines * m_framebuffer_width;
+    auto end_of_framebuffer = m_framebuffer_width * m_framebuffer_height;
+
+    memcpy(m_double_buffer, m_framebuffer + new_area, area_to_scroll * 4);
+    memset(reinterpret_cast<char *>(m_double_buffer + end_of_framebuffer - new_area), 0x77, new_area * 4);
+}
+
+void Console::flip_buffer_screen() {
+    memcpy(m_framebuffer, m_double_buffer, m_framebuffer_size);
 }
