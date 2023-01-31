@@ -7,7 +7,6 @@
 #include <EFI/Efi.h>
 #include <EFI/MemoryMap.h>
 #include <EFI/Error.h>
-#include <EFI/Error.h>
 #include <LibStd/Try.h>
 
 namespace EFI {

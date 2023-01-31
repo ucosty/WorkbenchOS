@@ -87,10 +87,10 @@ void FreeBlock::split_if_required(size_t allocation_request) {
 }
 
 Result<void> KmallocSubHeap::initialise() {
-    auto sub_heap_size_pages = 0x100000 / Page;
+    auto sub_heap_size_pages = 0x1000000 / Page;
     auto &memory_manager = MemoryManager::get_instance();
     m_storage = TRY(memory_manager.allocate_kernel_heap_pages(sub_heap_size_pages)).as_ptr();
-    m_capacity = 0x100000;
+    m_capacity = 0x1000000;
     m_free_list = new (m_storage) FreeBlock(m_capacity);
     m_available = m_capacity;
     return {};

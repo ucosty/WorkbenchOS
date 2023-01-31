@@ -47,6 +47,15 @@ struct PACKED MCFGTable {
 };
 
 struct PACKED MultipleApicDescriptionTable {
+    uint32_t signature;
+    uint32_t length;
+    uint8_t revision;
+    uint8_t checksum;
+    uint8_t oem_id[6];
+    uint8_t oem_table_id[8];
+    uint32_t oem_revision;
+    uint32_t creator_id;
+    uint32_t creator_revision;
     uint32_t local_interrupt_controller_address;
     uint32_t flags;
 };
@@ -62,6 +71,23 @@ struct PACKED MadtLocalApicEntry {
     uint8_t processor_id;
     uint8_t apic_id;
     uint32_t flags;
+};
+
+struct PACKED MadtIoApic {
+    uint8_t type;
+    uint8_t length;
+    uint8_t id;
+    uint32_t address;
+    uint32_t global_system_interrupt_base;
+};
+
+struct PACKED MadtInterruptSourceOverride {
+    uint8_t type;
+    uint8_t length;
+    uint8_t bus_source;
+    uint8_t irq_source;
+    uint32_t global_system_interrupt;
+    uint16_t flags;
 };
 
 

@@ -3,15 +3,16 @@
 //
 // SPDX-License-Identifier: GPL-3.0-only
 
+#include "LibStd/StringSplitter.h"
 #include <Devices/BlockDeviceReader.h>
 #include <Filesystems/RamdiskFS.h>
 #include <LibStd/String.h>
 #include <LibStd/Try.h>
 #include <LibStd/Vector.h>
 #include <UnbufferedConsole.h>
-#include "LibStd/StringSplitter.h"
-
+#include <ConsoleIO.h>
 using namespace Std;
+void debug_putchar(char c);
 
 namespace RamdiskFS {
 
@@ -21,29 +22,26 @@ Result<void> Filesystem::init() {
     auto reader = BlockDeviceReader(m_block_device);
     m_superblock = TRY(reader.read<Superblock>());
     if (m_superblock.magic != MAGIC) {
-        return Error::from_code(1);
+        return Std::Error::with_message("RamdiskFS: Invalid superblock"_sv);//ErrorCode::InvalidSuperblockMagic);
     }
     return {};
 }
 
-Result<OpenFile> Filesystem::open(const String& filename) {
+Result<OpenFile> Filesystem::open(const String &filename) {
     auto reader = BlockDeviceReader(m_block_device);
-    println("Looking for file: {}", filename);
     auto inode_number = TRY(find_file(reader, filename));
-    println("Found inode: {}", inode_number);
     auto inode = TRY(read_inode(reader, inode_number));
-    println("Read inode: offset = {}, size = {}", inode.offset, inode.size);
-    return OpenFile{inode};
+    return OpenFile{inode, this};
 }
 
 Result<Inode> Filesystem::read_inode(BlockDeviceReader &reader, uint32_t index) const {
     if (index > m_superblock.inode_table_size) {
-        println("Invalid inode: {}", index);
+        return Std::Error::from_code(1);//ErrorCode::InvalidInodeNumber);
     }
 
     uint32_t inode_offset = sizeof(Superblock) + (sizeof(Inode) * index);
     reader.seek(inode_offset);
-    return reader.read<Inode>();
+    return TRY(reader.read<Inode>());
 }
 
 Result<String> Filesystem::read_filename_inode(BlockDeviceReader &reader, uint32_t index) {
@@ -54,7 +52,7 @@ Result<String> Filesystem::read_filename_inode(BlockDeviceReader &reader, uint32
     return String(filename, inode.size);
 }
 
-Result<uint32_t> Filesystem::find_file_in_directory(uint32_t directory_inode_index, const String& filename) {
+Result<uint32_t> Filesystem::find_file_in_directory(uint32_t directory_inode_index, const String &filename) {
     auto reader = BlockDeviceReader(m_block_device);
     auto directory_inode = TRY(read_inode(reader, directory_inode_index));
 
@@ -69,21 +67,28 @@ Result<uint32_t> Filesystem::find_file_in_directory(uint32_t directory_inode_ind
             return directory_entry.data_inode;
         }
     }
-    return Error::from_code(1);
+    return Std::Error::with_message("File not found"_sv);
 }
 
 Result<uint32_t> Filesystem::find_file(BlockDeviceReader &reader, String filename) {
-    auto parts = StringSplitter::split(filename, '/');
-    int depth = 0;
+    auto directory = TRY(find_directory_containing_file(filename));
+    auto file = TRY(find_file_in_directory(directory, filename));
+    return file;
+}
 
-    uint32_t directory_inode = 0;
-    while (depth < parts.length()) {
-        println("Looking for {} in {}", filename, parts[depth]);
-        directory_inode = TRY(find_file_in_directory(directory_inode, parts[depth]));
-        depth++;
+Std::Result<uint32_t> Filesystem::find_directory_containing_file(String path) {
+    auto path_parts = StringSplitter::split(path, '/');
+    auto max_search_depth = path_parts.length() - 1;
+    auto current_search_depth = 0;
+    auto inode = 0;
+
+    while (current_search_depth < max_search_depth) {
+        println("Looking in {}", path_parts[current_search_depth]);
+        inode = TRY(find_file_in_directory(inode, path_parts[current_search_depth]));
+        max_search_depth++;
     }
 
-    return directory_inode;
+    return inode;
 }
 
 Result<Vector<Entry>> Filesystem::read_directory(BlockDeviceReader &reader, uint32_t directory_inode_number) {
@@ -107,4 +112,19 @@ size_t Filesystem::get_directory_entry_offset(size_t base, size_t index) {
     return base + (sizeof(DirectoryEntry) * index);
 }
 
+Std::Result<void> Filesystem::read(uint8_t *buffer, Inode inode, size_t offset, size_t size) {
+    if (buffer == nullptr) {
+        return Std::Error::from_code(1);
+    }
+    auto reader = BlockDeviceReader(m_block_device);
+    TRY(reader.seek(m_superblock.data_table_offset + inode.offset + offset));
+    TRY(reader.read_buffer(buffer, size));
+    return {};
+}
+
+Std::Result<void> OpenFile::read(uint8_t *buffer, size_t size) {
+    TRY(m_filesystem->read(buffer, m_inode, m_read_offset, size));
+    m_read_offset += size;
+    return {};
+}
 }// namespace RamdiskFS

@@ -24,6 +24,11 @@ public:
     [[nodiscard]] bool has_mcfg_table() const { return false; }
     Std::Result<void> find_devices();
 
+    template<typename T>
+    Std::Result<DescriptorTable< T>> find_table(const Std::StringView signature_to_find) {
+        return m_descriptor_tables.find_table<T>(signature_to_find);
+    }
+
     // Multi-Processor Initialisation
     void start_application_processors();
     static void set_booted();

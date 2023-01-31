@@ -81,12 +81,12 @@ public:
     bool contains_allocation(VirtualAddress address);
 
 private:
-    uint8_t *m_storage;
-    FreeBlock *m_free_list;
+    uint8_t *m_storage{nullptr};
+    FreeBlock *m_free_list{nullptr};
     KmallocSubHeap *m_previous{nullptr};
     KmallocSubHeap *m_next{nullptr};
-    size_t m_capacity;
-    size_t m_available;
+    size_t m_capacity{0x1000000};
+    size_t m_available{0x1000000};
 };
 
 class KmallocHeap {
@@ -102,7 +102,7 @@ public:
 private:
     Std::Result<void> grow();
 
-    KmallocSubHeap *m_subheaps;
+    KmallocSubHeap *m_subheaps{nullptr};
 
     Slab *m_subheap_allocator{nullptr};
 };

@@ -18,9 +18,9 @@ namespace Kernel {
 template<typename T>
 class DescriptorTable {
 public:
-    DescriptorTable(::Std::SystemDescriptionTableHeader *_header, T *_table)
+    DescriptorTable(SystemDescriptionTableHeader *_header, T *_table)
         : header(_header), table(_table) {}
-    ::Std::SystemDescriptionTableHeader *header;
+    SystemDescriptionTableHeader *header;
     T *table;
 };
 

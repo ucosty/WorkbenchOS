@@ -5,7 +5,7 @@
 
 #pragma once
 
-#include <LibStd/StringView.h>
+//#include <LibStd/StringView.h>
 #include <LibStd/Types.h>
 
 class BootConsole {
@@ -16,7 +16,7 @@ public:
         m_framebuffer_height = framebuffer_height;
     }
 
-    void println(Std::StringView message);
+//    void println(Std::StringView message);
     void println(const char *message);
     void print(const char *message);
     void write_character(char c);

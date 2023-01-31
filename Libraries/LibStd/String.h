@@ -7,12 +7,8 @@
 
 #include <LibStd/StringView.h>
 #include <LibStd/Types.h>
-//#include <LibStd/Vector.h>
 
 namespace Std {
-
-//template<typename T>
-//class Vector;
 
 class String {
 public:
@@ -37,8 +33,6 @@ public:
     char &operator[](size_t index) const {
         return const_cast<char &>(m_characters[index]);
     }
-
-
 
 private:
     const char *m_characters{nullptr};

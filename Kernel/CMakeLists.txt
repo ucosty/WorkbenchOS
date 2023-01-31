@@ -1,6 +1,7 @@
 project(Kernel)
 
 SET(LINKER_SCRIPT ${CMAKE_CURRENT_SOURCE_DIR}/linker.ld)
+
 SET(SOURCES
         main.cpp
         Exceptions.cpp
@@ -55,8 +56,181 @@ SET(SOURCES
         BootConsole/Console.cpp
         BootConsole/Console.h
         BootConsole/ConsoleFont.h
+        Devices/PS2Keyboard.cpp
+        Devices/PS2Keyboard.h
+        Devices/PS2Mouse.cpp
+        Devices/PS2Mouse.h
+        Mutex.cpp
+        Mutex.h
         )
-SET(SOURCES ${SOURCES})
+
+SET(ACPICA_SOURCES
+        ../Libraries/LibACPICA/ACPICA/source/components/dispatcher/dsargs.c
+        ../Libraries/LibACPICA/ACPICA/source/components/dispatcher/dscontrol.c
+        ../Libraries/LibACPICA/ACPICA/source/components/dispatcher/dsdebug.c
+        ../Libraries/LibACPICA/ACPICA/source/components/dispatcher/dsfield.c
+        ../Libraries/LibACPICA/ACPICA/source/components/dispatcher/dsinit.c
+        ../Libraries/LibACPICA/ACPICA/source/components/dispatcher/dsmethod.c
+        ../Libraries/LibACPICA/ACPICA/source/components/dispatcher/dsmthdat.c
+        ../Libraries/LibACPICA/ACPICA/source/components/dispatcher/dsobject.c
+        ../Libraries/LibACPICA/ACPICA/source/components/dispatcher/dsopcode.c
+        ../Libraries/LibACPICA/ACPICA/source/components/dispatcher/dspkginit.c
+        ../Libraries/LibACPICA/ACPICA/source/components/dispatcher/dsutils.c
+        ../Libraries/LibACPICA/ACPICA/source/components/dispatcher/dswexec.c
+        ../Libraries/LibACPICA/ACPICA/source/components/dispatcher/dswload.c
+        ../Libraries/LibACPICA/ACPICA/source/components/dispatcher/dswload2.c
+        ../Libraries/LibACPICA/ACPICA/source/components/dispatcher/dswscope.c
+        ../Libraries/LibACPICA/ACPICA/source/components/dispatcher/dswstate.c
+        ../Libraries/LibACPICA/ACPICA/source/components/events/evevent.c
+        ../Libraries/LibACPICA/ACPICA/source/components/events/evglock.c
+        ../Libraries/LibACPICA/ACPICA/source/components/events/evgpe.c
+        ../Libraries/LibACPICA/ACPICA/source/components/events/evgpeblk.c
+        ../Libraries/LibACPICA/ACPICA/source/components/events/evgpeinit.c
+        ../Libraries/LibACPICA/ACPICA/source/components/events/evgpeutil.c
+        ../Libraries/LibACPICA/ACPICA/source/components/events/evhandler.c
+        ../Libraries/LibACPICA/ACPICA/source/components/events/evmisc.c
+        ../Libraries/LibACPICA/ACPICA/source/components/events/evregion.c
+        ../Libraries/LibACPICA/ACPICA/source/components/events/evrgnini.c
+        ../Libraries/LibACPICA/ACPICA/source/components/events/evsci.c
+        ../Libraries/LibACPICA/ACPICA/source/components/events/evxface.c
+        ../Libraries/LibACPICA/ACPICA/source/components/events/evxfevnt.c
+        ../Libraries/LibACPICA/ACPICA/source/components/events/evxfgpe.c
+        ../Libraries/LibACPICA/ACPICA/source/components/events/evxfregn.c
+        ../Libraries/LibACPICA/ACPICA/source/components/executer/exconcat.c
+        ../Libraries/LibACPICA/ACPICA/source/components/executer/exconfig.c
+        ../Libraries/LibACPICA/ACPICA/source/components/executer/exconvrt.c
+        ../Libraries/LibACPICA/ACPICA/source/components/executer/excreate.c
+        ../Libraries/LibACPICA/ACPICA/source/components/executer/exdebug.c
+        ../Libraries/LibACPICA/ACPICA/source/components/executer/exdump.c
+        ../Libraries/LibACPICA/ACPICA/source/components/executer/exfield.c
+        ../Libraries/LibACPICA/ACPICA/source/components/executer/exfldio.c
+        ../Libraries/LibACPICA/ACPICA/source/components/executer/exmisc.c
+        ../Libraries/LibACPICA/ACPICA/source/components/executer/exmutex.c
+        ../Libraries/LibACPICA/ACPICA/source/components/executer/exnames.c
+        ../Libraries/LibACPICA/ACPICA/source/components/executer/exoparg1.c
+        ../Libraries/LibACPICA/ACPICA/source/components/executer/exoparg2.c
+        ../Libraries/LibACPICA/ACPICA/source/components/executer/exoparg3.c
+        ../Libraries/LibACPICA/ACPICA/source/components/executer/exoparg6.c
+        ../Libraries/LibACPICA/ACPICA/source/components/executer/exprep.c
+        ../Libraries/LibACPICA/ACPICA/source/components/executer/exregion.c
+        ../Libraries/LibACPICA/ACPICA/source/components/executer/exresnte.c
+        ../Libraries/LibACPICA/ACPICA/source/components/executer/exresolv.c
+        ../Libraries/LibACPICA/ACPICA/source/components/executer/exresop.c
+        ../Libraries/LibACPICA/ACPICA/source/components/executer/exserial.c
+        ../Libraries/LibACPICA/ACPICA/source/components/executer/exstore.c
+        ../Libraries/LibACPICA/ACPICA/source/components/executer/exstoren.c
+        ../Libraries/LibACPICA/ACPICA/source/components/executer/exstorob.c
+        ../Libraries/LibACPICA/ACPICA/source/components/executer/exsystem.c
+        ../Libraries/LibACPICA/ACPICA/source/components/executer/extrace.c
+        ../Libraries/LibACPICA/ACPICA/source/components/executer/exutils.c
+        ../Libraries/LibACPICA/ACPICA/source/components/hardware/hwacpi.c
+        ../Libraries/LibACPICA/ACPICA/source/components/hardware/hwesleep.c
+        ../Libraries/LibACPICA/ACPICA/source/components/hardware/hwgpe.c
+        ../Libraries/LibACPICA/ACPICA/source/components/hardware/hwpci.c
+        ../Libraries/LibACPICA/ACPICA/source/components/hardware/hwregs.c
+        ../Libraries/LibACPICA/ACPICA/source/components/hardware/hwsleep.c
+        ../Libraries/LibACPICA/ACPICA/source/components/hardware/hwtimer.c
+        ../Libraries/LibACPICA/ACPICA/source/components/hardware/hwvalid.c
+        ../Libraries/LibACPICA/ACPICA/source/components/hardware/hwxface.c
+        ../Libraries/LibACPICA/ACPICA/source/components/hardware/hwxfsleep.c
+        ../Libraries/LibACPICA/ACPICA/source/components/namespace/nsaccess.c
+        ../Libraries/LibACPICA/ACPICA/source/components/namespace/nsalloc.c
+        ../Libraries/LibACPICA/ACPICA/source/components/namespace/nsarguments.c
+        ../Libraries/LibACPICA/ACPICA/source/components/namespace/nsconvert.c
+        ../Libraries/LibACPICA/ACPICA/source/components/namespace/nsdump.c
+        ../Libraries/LibACPICA/ACPICA/source/components/namespace/nsdumpdv.c
+        ../Libraries/LibACPICA/ACPICA/source/components/namespace/nseval.c
+        ../Libraries/LibACPICA/ACPICA/source/components/namespace/nsinit.c
+        ../Libraries/LibACPICA/ACPICA/source/components/namespace/nsload.c
+        ../Libraries/LibACPICA/ACPICA/source/components/namespace/nsnames.c
+        ../Libraries/LibACPICA/ACPICA/source/components/namespace/nsobject.c
+        ../Libraries/LibACPICA/ACPICA/source/components/namespace/nsparse.c
+        ../Libraries/LibACPICA/ACPICA/source/components/namespace/nspredef.c
+        ../Libraries/LibACPICA/ACPICA/source/components/namespace/nsprepkg.c
+        ../Libraries/LibACPICA/ACPICA/source/components/namespace/nsrepair.c
+        ../Libraries/LibACPICA/ACPICA/source/components/namespace/nsrepair2.c
+        ../Libraries/LibACPICA/ACPICA/source/components/namespace/nssearch.c
+        ../Libraries/LibACPICA/ACPICA/source/components/namespace/nsutils.c
+        ../Libraries/LibACPICA/ACPICA/source/components/namespace/nswalk.c
+        ../Libraries/LibACPICA/ACPICA/source/components/namespace/nsxfeval.c
+        ../Libraries/LibACPICA/ACPICA/source/components/namespace/nsxfname.c
+        ../Libraries/LibACPICA/ACPICA/source/components/namespace/nsxfobj.c
+        ../Libraries/LibACPICA/ACPICA/source/components/parser/psargs.c
+        ../Libraries/LibACPICA/ACPICA/source/components/parser/psloop.c
+        ../Libraries/LibACPICA/ACPICA/source/components/parser/psobject.c
+        ../Libraries/LibACPICA/ACPICA/source/components/parser/psopcode.c
+        ../Libraries/LibACPICA/ACPICA/source/components/parser/psopinfo.c
+        ../Libraries/LibACPICA/ACPICA/source/components/parser/psparse.c
+        ../Libraries/LibACPICA/ACPICA/source/components/parser/psscope.c
+        ../Libraries/LibACPICA/ACPICA/source/components/parser/pstree.c
+        ../Libraries/LibACPICA/ACPICA/source/components/parser/psutils.c
+        ../Libraries/LibACPICA/ACPICA/source/components/parser/pswalk.c
+        ../Libraries/LibACPICA/ACPICA/source/components/parser/psxface.c
+        ../Libraries/LibACPICA/ACPICA/source/components/resources/rsaddr.c
+        ../Libraries/LibACPICA/ACPICA/source/components/resources/rscalc.c
+        ../Libraries/LibACPICA/ACPICA/source/components/resources/rscreate.c
+        ../Libraries/LibACPICA/ACPICA/source/components/resources/rsdumpinfo.c
+        ../Libraries/LibACPICA/ACPICA/source/components/resources/rsinfo.c
+        ../Libraries/LibACPICA/ACPICA/source/components/resources/rsio.c
+        ../Libraries/LibACPICA/ACPICA/source/components/resources/rsirq.c
+        ../Libraries/LibACPICA/ACPICA/source/components/resources/rslist.c
+        ../Libraries/LibACPICA/ACPICA/source/components/resources/rsmemory.c
+        ../Libraries/LibACPICA/ACPICA/source/components/resources/rsmisc.c
+        ../Libraries/LibACPICA/ACPICA/source/components/resources/rsserial.c
+        ../Libraries/LibACPICA/ACPICA/source/components/resources/rsutils.c
+        ../Libraries/LibACPICA/ACPICA/source/components/resources/rsxface.c
+        ../Libraries/LibACPICA/ACPICA/source/components/tables/tbdata.c
+        ../Libraries/LibACPICA/ACPICA/source/components/tables/tbfadt.c
+        ../Libraries/LibACPICA/ACPICA/source/components/tables/tbfind.c
+        ../Libraries/LibACPICA/ACPICA/source/components/tables/tbinstal.c
+        ../Libraries/LibACPICA/ACPICA/source/components/tables/tbprint.c
+        ../Libraries/LibACPICA/ACPICA/source/components/tables/tbutils.c
+        ../Libraries/LibACPICA/ACPICA/source/components/tables/tbxface.c
+        ../Libraries/LibACPICA/ACPICA/source/components/tables/tbxfload.c
+        ../Libraries/LibACPICA/ACPICA/source/components/tables/tbxfroot.c
+        ../Libraries/LibACPICA/ACPICA/source/components/utilities/utaddress.c
+        ../Libraries/LibACPICA/ACPICA/source/components/utilities/utalloc.c
+        ../Libraries/LibACPICA/ACPICA/source/components/utilities/utascii.c
+        ../Libraries/LibACPICA/ACPICA/source/components/utilities/utbuffer.c
+        ../Libraries/LibACPICA/ACPICA/source/components/utilities/utcache.c
+        ../Libraries/LibACPICA/ACPICA/source/components/utilities/utcksum.c
+        ../Libraries/LibACPICA/ACPICA/source/components/utilities/utclib.c
+        ../Libraries/LibACPICA/ACPICA/source/components/utilities/utcopy.c
+        ../Libraries/LibACPICA/ACPICA/source/components/utilities/utdebug.c
+        ../Libraries/LibACPICA/ACPICA/source/components/utilities/utdecode.c
+        ../Libraries/LibACPICA/ACPICA/source/components/utilities/utdelete.c
+        ../Libraries/LibACPICA/ACPICA/source/components/utilities/uterror.c
+        ../Libraries/LibACPICA/ACPICA/source/components/utilities/uteval.c
+        ../Libraries/LibACPICA/ACPICA/source/components/utilities/utexcep.c
+        ../Libraries/LibACPICA/ACPICA/source/components/utilities/utglobal.c
+        ../Libraries/LibACPICA/ACPICA/source/components/utilities/uthex.c
+        ../Libraries/LibACPICA/ACPICA/source/components/utilities/utids.c
+        ../Libraries/LibACPICA/ACPICA/source/components/utilities/utinit.c
+        ../Libraries/LibACPICA/ACPICA/source/components/utilities/utlock.c
+        ../Libraries/LibACPICA/ACPICA/source/components/utilities/utmath.c
+        ../Libraries/LibACPICA/ACPICA/source/components/utilities/utmisc.c
+        ../Libraries/LibACPICA/ACPICA/source/components/utilities/utmutex.c
+        ../Libraries/LibACPICA/ACPICA/source/components/utilities/utnonansi.c
+        ../Libraries/LibACPICA/ACPICA/source/components/utilities/utobject.c
+        ../Libraries/LibACPICA/ACPICA/source/components/utilities/utosi.c
+        ../Libraries/LibACPICA/ACPICA/source/components/utilities/utownerid.c
+        ../Libraries/LibACPICA/ACPICA/source/components/utilities/utpredef.c
+        ../Libraries/LibACPICA/ACPICA/source/components/utilities/utprint.c
+        ../Libraries/LibACPICA/ACPICA/source/components/utilities/utresdecode.c
+        ../Libraries/LibACPICA/ACPICA/source/components/utilities/utresrc.c
+        ../Libraries/LibACPICA/ACPICA/source/components/utilities/utstate.c
+        ../Libraries/LibACPICA/ACPICA/source/components/utilities/utstring.c
+        ../Libraries/LibACPICA/ACPICA/source/components/utilities/utstrsuppt.c
+        ../Libraries/LibACPICA/ACPICA/source/components/utilities/utstrtoul64.c
+        ../Libraries/LibACPICA/ACPICA/source/components/utilities/uttrack.c
+        ../Libraries/LibACPICA/ACPICA/source/components/utilities/utuuid.c
+        ../Libraries/LibACPICA/ACPICA/source/components/utilities/utxface.c
+        ../Libraries/LibACPICA/ACPICA/source/components/utilities/utxferror.c
+        ../Libraries/LibACPICA/ACPICA/source/components/utilities/utxfinit.c
+        ../Libraries/LibACPICA/ACPICA/source/components/utilities/utxfmutex.c
+        )
+
+#SET(SOURCES ${SOURCES} ${ACPICA_SOURCES} ACPI/ACPICA.cpp ACPI/ACPICA.h)
 
 add_compile_options(-target x86_64-pc-none-elf)
 add_compile_options(-fno-pie)
@@ -66,6 +240,7 @@ add_compile_options(-fshort-wchar)
 add_compile_options(-fno-rtti -ffreestanding -fno-builtin -nostdinc++)
 add_compile_options(-fno-exceptions)
 add_compile_options(-fno-asynchronous-unwind-tables)
+add_compile_options(-fno-stack-protector)
 add_compile_options(-mno-80387 -mno-mmx -mno-sse -mno-sse2)
 add_compile_options(-fdiagnostics-color=always)
 add_compile_options(-Wall)
@@ -79,6 +254,7 @@ add_link_options(-no-pie)
 add_link_options(-Wl,-T${LINKER_SCRIPT})
 
 include_directories(.)
+include_directories(../Libraries/LibACPICA/ACPICA/source/include)
 
 add_executable(Kernel ${SOURCES})
 

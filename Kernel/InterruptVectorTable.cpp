@@ -5,31 +5,48 @@
 
 #include <ConsoleIO.h>
 #include <Exceptions.h>
-#include <InterruptVectorTable.h>
 #include <PhysicalAddress.h>
 #include <Process/ProcessManager.h>
-
+#include <Devices/PS2Mouse.h>
+#include <Devices/PS2Keyboard.h>
 uint64_t counter = 0;
 
 alignas(8) DescriptorTablePointer g_idt_pointer{};
 alignas(8) InterruptDescriptor g_interrupts[256];
 
-INTERRUPT_HANDLER(not_implemented);
-void not_implemented_handler(StackFrame frame) {
+PS2Mouse g_mouse;
+PS2Keyboard g_keyboard;
+
+INTERRUPT_HANDLER(0, not_implemented);
+void not_implemented_handler(StackFrame *frame) {
     printf("\u001b[31mNot implemented!\u001b[0m\n");
-    printf("    rip = %X\n", frame.rip);
-    printf("     cs = %X\n", frame.cs);
-    printf(" rflags = %X\n", frame.rflags);
-    printf("    rsp = %X\n", frame.rsp);
-    printf("     ss = %X\n", frame.ss);
+    printf("    rip = %X\n", frame->rip);
+    printf("     cs = %X\n", frame->cs);
+    printf(" rflags = %X\n", frame->rflags);
+    printf("    rsp = %X\n", frame->rsp);
+    printf("     ss = %X\n", frame->ss);
 }
 
-INTERRUPT_HANDLER(timer)
-void timer_handler(StackFrame frame) {
-    if (counter++ % 100 == 0) {
-        printf("\u001b[42;97m Timer \u001b[0m rsp = %X, counter = %d\n", frame.rsp, counter++);
-    }
+INTERRUPT_HANDLER(32, timer)
+void timer_handler(StackFrame *frame) {
+    //    if (counter++ % 100 == 0) {
+    printf("\u001b[42;97m Timer \u001b[0m rsp = %X, counter = %d\n", frame->rsp, counter++);
+    //    }
 
+    auto eoi_register = PhysicalAddress(0xFEE00000 + 0xb0).as_ptr<uint32_t>();
+    *eoi_register = 0;
+}
+
+INTERRUPT_HANDLER(33, ps2_keyboard)
+void ps2_keyboard_handler(StackFrame *frame) {
+    g_keyboard.interrupt_handler();
+    auto eoi_register = PhysicalAddress(0xFEE00000 + 0xb0).as_ptr<uint32_t>();
+    *eoi_register = 0;
+}
+
+INTERRUPT_HANDLER(34, ps2_mouse)
+void ps2_mouse_handler(StackFrame *frame) {
+    g_mouse.interrupt_handler();
     auto eoi_register = PhysicalAddress(0xFEE00000 + 0xb0).as_ptr<uint32_t>();
     *eoi_register = 0;
 }
@@ -39,8 +56,8 @@ struct PACKED BacktraceFrame {
     uint64_t rip;
 };
 
-INTERRUPT_HANDLER(schedule)
-void schedule_handler(StackFrame frame) {
+INTERRUPT_HANDLER(35, schedule)
+void schedule_handler(StackFrame *frame) {
     auto &process_manager = Kernel::ProcessManager::get_instance();
 
     // FIXME: hack for now, let's just see if we can jump into user code
@@ -59,7 +76,8 @@ void InterruptVectorTable::initialise() {
     }
     configure_exceptions(*this);
     set_interrupt_gate(32, PrivilegeLevel::User, &timer_asm_wrapper);
-    set_interrupt_gate(34, PrivilegeLevel::Kernel, &schedule_asm_wrapper);
+    set_interrupt_gate(33, PrivilegeLevel::Kernel, &ps2_keyboard_asm_wrapper);
+    set_interrupt_gate(34, PrivilegeLevel::Kernel, &ps2_mouse_asm_wrapper);
 
     g_idt_pointer.address = reinterpret_cast<uint64_t>(&g_interrupts);
     g_idt_pointer.limit = sizeof(InterruptDescriptor) * 256;

@@ -13,6 +13,20 @@ namespace RamdiskFS {
 
 #define MAGIC 0x017DCE23
 
+enum class ErrorCode {
+    InvalidSuperblockMagic,
+    InvalidInodeNumber
+};
+
+class Error {
+public:
+    Error(ErrorCode code) : m_code(code) {}
+    Error(BlockDeviceError blockDeviceError) : m_block_device_error(blockDeviceError) {}
+private:
+    ErrorCode m_code;
+    Std::Optional<BlockDeviceError> m_block_device_error;
+};
+
 struct Superblock {
     uint32_t magic;// 0x017DCE23
     uint32_t version;
@@ -42,20 +56,13 @@ struct Inode {
     uint32_t size;
 };
 
-class OpenFile {
-public:
-    explicit OpenFile(Inode inode) : m_inode(inode) {}
-
-private:
-    Inode m_inode;
-    size_t m_read_offset{0};
-};
-
 struct Entry {
     Std::String name;
     DirectoryEntryType type;
     uint32_t data_inode;
 };
+
+class OpenFile;
 
 class Filesystem {
 public:
@@ -66,6 +73,8 @@ public:
     Std::Result<OpenFile> open(const Std::String &filename);
 
     Std::Result<Std::Vector<Entry>> read_directory(BlockDeviceReader &reader, uint32_t directory_inode_number);
+
+    Std::Result<void> read(uint8_t *buffer, Inode inode, size_t offset, size_t size);
 
 private:
     Std::Result<uint32_t> find_file_in_directory(uint32_t directory_inode_index, const Std::String &filename);
@@ -81,5 +90,22 @@ private:
     Superblock m_superblock{};
 
     static size_t get_directory_entry_offset(size_t base, size_t index);
+
+    Std::Result<uint32_t> find_directory_containing_file(Std::String path);
 };
+
+class OpenFile {
+public:
+    OpenFile(Inode inode, Filesystem *filesystem) : m_inode(inode), m_filesystem(filesystem) {}
+
+    Std::Result<void> read(uint8_t *buffer, size_t size);
+
+    size_t size() const { return m_inode.size; }
+
+private:
+    Inode m_inode;
+    size_t m_read_offset{0};
+    Filesystem *m_filesystem;
+};
+
 };// namespace RamdiskFS

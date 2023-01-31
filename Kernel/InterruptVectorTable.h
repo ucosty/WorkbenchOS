@@ -4,8 +4,8 @@
 // SPDX-License-Identifier: GPL-3.0-only
 #pragma once
 
-#include <Descriptors.h>
 #include "Process/StackFrame.h"
+#include <Descriptors.h>
 
 enum class PrivilegeLevel {
     Kernel = 0x00,
@@ -28,21 +28,22 @@ private:
 };
 
 struct PACKED StackFrameErrorCode {
-    uint64_t rax;
-    uint64_t rbp;
-    uint64_t rbx;
-    uint64_t rcx;
-    uint64_t rdi;
-    uint64_t rdx;
-    uint64_t rsi;
-    uint64_t r8;
-    uint64_t r9;
-    uint64_t r10;
-    uint64_t r11;
-    uint64_t r12;
-    uint64_t r13;
-    uint64_t r14;
     uint64_t r15;
+    uint64_t r14;
+    uint64_t r13;
+    uint64_t r12;
+    uint64_t r11;
+    uint64_t r10;
+    uint64_t r9;
+    uint64_t r8;
+    uint64_t rsi;
+    uint64_t rdx;
+    uint64_t rdi;
+    uint64_t rcx;
+    uint64_t rbx;
+    uint64_t rbp;
+    uint64_t rax;
+    uint64_t interrupt;
     uint64_t error;
     uint64_t rip;
     uint64_t cs;
@@ -51,22 +52,24 @@ struct PACKED StackFrameErrorCode {
     uint64_t ss;
 };
 
-#define PUSH_REGISTERS()       \
-    asm volatile("push %rax\n" \
-                 "push %rbp\n" \
-                 "push %rbx\n" \
-                 "push %rcx\n" \
-                 "push %rdi\n" \
-                 "push %rdx\n" \
-                 "push %rsi\n" \
-                 "push %r8\n"  \
-                 "push %r9\n"  \
-                 "push %r10\n" \
-                 "push %r11\n" \
-                 "push %r12\n" \
-                 "push %r13\n" \
-                 "push %r14\n" \
-                 "push %r15\n")
+#define PUSH_REGISTERS(interrupt)      \
+    asm volatile("pushq $" #interrupt "\n" \
+                 "push %rax\n"         \
+                 "push %rbp\n"         \
+                 "push %rbx\n"         \
+                 "push %rcx\n"         \
+                 "push %rdi\n"         \
+                 "push %rdx\n"         \
+                 "push %rsi\n"         \
+                 "push %r8\n"          \
+                 "push %r9\n"          \
+                 "push %r10\n"         \
+                 "push %r11\n"         \
+                 "push %r12\n"         \
+                 "push %r13\n"         \
+                 "push %r14\n"         \
+                 "push %r15\n"         \
+                 "mov %rsp, %rdi\n")
 
 #define POP_REGISTERS()       \
     asm volatile("pop %r15\n" \
@@ -83,31 +86,32 @@ struct PACKED StackFrameErrorCode {
                  "pop %rcx\n" \
                  "pop %rbx\n" \
                  "pop %rbp\n" \
-                 "pop %rax\n")
+                 "pop %rax\n" \
+                 "addq $8, %rsp")
 
-#define INTERRUPT_HANDLER(name)                 \
-    extern "C" void name##_handler(StackFrame); \
-    void NAKED name##_asm_wrapper() {           \
-        PUSH_REGISTERS();                       \
-        asm volatile("call " #name "_handler"); \
-        POP_REGISTERS();                        \
-        asm volatile("iretq");                  \
+#define INTERRUPT_HANDLER(interrupt, name)        \
+    extern "C" void name##_handler(StackFrame *); \
+    void NAKED name##_asm_wrapper() {             \
+        PUSH_REGISTERS(interrupt);                \
+        asm volatile("call " #name "_handler");   \
+        POP_REGISTERS();                          \
+        asm volatile("iretq");                    \
     }
 
-#define EXCEPTION_HANDLER(name)                 \
-    extern "C" void name##_handler(StackFrame); \
-    void NAKED name##_asm_wrapper() {           \
-        PUSH_REGISTERS();                       \
-        asm volatile("call " #name "_handler"); \
-        POP_REGISTERS();                        \
-        asm volatile("hlt");                    \
+#define EXCEPTION_HANDLER(interrupt, name)        \
+    extern "C" void name##_handler(StackFrame *); \
+    void NAKED name##_asm_wrapper() {             \
+        PUSH_REGISTERS(interrupt);                \
+        asm volatile("call " #name "_handler");   \
+        POP_REGISTERS();                          \
+        asm volatile("hlt");                      \
     }
 
-#define EXCEPTION_HANDLER_WITH_CODE(name)                \
-    extern "C" void name##_handler(StackFrameErrorCode); \
-    void NAKED name##_asm_wrapper() {                    \
-        PUSH_REGISTERS();                                \
-        asm volatile("call " #name "_handler");          \
-        POP_REGISTERS();                                 \
-        asm volatile("hlt");                             \
+#define EXCEPTION_HANDLER_WITH_CODE(interrupt, name)       \
+    extern "C" void name##_handler(StackFrameErrorCode *); \
+    void NAKED name##_asm_wrapper() {                      \
+        PUSH_REGISTERS(interrupt);                         \
+        asm volatile("call " #name "_handler");            \
+        POP_REGISTERS();                                   \
+        asm volatile("hlt");                               \
     }

@@ -8,6 +8,18 @@
 #include <Devices/BlockDevice.h>
 #include <LibStd/String.h>
 
+
+enum class BlockDeviceErrorCode {
+    ReadError
+};
+
+class BlockDeviceError {
+public:
+    BlockDeviceError(BlockDeviceErrorCode code) : m_code(code) {}
+private:
+    BlockDeviceErrorCode m_code;
+};
+
 class BlockDeviceReader {
 public:
     BlockDeviceReader(BlockDevice *block_device) : m_block_device(block_device) {}

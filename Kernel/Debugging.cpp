@@ -2,10 +2,11 @@
 // Copyright (c) 2021 Matthew Costa <ucosty@gmail.com>
 //
 // SPDX-License-Identifier: GPL-3.0-only
+#include <UnbufferedConsole.h>
+#include <BootConsole/Console.h>
 #include <ConsoleIO.h>
 #include <Debugging.h>
 #include <LibStd/Error.h>
-#include <BootConsole/Console.h>
 
 extern Console g_console;
 
@@ -15,9 +16,14 @@ extern Console g_console;
 }
 
 [[noreturn]] void panic(Std::Error error) {
-//    printf("\u001b[31mPANIC:\u001b[0m Got error %d\n", error);
-    printf("PANIC: Got error %d\n", error);
-//    g_console.println("PANIC: Got error %d", error.get_code());
+    if(error.is_stringview()) {
+        println("PANIC: Got error '{}'\n", error.get_message());
+    } else if(error.is_string()) {
+//        println("PANIC: Got error {}\n", error.get_string());
+    } else {
+        println("PANIC: Got error '{}'\n", error.get_code());
+    }
+
     asm volatile("hlt");
     while (true) {}
 }
@@ -35,10 +41,14 @@ void delay(size_t microseconds) {
 
 void debug_putchar(char c) {
     outb(0xe9, c);
+    g_console.write_character(c);
+    if(c == '\n') {
+        g_console.flip_buffer_screen();
+    }
 }
 
 void debug_putstring(const char *string) {
-    g_console.print(string);
+//    g_console.print(string);
     while (*string != '\0') {
         outb(0xe9, *string);
         string++;

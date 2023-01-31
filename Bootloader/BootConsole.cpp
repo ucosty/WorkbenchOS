@@ -33,14 +33,6 @@ void BootConsole::put_pixel(int x, int y, uint32_t colour) {
     m_framebuffer[offset] = colour;
 }
 
-void BootConsole::println(Std::StringView message) {
-    for(int i = 0; i < message.length(); i++) {
-        write_character(message.get(i));
-    }
-    m_cursor_y += 16;
-    m_cursor_x = 0;
-}
-
 void BootConsole::println(const char *message) {
     while (*message != '\0') {
         write_character(*message);

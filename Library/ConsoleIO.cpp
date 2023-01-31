@@ -67,6 +67,17 @@ void printf(const char *fmt...) {
                     }
                     break;
                 }
+                case 'u': {
+                    // Max length value "-2147483648" ~11 chars
+                    char temp[12] = {0};
+                    int d = va_arg(args, int);
+                    uint32_t_to_cstring(d, 10, 12, temp);
+                    for (char i: temp) {
+                        if (i == 0) continue;
+                        buffer[output_index++] = i;
+                    }
+                    break;
+                }
                 case 'v': {
                     // StringView
                     auto string_view = va_arg(args, StringView *);

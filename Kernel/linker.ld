@@ -21,7 +21,9 @@ SECTIONS {
 
     .rodata ALIGN(4k) : AT(ADDR(.rodata) - kernel_base) {
         *(.rodata*)
-        (.shstrtab*)
+
+        *(SHT_STRTAB)
+        *(SHT_PROGBITS)
     } :rodata
 
     .data ALIGN(4k) : AT(ADDR(.data) - kernel_base) {

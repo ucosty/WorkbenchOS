@@ -7,14 +7,31 @@
 #include <ConsoleIO.h>
 #include <EFI/Efi.h>
 #include <EFI/EfiWrapper.h>
-#include "LibELF/ELF.h"
+#include <LibELF/ELF.h>
+#include <LibStd/Try.h>
 #include <PageStructures.h>
-#include "LibStd/Try.h"
-#include <UnbufferedConsole.h>
-#include "LibStd/CString.h"
+//#include <UnbufferedConsole.h>
 #include "BootConsole.h"
+#include <LibStd/CString.h>
 
 using namespace Std;
+
+namespace Std {
+String::~String() {
+}
+
+String::String(const char *characters) {
+}
+
+String::String(const StringView &sv) : m_length(sv.m_length) {
+}
+
+String::String(const char *characters, size_t length) : m_length(length) {
+}
+
+String::String(String const &other) {
+}
+}// namespace Std
 
 constexpr uint64_t GUARD_PAGE = 1;
 constexpr uint64_t kernel_virtual_base = 0xffffffff80000000;
@@ -173,7 +190,7 @@ Result<void> init(EFI::Raw::Handle image_handle, EFI::Raw::SystemTable *system_t
     memset((char *) gfx.mode()->framebuffer_base, 0x77, 1280 * 1024 * 4);
 
     g_boot_console.initialise(reinterpret_cast<uint32_t *>(gfx.mode()->framebuffer_base), 1280, 1024);
-    g_boot_console.println("WorkbenchOS is booting..."_sv);
+    g_boot_console.println("WorkbenchOS is booting...");
 
     // All the bits needed to load the kernel from disk
     auto loaded_image = TRY(boot_services.handle_protocol<EFI::LoadedImageProtocol>(image_handle));
@@ -195,7 +212,7 @@ Result<void> init(EFI::Raw::Handle image_handle, EFI::Raw::SystemTable *system_t
         panic("Kernel.elf: invalid ELF magic bytes");
     }
 
-    auto program_headers = (ELF::Elf64_Phdr *) ((char *) kernel_bytes + elf_header->e_phoff);
+    auto program_headers = reinterpret_cast<ELF::Elf64_Phdr *>((char *) kernel_bytes + elf_header->e_phoff);
     auto get_total_pages = [](ELF::Elf64_Ehdr *elf_header, ELF::Elf64_Phdr *program_headers) -> uint64_t {
         auto total_pages = 0ULL;
         for (int i = 0; i < elf_header->e_phnum; i++) {
@@ -273,7 +290,7 @@ Result<void> init(EFI::Raw::Handle image_handle, EFI::Raw::SystemTable *system_t
      *       ------------------------------
      */
     auto memory_map = TRY(boot_services.get_memory_map());
-//    TRY(memory_map.sanity_check());
+    //    TRY(memory_map.sanity_check());
 
     // Allocate for the initial frame allocator
     auto memory_size = get_physical_memory_extent(memory_map);
@@ -406,11 +423,11 @@ Result<void> init(EFI::Raw::Handle image_handle, EFI::Raw::SystemTable *system_t
     auto kernel_page_tables = (PageTableEntry *) (paging_physical_base + 0x4000);           // 2 MiB / 4 KiB per entry
 
     // Zeroise page structures
-    memset((char *)pml4, 0, 0x1000);
-    memset((char *)pdpt, 0, 0x1000);
-    memset((char *)pdpt_identity, 0, 0x1000);
-    memset((char *)kernel_page_directory, 0, 0x1000);
-    memset((char *)kernel_page_tables, 0, 0x1000);
+    memset((char *) pml4, 0, 0x1000);
+    memset((char *) pdpt, 0, 0x1000);
+    memset((char *) pdpt_identity, 0, 0x1000);
+    memset((char *) kernel_page_directory, 0, 0x1000);
+    memset((char *) kernel_page_tables, 0, 0x1000);
 
     boot_state->kernel_address_space.kernel_page_directory_virtual_address = boot_state->kernel_address_space.initial_pages.virtual_base + 0x3000;
 
@@ -484,7 +501,7 @@ Result<void> init(EFI::Raw::Handle image_handle, EFI::Raw::SystemTable *system_t
     asm volatile("mov %%rax, %%rsp\n"
                  "mov %%rax, %%rbp\n"
                  "push %%rcx\n"
-                 "jmp *(%%edx)"
+                 "jmp *(%%rdx)"
                  : /* no output */
                  : "a"(boot_state->kernel_address_space.stack.virtual_base + boot_state->kernel_address_space.stack.size - 0x1000),
                    "c"(boot_state->kernel_address_space.boot_state.virtual_base),
@@ -497,7 +514,7 @@ extern "C" [[noreturn]] EFI::Raw::Status efi_main(EFI::Raw::Handle *image_handle
     auto response = init(image_handle, system_table);
     if (response.is_error()) {
         printf("Got error: %v\r\n", response.get_error().get_message());
-        g_boot_console.println(response.get_error().get_message());
+        //        g_boot_console.println(response.get_error().get_message());
     }
     panic("You should not be here");
 }
