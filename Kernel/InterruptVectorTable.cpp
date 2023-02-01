@@ -9,7 +9,7 @@
 #include <Process/ProcessManager.h>
 #include <Devices/PS2Mouse.h>
 #include <Devices/PS2Keyboard.h>
-uint64_t counter = 0;
+u64 counter = 0;
 
 alignas(8) DescriptorTablePointer g_idt_pointer{};
 alignas(8) InterruptDescriptor g_interrupts[256];
@@ -33,27 +33,27 @@ void timer_handler(StackFrame *frame) {
     println("\u001b[42;97m Timer \u001b[0m rsp = {}, counter = {}", frame->rsp, counter++);
     //    }
 
-    auto eoi_register = PhysicalAddress(0xFEE00000 + 0xb0).as_ptr<uint32_t>();
+    auto eoi_register = PhysicalAddress(0xFEE00000 + 0xb0).as_ptr<u32>();
     *eoi_register = 0;
 }
 
 INTERRUPT_HANDLER(33, ps2_keyboard)
 void ps2_keyboard_handler(StackFrame *frame) {
     g_keyboard.interrupt_handler();
-    auto eoi_register = PhysicalAddress(0xFEE00000 + 0xb0).as_ptr<uint32_t>();
+    auto eoi_register = PhysicalAddress(0xFEE00000 + 0xb0).as_ptr<u32>();
     *eoi_register = 0;
 }
 
 INTERRUPT_HANDLER(34, ps2_mouse)
 void ps2_mouse_handler(StackFrame *frame) {
     g_mouse.interrupt_handler();
-    auto eoi_register = PhysicalAddress(0xFEE00000 + 0xb0).as_ptr<uint32_t>();
+    auto eoi_register = PhysicalAddress(0xFEE00000 + 0xb0).as_ptr<u32>();
     *eoi_register = 0;
 }
 
 struct PACKED BacktraceFrame {
     BacktraceFrame *rbp;
-    uint64_t rip;
+    u64 rip;
 };
 
 INTERRUPT_HANDLER(35, schedule)
@@ -79,14 +79,14 @@ void InterruptVectorTable::initialise() {
     set_interrupt_gate(33, PrivilegeLevel::Kernel, &ps2_keyboard_asm_wrapper);
     set_interrupt_gate(34, PrivilegeLevel::Kernel, &ps2_mouse_asm_wrapper);
 
-    g_idt_pointer.address = reinterpret_cast<uint64_t>(&g_interrupts);
+    g_idt_pointer.address = reinterpret_cast<u64>(&g_interrupts);
     g_idt_pointer.limit = sizeof(InterruptDescriptor) * 256;
     asm volatile("lidt g_idt_pointer");
 }
 
-void InterruptVectorTable::set_interrupt_gate(uint8_t id, PrivilegeLevel dpl, void (*handler)()) {
+void InterruptVectorTable::set_interrupt_gate(u8 id, PrivilegeLevel dpl, void (*handler)()) {
     auto descriptor_privilege_level = dpl == PrivilegeLevel::User ? 3 : 0;
-    auto address = reinterpret_cast<uint64_t>(handler);
+    auto address = reinterpret_cast<u64>(handler);
     g_interrupts[id].offset = address & 0xffff;
     g_interrupts[id].offset_2 = (address >> 16) & 0xffff;
     g_interrupts[id].offset_3 = address >> 32;

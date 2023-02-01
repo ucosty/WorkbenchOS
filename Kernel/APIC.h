@@ -10,36 +10,36 @@
 
 namespace Kernel {
 struct PACKED TimerVector {
-    uint32_t vector : 8;         // bits 0 - 7
-    uint32_t ignored : 4;        // bits 8 - 11
-    uint32_t delivery_status : 1;// bits 12
-    uint32_t ignored_2 : 3;      // bits 13 - 15
-    uint32_t mask : 1;           // bits 16
-    uint32_t timer_mode : 2;     // bits 17 - 18
-    uint32_t ignored_3 : 13;     // bits 19 - 31
+    u32 vector : 8;         // bits 0 - 7
+    u32 ignored : 4;        // bits 8 - 11
+    u32 delivery_status : 1;// bits 12
+    u32 ignored_2 : 3;      // bits 13 - 15
+    u32 mask : 1;           // bits 16
+    u32 timer_mode : 2;     // bits 17 - 18
+    u32 ignored_3 : 13;     // bits 19 - 31
 };
 static_assert(sizeof(TimerVector) == 4);
 
 struct PACKED SpuriousVector {
-    uint32_t vector : 8;
-    uint32_t apic_software_enabled : 1;
-    uint32_t focus_processor_checking : 1;
-    uint32_t ignored : 2;
-    uint32_t eoi_broadcast_suppression : 1;
-    uint32_t ignored_2 : 19;
+    u32 vector : 8;
+    u32 apic_software_enabled : 1;
+    u32 focus_processor_checking : 1;
+    u32 ignored : 2;
+    u32 eoi_broadcast_suppression : 1;
+    u32 ignored_2 : 19;
 };
 static_assert(sizeof(SpuriousVector) == 4);
 
 struct PACKED LintVector {
-    uint32_t vector : 8;
-    uint32_t delivery_mode : 3;
-    uint32_t ignored : 1;
-    uint32_t delivery_status : 1;
-    uint32_t interrupt_input_pin_polarity : 1;
-    uint32_t remote_irr : 1;
-    uint32_t trigger_mode : 1;
-    uint32_t mask : 1;
-    uint32_t ignored_2 : 15;
+    u32 vector : 8;
+    u32 delivery_mode : 3;
+    u32 ignored : 1;
+    u32 delivery_status : 1;
+    u32 interrupt_input_pin_polarity : 1;
+    u32 remote_irr : 1;
+    u32 trigger_mode : 1;
+    u32 mask : 1;
+    u32 ignored_2 : 15;
 };
 static_assert(sizeof(LintVector) == 4);
 
@@ -75,16 +75,16 @@ enum TriggerMode {
 };
 
 struct ICR {
-    uint8_t vector;
-    uint32_t destination;
+    u8 vector;
+    u32 destination;
     DeliveryMode delivery_mode;
     DestinationMode destination_mode;
     DestinationShorthand destination_shorthand;
     AssertLevel level;
     TriggerMode trigger_mode;
 
-    [[nodiscard]] constexpr uint32_t high() const { return destination << 24; }
-    [[nodiscard]] constexpr uint32_t low() const {
+    [[nodiscard]] constexpr u32 high() const { return destination << 24; }
+    [[nodiscard]] constexpr u32 low() const {
         return vector | delivery_mode << 8 | destination_mode << 11 | level << 14 | trigger_mode << 15 | destination_shorthand << 18;
     }
 };
@@ -94,13 +94,13 @@ static_assert(ICR{0x08, 1, DeliveryMode::INIT, DestinationMode::Physical, Destin
 class APIC {
 public:
     Std::Result<void> initialise();
-    [[nodiscard]] uint64_t register_base() const { return m_register_base; };
+    [[nodiscard]] u64 register_base() const { return m_register_base; };
     static void write_icr(const ICR &icr) ;
-    static void send_init(uint8_t cpu);
-    static void send_sipi(uint8_t cpu);
-    static uint64_t apic_register_base();
+    static void send_init(u8 cpu);
+    static void send_sipi(u8 cpu);
+    static u64 apic_register_base();
 
 private:
-    uint64_t m_register_base{0};
+    u64 m_register_base{0};
 };
 }// namespace Kernel

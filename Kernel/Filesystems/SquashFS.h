@@ -11,28 +11,28 @@
 namespace SquashFS {
 
 struct PACKED Superblock {
-    uint32_t magic;
-    uint32_t inode_count;
-    uint32_t modification_time;
-    uint32_t block_size;
-    uint32_t fragment_entry_count;
-    uint16_t compression_id;
-    uint16_t block_log;
-    uint16_t flags;
-    uint16_t id_count;
-    uint16_t version_major;
-    uint16_t version_minor;
-    uint64_t root_inode_ref;
-    uint64_t bytes_used;
-    uint64_t id_table_start;
-    uint64_t xattr_id_table_start;
-    uint64_t inode_table_start;
-    uint64_t directory_table_start;
-    uint64_t fragment_table_start;
-    uint64_t export_table_start;
+    u32 magic;
+    u32 inode_count;
+    u32 modification_time;
+    u32 block_size;
+    u32 fragment_entry_count;
+    u16 compression_id;
+    u16 block_log;
+    u16 flags;
+    u16 id_count;
+    u16 version_major;
+    u16 version_minor;
+    u64 root_inode_ref;
+    u64 bytes_used;
+    u64 id_table_start;
+    u64 xattr_id_table_start;
+    u64 inode_table_start;
+    u64 directory_table_start;
+    u64 fragment_table_start;
+    u64 export_table_start;
 };
 
-enum Flags : uint16_t {
+enum Flags : u16 {
     UncompressedInodes = 0x00001,
     UncompressedData = 0x00002,
     Check = 0x0004,
@@ -47,7 +47,7 @@ enum Flags : uint16_t {
     UncompressedIds = 0x0800,
 };
 
-enum InodeType : uint16_t {
+enum InodeType : u16 {
     BasicDirectory = 1,
     BasicFile = 2,
     BasicSymlink = 3,
@@ -65,16 +65,16 @@ enum InodeType : uint16_t {
 };
 
 struct DirectoryHeader {
-    uint32_t count{0};
-    uint32_t start{0};
-    uint32_t inode_number{0};
+    u32 count{0};
+    u32 start{0};
+    u32 inode_number{0};
 };
 
 struct DirectoryEntryHeader {
-    uint16_t offset;
-    uint16_t inode_offset;
-    uint16_t type;
-    uint16_t name_size;
+    u16 offset;
+    u16 inode_offset;
+    u16 type;
+    u16 name_size;
 };
 
 struct DirectoryEntry {
@@ -85,30 +85,30 @@ struct DirectoryEntry {
 static_assert(sizeof(DirectoryEntryHeader) == 8);
 
 struct PACKED CommonInodeHeader {
-    uint16_t type;
-    uint16_t permissions;
-    uint16_t uid;
-    uint16_t gid;
-    uint32_t mtime;
-    uint32_t inode_number;
+    u16 type;
+    u16 permissions;
+    u16 uid;
+    u16 gid;
+    u32 mtime;
+    u32 inode_number;
 };
 
 struct PACKED DirectoryInode {
     CommonInodeHeader header;
-    uint32_t block_index;
-    uint32_t link_count;
-    uint16_t file_size;
-    uint16_t block_offset;
-    uint32_t parent_inode;
+    u32 block_index;
+    u32 link_count;
+    u16 file_size;
+    u16 block_offset;
+    u32 parent_inode;
 };
 
 struct PACKED FileInode {
     CommonInodeHeader header;
-    uint32_t blocks_start;
-    uint32_t frag_index;
-    uint32_t block_offset;
-    uint32_t file_size;
-    uint32_t block_sizes;
+    u32 blocks_start;
+    u32 frag_index;
+    u32 block_offset;
+    u32 file_size;
+    u32 block_sizes;
 };
 
 class OpenFile {

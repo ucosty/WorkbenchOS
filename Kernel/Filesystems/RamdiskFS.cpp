@@ -34,25 +34,25 @@ Result<OpenFile> Filesystem::open(const String &filename) {
     return OpenFile{inode, this};
 }
 
-Result<Inode> Filesystem::read_inode(BlockDeviceReader &reader, uint32_t index) const {
+Result<Inode> Filesystem::read_inode(BlockDeviceReader &reader, u32 index) const {
     if (index > m_superblock.inode_table_size) {
         return Std::Error::from_code(1);//ErrorCode::InvalidInodeNumber);
     }
 
-    uint32_t inode_offset = sizeof(Superblock) + (sizeof(Inode) * index);
+    u32 inode_offset = sizeof(Superblock) + (sizeof(Inode) * index);
     reader.seek(inode_offset);
     return TRY(reader.read<Inode>());
 }
 
-Result<String> Filesystem::read_filename_inode(BlockDeviceReader &reader, uint32_t index) {
+Result<String> Filesystem::read_filename_inode(BlockDeviceReader &reader, u32 index) {
     auto inode = TRY(read_inode(reader, index));
     auto *filename = new char[inode.size];
     reader.seek(m_superblock.data_table_offset + inode.offset);
-    reader.read_buffer(reinterpret_cast<uint8_t *>(filename), inode.size);
+    reader.read_buffer(reinterpret_cast<u8 *>(filename), inode.size);
     return String(filename, inode.size);
 }
 
-Result<uint32_t> Filesystem::find_file_in_directory(uint32_t directory_inode_index, const String &filename) {
+Result<u32> Filesystem::find_file_in_directory(u32 directory_inode_index, const String &filename) {
     auto reader = BlockDeviceReader(m_block_device);
     auto directory_inode = TRY(read_inode(reader, directory_inode_index));
 
@@ -70,13 +70,13 @@ Result<uint32_t> Filesystem::find_file_in_directory(uint32_t directory_inode_ind
     return Std::Error::with_message("File not found"_sv);
 }
 
-Result<uint32_t> Filesystem::find_file(BlockDeviceReader &reader, String filename) {
+Result<u32> Filesystem::find_file(BlockDeviceReader &reader, String filename) {
     auto directory = TRY(find_directory_containing_file(filename));
     auto file = TRY(find_file_in_directory(directory, filename));
     return file;
 }
 
-Std::Result<uint32_t> Filesystem::find_directory_containing_file(String path) {
+Std::Result<u32> Filesystem::find_directory_containing_file(String path) {
     auto path_parts = StringSplitter::split(path, '/');
     auto max_search_depth = path_parts.length() - 1;
     auto current_search_depth = 0;
@@ -91,7 +91,7 @@ Std::Result<uint32_t> Filesystem::find_directory_containing_file(String path) {
     return inode;
 }
 
-Result<Vector<Entry>> Filesystem::read_directory(BlockDeviceReader &reader, uint32_t directory_inode_number) {
+Result<Vector<Entry>> Filesystem::read_directory(BlockDeviceReader &reader, u32 directory_inode_number) {
     Vector<Entry> result;
     auto directory_inode = TRY(read_inode(reader, directory_inode_number));
     auto directory_offset = m_superblock.data_table_offset + directory_inode.offset;
@@ -112,7 +112,7 @@ size_t Filesystem::get_directory_entry_offset(size_t base, size_t index) {
     return base + (sizeof(DirectoryEntry) * index);
 }
 
-Std::Result<void> Filesystem::read(uint8_t *buffer, Inode inode, size_t offset, size_t size) {
+Std::Result<void> Filesystem::read(u8 *buffer, Inode inode, size_t offset, size_t size) {
     if (buffer == nullptr) {
         return Std::Error::from_code(1);
     }
@@ -122,7 +122,7 @@ Std::Result<void> Filesystem::read(uint8_t *buffer, Inode inode, size_t offset, 
     return {};
 }
 
-Std::Result<void> OpenFile::read(uint8_t *buffer, size_t size) {
+Std::Result<void> OpenFile::read(u8 *buffer, size_t size) {
     TRY(m_filesystem->read(buffer, m_inode, m_read_offset, size));
     m_read_offset += size;
     return {};

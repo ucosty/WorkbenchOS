@@ -97,13 +97,13 @@ void general_protection_fault_exception_handler(StackFrameErrorCode *frame) {
 
 struct PACKED BacktraceFrame {
     BacktraceFrame *rbp;
-    uint64_t rip;
+    u64 rip;
 };
 static_assert(sizeof(BacktraceFrame) == 16);
 
 EXCEPTION_HANDLER_WITH_CODE(14, page_fault_exception);
 void page_fault_exception_handler(StackFrameErrorCode *frame) {
-    uint64_t address = 0;
+    u64 address = 0;
     asm volatile("movq %%cr2, %%rax"
                  : "=a"(address));
     println("\u001b[31mPage Fault Exception!\u001b[0m");

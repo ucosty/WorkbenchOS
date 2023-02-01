@@ -5,8 +5,8 @@
 
 #include "PS2Keyboard.h"
 
-inline uint8_t inb(uint16_t port) {
-    uint8_t val;
+inline u8 inb(u16 port) {
+    u8 val;
     asm volatile("inb %1, %0"
                  : "=q"(val)
                  : "Nd"(port));
@@ -21,7 +21,7 @@ void PS2Keyboard::interrupt_handler() {
     }
 }
 
-uint8_t PS2Keyboard::read() {
+u8 PS2Keyboard::read() {
     if(m_buffer_items > 0) {
         return m_buffer[--m_buffer_items];
     }

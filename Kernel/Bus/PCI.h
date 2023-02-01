@@ -11,7 +11,7 @@
 
 class Device {
 public:
-    Device(uint16_t vendor_id, uint16_t device_id, uint32_t bar0, uint32_t bar1, uint32_t bar2, uint32_t bar3) : m_vendor_id(vendor_id)
+    Device(u16 vendor_id, u16 device_id, u32 bar0, u32 bar1, u32 bar2, u32 bar3) : m_vendor_id(vendor_id)
                                                                     , m_device_id(device_id)
                                                                     , m_bar0(bar0)
                                                                     , m_bar1(bar1)
@@ -50,47 +50,47 @@ public:
         }
     }
 
-    [[nodiscard]] uint16_t vendor_id() const { return m_vendor_id; }
-    [[nodiscard]] uint16_t device_id() const { return m_device_id; }
-    [[nodiscard]] uint32_t bar0() const { return m_bar0; }
-    [[nodiscard]] uint32_t bar1() const { return m_bar1; }
-    [[nodiscard]] uint32_t bar2() const { return m_bar2; }
-    [[nodiscard]] uint32_t bar3() const { return m_bar3; }
+    [[nodiscard]] u16 vendor_id() const { return m_vendor_id; }
+    [[nodiscard]] u16 device_id() const { return m_device_id; }
+    [[nodiscard]] u32 bar0() const { return m_bar0; }
+    [[nodiscard]] u32 bar1() const { return m_bar1; }
+    [[nodiscard]] u32 bar2() const { return m_bar2; }
+    [[nodiscard]] u32 bar3() const { return m_bar3; }
 
 private:
-    uint16_t m_vendor_id;
-    uint16_t m_device_id;
-    uint32_t m_bar0;
-    uint32_t m_bar1;
-    uint32_t m_bar2;
-    uint32_t m_bar3;
-    uint32_t m_bar4;
-    uint32_t m_bar5;
+    u16 m_vendor_id;
+    u16 m_device_id;
+    u32 m_bar0;
+    u32 m_bar1;
+    u32 m_bar2;
+    u32 m_bar3;
+    u32 m_bar4;
+    u32 m_bar5;
     Std::Vector<Device *> m_children;
 };
 
 class PCI {
 public:
     Std::Result<void> initialise();
-    Std::Optional<Device *> find_device(uint16_t vendor_id, uint16_t device_id);
+    Std::Optional<Device *> find_device(u16 vendor_id, u16 device_id);
 
 private:
     Std::Result<void> initialise_legacy();
     Std::Vector<Device *> m_devices;
 
-    Std::Result<void> read_device_function(uint8_t bus, uint8_t device, uint8_t function);
-    uint16_t config_read_word(uint8_t bus, uint8_t slot, uint8_t function, uint8_t offset);
-    static uint32_t config_read_dword(uint8_t bus, uint8_t slot, uint8_t function, uint8_t offset);
+    Std::Result<void> read_device_function(u8 bus, u8 device, u8 function);
+    u16 config_read_word(u8 bus, u8 slot, u8 function, u8 offset);
+    static u32 config_read_dword(u8 bus, u8 slot, u8 function, u8 offset);
 
     union Address {
          struct {
-            uint32_t offset : 8;
-            uint32_t function : 3;
-            uint32_t device_number : 5;
-            uint32_t bus_number : 8;
-            uint32_t reserved : 7;
-            uint32_t enable : 1;
+            u32 offset : 8;
+            u32 function : 3;
+            u32 device_number : 5;
+            u32 bus_number : 8;
+            u32 reserved : 7;
+            u32 enable : 1;
         };
-        uint32_t value;
+        u32 value;
     };
 };

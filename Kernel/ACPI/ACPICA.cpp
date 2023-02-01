@@ -11,7 +11,7 @@ extern "C" {
 #include <acpi.h>
 }
 
-static uint64_t divide_rounded_up(uint64_t value, uint64_t divisor) {
+static u64 divide_rounded_up(u64 value, u64 divisor) {
     return (value + (divisor - 1)) / divisor;
 }
 

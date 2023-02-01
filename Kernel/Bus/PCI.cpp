@@ -63,7 +63,7 @@ Result<void> PCI::initialise_legacy() {
     return {};
 }
 
-Result<void> PCI::read_device_function(uint8_t bus, uint8_t device, uint8_t function) {
+Result<void> PCI::read_device_function(u8 bus, u8 device, u8 function) {
     auto id = config_read_dword(bus, device, function, 0);
     if ((id & 0xffff) == 0xffff)
         return {};
@@ -81,14 +81,14 @@ Result<void> PCI::read_device_function(uint8_t bus, uint8_t device, uint8_t func
     //    auto subsystem = config_read_dword(bus, device, function, 44);
     //    auto expansion_rom_base_address = config_read_dword(bus, device, function, 48);
 
-    auto header_type = static_cast<uint8_t>((more_info >> 16) & 0xff);
+    auto header_type = static_cast<u8>((more_info >> 16) & 0xff);
     auto is_multifunction = header_type & 0x80;
 
-    auto vendor_id = static_cast<uint32_t>(id & 0xffff);
-    auto device_id = static_cast<uint32_t>(id >> 16);
-    auto status_value = static_cast<uint32_t>(status >> 16);
-    auto class_code = static_cast<uint32_t>((info >> 24) & 0xff);
-    auto subclass = static_cast<uint32_t>((status >> 16) & 0xff);
+    auto vendor_id = static_cast<u32>(id & 0xffff);
+    auto device_id = static_cast<u32>(id >> 16);
+    auto status_value = static_cast<u32>(status >> 16);
+    auto class_code = static_cast<u32>((info >> 24) & 0xff);
+    auto subclass = static_cast<u32>((status >> 16) & 0xff);
 
     auto device_object = new Device(vendor_id, device_id, bar0, bar1, bar2, bar3);
 
@@ -103,7 +103,7 @@ Result<void> PCI::read_device_function(uint8_t bus, uint8_t device, uint8_t func
     return {};
 }
 
-uint32_t PCI::config_read_dword(uint8_t bus, uint8_t device, uint8_t function, uint8_t offset) {
+u32 PCI::config_read_dword(u8 bus, u8 device, u8 function, u8 offset) {
     auto address = Address{
         .offset = offset,
         .function = function,
@@ -115,7 +115,7 @@ uint32_t PCI::config_read_dword(uint8_t bus, uint8_t device, uint8_t function, u
     return inl(0xcfc);
 }
 
-uint16_t PCI::config_read_word(uint8_t bus, uint8_t device, uint8_t function, uint8_t offset) {
+u16 PCI::config_read_word(u8 bus, u8 device, u8 function, u8 offset) {
     auto address = Address{
         .offset = offset,
         .function = function,
@@ -125,10 +125,10 @@ uint16_t PCI::config_read_word(uint8_t bus, uint8_t device, uint8_t function, ui
 
     outl(0xcf8, address.value);
     auto response = inl(0xcfc);
-    return static_cast<uint16_t>(response & 0xFFFF);
+    return static_cast<u16>(response & 0xFFFF);
 }
 
-Optional<Device *> PCI::find_device(uint16_t vendor_id, uint16_t device_id) {
+Optional<Device *> PCI::find_device(u16 vendor_id, u16 device_id) {
     for(auto device: m_devices) {
         if(device->vendor_id() == vendor_id && device->device_id() == device_id) {
             return device;

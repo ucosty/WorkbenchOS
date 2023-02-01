@@ -61,6 +61,9 @@ SET(SOURCES
         Devices/PS2Mouse.h
         Mutex.cpp
         Mutex.h
+        Platform/x86_64/Entrypoint.cpp
+        Platform/x86_64/PIC.cpp
+        Platform/x86_64/PIC.h
         )
 
 SET(ACPICA_SOURCES

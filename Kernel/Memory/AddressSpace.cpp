@@ -6,7 +6,7 @@
 
 namespace VirtualMemory {
 AddressSpace::AddressSpace() {
-    auto start = VirtualAddress((uint64_t) 0);
+    auto start = VirtualAddress((u64) 0);
     m_regions = new FreeRegion(nullptr, start, ADDRESS_SPACE_PAGES);
 }
 
@@ -23,7 +23,7 @@ Optional<Region *> AddressSpace::find_by_address(VirtualAddress address) {
 }
 
 Result<void> AddressSpace::create_memory_region() {
-    auto start = VirtualAddress((uint64_t) 0);
+    auto start = VirtualAddress((u64) 0);
     m_regions = new MemoryRegion(m_regions, start, 0);
     return {};
 }

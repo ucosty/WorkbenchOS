@@ -7,14 +7,14 @@
 #include "UnbufferedConsole.h"
 #include <LibStd/Try.h>
 
-Std::Result<uint16_t> BlockDeviceReader::read_uint16() {
-    uint16_t result;
-    TRY(m_block_device->read(m_offset, sizeof(uint16_t), reinterpret_cast<uint8_t *>(&result)));
-    m_offset += sizeof(uint16_t);
+Std::Result<u16> BlockDeviceReader::read_uint16() {
+    u16 result;
+    TRY(m_block_device->read(m_offset, sizeof(u16), reinterpret_cast<u8 *>(&result)));
+    m_offset += sizeof(u16);
     return result;
 }
 
-Std::Result<void> BlockDeviceReader::read_buffer(uint8_t *destination, size_t size) {
+Std::Result<void> BlockDeviceReader::read_buffer(u8 *destination, size_t size) {
     TRY(m_block_device->read(m_offset, size, destination));
     m_offset += size;
     return {};
@@ -22,7 +22,7 @@ Std::Result<void> BlockDeviceReader::read_buffer(uint8_t *destination, size_t si
 
 Std::Result<Std::String> BlockDeviceReader::read_string(size_t size) {
     char *destination = new char[size];
-    TRY(m_block_device->read(m_offset, size, reinterpret_cast<uint8_t *>(destination)));
+    TRY(m_block_device->read(m_offset, size, reinterpret_cast<u8 *>(destination)));
     m_offset += size;
     return Std::String(destination, size);
 }

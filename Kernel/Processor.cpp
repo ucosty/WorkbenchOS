@@ -11,7 +11,7 @@ namespace Kernel {
     }
 }
 
-CpuidResponse Processor::cpuid(uint64_t cpuid_function) {
+CpuidResponse Processor::cpuid(u64 cpuid_function) {
     auto response = CpuidResponse();
     asm volatile("cpuid"
                  : "=a"(response.rax), "=b"(response.rbx), "=c"(response.rcx), "=d"(response.rdx)
@@ -34,17 +34,17 @@ bool Processor::tsc_deadline() {
     return (feature_bits.rcx >> 24) & 1;
 }
 
-uint8_t Processor::local_apic_id() {
+u8 Processor::local_apic_id() {
     auto feature_bits = cpuid(1);
     return (feature_bits.rbx >> 24) & 0xFF;
 }
 
-uint64_t Processor::read_msr(uint32_t id) {
-    uint32_t low, high;
+u64 Processor::read_msr(u32 id) {
+    u32 low, high;
     asm volatile("rdmsr"
                  : "=a"(low), "=d"(high)
                  : "c"(id));
-    return ((uint64_t) high << 32) | low;
+    return ((u64) high << 32) | low;
 }
 
 void Processor::disable_pic() {
@@ -57,7 +57,7 @@ void Processor::interrupt() {
     asm volatile("int $0x22");
 }
 
-void Processor::load_task_register(uint16_t selector) {
+void Processor::load_task_register(u16 selector) {
     asm("ltr %0" ::"r"(selector));
 }
 

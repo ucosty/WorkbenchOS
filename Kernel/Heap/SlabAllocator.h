@@ -36,10 +36,10 @@ public:
         auto page_address = reinterpret_cast<size_t>(this);
         return VirtualAddress(page_address + sizeof(SlabPage) + (m_object_size * index));
     }
-    [[nodiscard]] Std::Result<uint8_t *> allocate();
+    [[nodiscard]] Std::Result<u8 *> allocate();
     Std::Result<void> free(VirtualAddress address);
     [[nodiscard]] bool contains_object_at_address(VirtualAddress address) const {
-        auto base_address = reinterpret_cast<uint64_t>(this);
+        auto base_address = reinterpret_cast<u64>(this);
         return (address.as_address() > base_address) &&
                (address.as_address() < base_address + 0x1000);
     }
@@ -60,7 +60,7 @@ public:
     Std::Result<void> initialise(size_t size);
     [[nodiscard]] bool is_slab_for(size_t size) const { return m_initialised && m_object_size == size; }
     [[nodiscard]] bool is_initialised() const { return m_initialised; }
-    [[nodiscard]] Std::Result<Std::NonNullPtr<uint8_t>> allocate();
+    [[nodiscard]] Std::Result<Std::NonNullPtr<u8>> allocate();
     template<typename T>
     Std::Result<T *> allocate() {
         auto result = TRY(allocate());

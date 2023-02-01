@@ -34,18 +34,18 @@ void Kernel::ACPI::start_application_processors() {
     memcpy(trampoline.as_ptr(), &ap_trampoline, ap_init_size);
 
     // Set up variables for the trampoline
-    uint64_t cr3 = 0;
+    u64 cr3 = 0;
     asm volatile("mov %%cr3, %%rax"
                  : "=a"(cr3));
 
-    auto ap_cr3 = PhysicalAddress(0x8ff0).as_ptr<uint64_t>();
+    auto ap_cr3 = PhysicalAddress(0x8ff0).as_ptr<u64>();
     *ap_cr3 = cr3;
 
-    auto ap_main_function = PhysicalAddress(0x8fe0).as_ptr<uint64_t>();
-    *ap_main_function = reinterpret_cast<uint64_t>(&ap_main);
+    auto ap_main_function = PhysicalAddress(0x8fe0).as_ptr<u64>();
+    *ap_main_function = reinterpret_cast<u64>(&ap_main);
 
-    uint64_t stack_base = 0x9000;
-    auto stack = PhysicalAddress(0x8fd0).as_ptr<uint64_t>();
+    u64 stack_base = 0x9000;
+    auto stack = PhysicalAddress(0x8fd0).as_ptr<u64>();
 
     auto cpus = 4;
 

@@ -12,10 +12,10 @@ public:
     void interrupt_handler();
 
     [[nodiscard]] bool is_buffer_empty() const { return m_buffer_items == 0; }
-    uint8_t read();
+    u8 read();
 
 private:
     size_t m_buffer_items{0};
     static constexpr size_t m_buffer_size = 128;
-    uint8_t m_buffer[m_buffer_size] = {0};
+    u8 m_buffer[m_buffer_size] = {0};
 };

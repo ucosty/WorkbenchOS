@@ -4,6 +4,7 @@
 // SPDX-License-Identifier: GPL-3.0-only
 #include "Devices/PS2Keyboard.h"
 #include "LibELF/ELF.h"
+#include "Platform/x86_64/PIC.h"
 #include <ACPI/ACPI.h>
 #include <ACPI/ACPICA.h>
 #include <APIC.h>
@@ -25,7 +26,7 @@ using namespace Kernel;
 
 static constexpr size_t gdt_descriptors = 7;
 alignas(8) DescriptorTablePointer gdt_pointer{};
-alignas(8) uint64_t segments[gdt_descriptors] = {
+alignas(8) u64 segments[gdt_descriptors] = {
     // Null segment
     SegmentDescriptor{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}.descriptor(),
     // Kernel Code Segment
@@ -47,7 +48,7 @@ extern constructor_function __init_array_end[];
 
 Console g_console;
 
-void hexdump(uint8_t *buffer, size_t size) {
+void hexdump(u8 *buffer, size_t size) {
     for(auto i = 0; i < size; i++) {
         if((i + 1) % 16 == 0) {
             print(" | ");
@@ -62,7 +63,7 @@ void hexdump(uint8_t *buffer, size_t size) {
             println("");
         }
 
-        auto value = static_cast<uint32_t>(buffer[i]);
+        auto value = static_cast<u32>(buffer[i]);
         if(value <= 0x0f) {
             print("0{} ", value);
         } else {
@@ -71,22 +72,22 @@ void hexdump(uint8_t *buffer, size_t size) {
     }
 }
 
-uint64_t divide_rounded_up(uint64_t value, uint64_t divisor) {
+u64 divide_rounded_up(u64 value, u64 divisor) {
     return (value + (divisor - 1)) / divisor;
 }
 
-uint64_t bytes_to_pages(uint64_t bytes) {
+u64 bytes_to_pages(u64 bytes) {
     return divide_rounded_up(bytes, 0x1000);
 }
 
-Result<VirtualAddress> load_executable(uint8_t *buffer) {
+Result<VirtualAddress> load_executable(u8 *buffer) {
     auto elf_header = reinterpret_cast<ELF::Elf64_Ehdr *>(buffer);
     if (elf_header->ei_magic != ELF_MAGIC) {
         return Error::with_message("Invalid ELF magic bytes"_sv);
     }
 
     auto program_headers = reinterpret_cast<ELF::Elf64_Phdr *>(buffer + elf_header->e_phoff);
-    auto get_total_pages = [](ELF::Elf64_Ehdr *elf_header, ELF::Elf64_Phdr *program_headers) -> uint64_t {
+    auto get_total_pages = [](ELF::Elf64_Ehdr *elf_header, ELF::Elf64_Phdr *program_headers) -> u64 {
         auto total_pages = 0ULL;
         for (int i = 0; i < elf_header->e_phnum; i++) {
             auto program_header = &program_headers[i];
@@ -143,13 +144,8 @@ extern "C" [[noreturn]] void kernel_stage2(const BootState &boot_state) {
         (*init)();
     }
 
-    // Disable the PIC
-    asm volatile("mov $0xff, %al\n"
-                 "outb %al, $0xa1\n"
-                 "outb %al, $0x21\n");
+    PIC::disable();
 
-    // TODO: Ensure C++ constructors are run
-    // TODO: SystemDescriptorTables initial support to find devices
     auto &ivt = InterruptVectorTable::get_instance();
     ivt.initialise();
 
@@ -182,7 +178,7 @@ extern "C" [[noreturn]] void kernel_stage2(const BootState &boot_state) {
     TRY_PANIC(ramdisk_fs.init());
 
     auto file = TRY_PANIC(ramdisk_fs.open("test"));
-    auto buffer = new uint8_t[file.size()];
+    auto buffer = new u8[file.size()];
     TRY_PANIC(file.read(buffer, file.size()));
 
     // load executable into new process memory space
@@ -194,11 +190,11 @@ extern "C" [[noreturn]] void kernel_stage2(const BootState &boot_state) {
     Processor::halt();
 }
 
-extern "C" [[noreturn]] EFICALL void kernel_main(uint64_t boot_state_address) {
-    gdt_pointer.address = reinterpret_cast<uint64_t>(&segments);
+extern "C" [[noreturn]] EFICALL void kernel_main(u64 boot_state_address) {
+    gdt_pointer.address = reinterpret_cast<u64>(&segments);
     gdt_pointer.limit = sizeof(SegmentDescriptor) * gdt_descriptors;
 
-    auto tss0_address = reinterpret_cast<uint64_t>(&tss0);
+    auto tss0_address = reinterpret_cast<u64>(&tss0);
     TSSDescriptor tss_descriptor_0{
         .segment_limit = sizeof(TSS) - 1,
         .base_low = tss0_address & 0xffff,
@@ -208,7 +204,7 @@ extern "C" [[noreturn]] EFICALL void kernel_main(uint64_t boot_state_address) {
         .present = 1,
         .granularity = 0,
         .base_high_middle = (tss0_address >> 24) & 0xff,
-        .base_high = (uint32_t) (tss0_address >> 32),
+        .base_high = (u32) (tss0_address >> 32),
     };
 
     segments[5] = tss_descriptor_0.low;

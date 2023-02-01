@@ -20,7 +20,7 @@ public:
 private:
     friend class KmallocSubHeap;
 
-    uint64_t m_canary{0xd1d1d1d1d1d1d1d1};
+    u64 m_canary{0xd1d1d1d1d1d1d1d1};
     size_t m_data_size;
 };
 
@@ -53,8 +53,8 @@ public:
 private:
     friend class KmallocSubHeap;
 
-    uint64_t m_canary{0xfefefefefefefefe};
-    uint64_t m_block_size;
+    u64 m_canary{0xfefefefefefefefe};
+    u64 m_block_size;
     FreeBlock *m_previous{nullptr};
     FreeBlock *m_next{nullptr};
 };
@@ -81,7 +81,7 @@ public:
     bool contains_allocation(VirtualAddress address);
 
 private:
-    uint8_t *m_storage{nullptr};
+    u8 *m_storage{nullptr};
     FreeBlock *m_free_list{nullptr};
     KmallocSubHeap *m_previous{nullptr};
     KmallocSubHeap *m_next{nullptr};

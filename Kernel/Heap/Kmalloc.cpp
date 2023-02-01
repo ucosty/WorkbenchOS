@@ -35,7 +35,7 @@ void FreeBlock::coalesce_with_previous_block() {
 bool FreeBlock::can_coalesce_next() {
     if (m_next == nullptr)
         return false;
-    auto end_of_block = reinterpret_cast<FreeBlock *>(reinterpret_cast<uint8_t *>(this) + block_size());
+    auto end_of_block = reinterpret_cast<FreeBlock *>(reinterpret_cast<u8 *>(this) + block_size());
     return m_next == end_of_block;
 }
 
@@ -43,7 +43,7 @@ bool FreeBlock::can_coalesce_previous() {
     if (m_previous == nullptr)
         return false;
 
-    auto end_of_previous_block = reinterpret_cast<FreeBlock *>(reinterpret_cast<uint8_t *>(m_previous) +
+    auto end_of_previous_block = reinterpret_cast<FreeBlock *>(reinterpret_cast<u8 *>(m_previous) +
                                                                m_previous->block_size());
     return end_of_previous_block == this;
 }
@@ -77,7 +77,7 @@ void FreeBlock::split_if_required(size_t allocation_request) {
     // Resize the block
     m_block_size = allocation_request + sizeof(FreeBlock);
 
-    auto *left_side_storage = reinterpret_cast<uint8_t *>(this) + sizeof(AllocatedBlock);
+    auto *left_side_storage = reinterpret_cast<u8 *>(this) + sizeof(AllocatedBlock);
     auto *rhs_pointer = reinterpret_cast<FreeBlock *>(left_side_storage + allocation_request);
     auto right_hand_side = new (rhs_pointer) FreeBlock(right_hand_size);
 
@@ -185,7 +185,7 @@ Result<VirtualAddress> KmallocSubHeap::allocate(size_t _size) {
 
 bool KmallocSubHeap::contains_allocation(VirtualAddress address) {
     auto start = reinterpret_cast<void *>(m_storage);
-    auto end = reinterpret_cast<void *>(reinterpret_cast<uint8_t *>(m_storage) + m_capacity);
+    auto end = reinterpret_cast<void *>(reinterpret_cast<u8 *>(m_storage) + m_capacity);
     return address.as_ptr() >= start && address.as_ptr() < end;
 }
 

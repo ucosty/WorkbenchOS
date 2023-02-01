@@ -12,6 +12,6 @@ public:
     void interrupt_handler();
 
 private:
-    uint8_t cycle = 0;
-    uint8_t packet[4] = {0};
+    u8 cycle = 0;
+    u8 packet[4] = {0};
 };

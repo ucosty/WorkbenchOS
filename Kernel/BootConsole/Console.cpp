@@ -7,12 +7,12 @@
 #include "ConsoleFont.h"
 #include <LibStd/CString.h>
 
-void Console::initialise(uint64_t framebuffer, uint64_t framebuffer_width, uint64_t framebuffer_height) {
-    m_framebuffer = reinterpret_cast<uint32_t *>(framebuffer);
+void Console::initialise(u64 framebuffer, u64 framebuffer_width, u64 framebuffer_height) {
+    m_framebuffer = reinterpret_cast<u32 *>(framebuffer);
     m_framebuffer_width = framebuffer_width;
     m_framebuffer_height = framebuffer_height;
 
-    m_double_buffer = new uint32_t[framebuffer_width * framebuffer_height];
+    m_double_buffer = new u32[framebuffer_width * framebuffer_height];
     memset(reinterpret_cast<char *>(m_double_buffer), 0x77, m_framebuffer_height * m_framebuffer_width * 4);
     m_framebuffer_size = m_framebuffer_width * m_framebuffer_height * 4;
 }
@@ -53,7 +53,7 @@ void Console::write_character(char c) {
     m_cursor_x += glyph.width;
 }
 
-inline void Console::put_pixel(int x, int y, uint32_t colour) {
+inline void Console::put_pixel(int x, int y, u32 colour) {
     if (m_double_buffer == nullptr) return;
 
     auto offset = x + (m_framebuffer_width * y);

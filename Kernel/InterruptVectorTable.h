@@ -21,35 +21,35 @@ public:
     InterruptVectorTable(InterruptVectorTable const &) = delete;
     void operator=(InterruptVectorTable const &) = delete;
     void initialise();
-    static void set_interrupt_gate(uint8_t id, PrivilegeLevel dpl, void (*handler)());
+    static void set_interrupt_gate(u8 id, PrivilegeLevel dpl, void (*handler)());
 
 private:
     InterruptVectorTable() = default;
 };
 
 struct PACKED StackFrameErrorCode {
-    uint64_t r15;
-    uint64_t r14;
-    uint64_t r13;
-    uint64_t r12;
-    uint64_t r11;
-    uint64_t r10;
-    uint64_t r9;
-    uint64_t r8;
-    uint64_t rsi;
-    uint64_t rdx;
-    uint64_t rdi;
-    uint64_t rcx;
-    uint64_t rbx;
-    uint64_t rbp;
-    uint64_t rax;
-    uint64_t interrupt;
-    uint64_t error;
-    uint64_t rip;
-    uint64_t cs;
-    uint64_t rflags;
-    uint64_t rsp;
-    uint64_t ss;
+    u64 r15;
+    u64 r14;
+    u64 r13;
+    u64 r12;
+    u64 r11;
+    u64 r10;
+    u64 r9;
+    u64 r8;
+    u64 rsi;
+    u64 rdx;
+    u64 rdi;
+    u64 rcx;
+    u64 rbx;
+    u64 rbp;
+    u64 rax;
+    u64 interrupt;
+    u64 error;
+    u64 rip;
+    u64 cs;
+    u64 rflags;
+    u64 rsp;
+    u64 ss;
 };
 
 #define PUSH_REGISTERS(interrupt)      \

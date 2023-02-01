@@ -12,7 +12,7 @@ using namespace Std;
 
 MemoryBlockDevice::MemoryBlockDevice(VirtualAddress address, size_t size) : m_address(address), m_size(size) {}
 
-void hexdump(uint8_t *buffer, size_t size);
+void hexdump(u8 *buffer, size_t size);
 
 void *copy(void *destination, const void *source, size_t num) {
     if (destination == nullptr || source == nullptr) return nullptr;
@@ -21,9 +21,9 @@ void *copy(void *destination, const void *source, size_t num) {
 
     // Perfect alignment
     if (source_address % 8 == 0 && destination_address % 8 == 0 && num % 8 == 0) {
-        auto *src = reinterpret_cast<const uint64_t *>(source);
-        auto *dst = reinterpret_cast<uint64_t *>(destination);
-        auto quad_words = num / sizeof(uint64_t);
+        auto *src = reinterpret_cast<const u64 *>(source);
+        auto *dst = reinterpret_cast<u64 *>(destination);
+        auto quad_words = num / sizeof(u64);
 
         for (int i = 0; i < quad_words; i++) {
             dst[i] = src[i];
@@ -33,9 +33,9 @@ void *copy(void *destination, const void *source, size_t num) {
     }
 
     if (source_address % 4 == 0 && destination_address % 4 == 0 && num % 4 == 0) {
-        auto *src = reinterpret_cast<const uint32_t *>(source);
-        auto *dst = reinterpret_cast<uint32_t *>(destination);
-        auto quad_words = num / sizeof(uint32_t);
+        auto *src = reinterpret_cast<const u32 *>(source);
+        auto *dst = reinterpret_cast<u32 *>(destination);
+        auto quad_words = num / sizeof(u32);
 
         for (int i = 0; i < quad_words; i++) {
             dst[i] = src[i];
@@ -53,7 +53,7 @@ void *copy(void *destination, const void *source, size_t num) {
     return destination;
 }
 
-Result<void> MemoryBlockDevice::read(size_t offset, size_t size, uint8_t *buffer) {
+Result<void> MemoryBlockDevice::read(size_t offset, size_t size, u8 *buffer) {
     auto source = m_address.as_ptr();
     if (offset + size > m_size) {
         return Error::from_code(1);
@@ -62,7 +62,7 @@ Result<void> MemoryBlockDevice::read(size_t offset, size_t size, uint8_t *buffer
     return {};
 }
 
-Result<void> MemoryBlockDevice::write(size_t offset, size_t size, uint8_t *buffer) {
+Result<void> MemoryBlockDevice::write(size_t offset, size_t size, u8 *buffer) {
     auto destination = m_address.as_ptr() + offset;
     if (offset + size >= m_size) {
         return Error::from_code(1);

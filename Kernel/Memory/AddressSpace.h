@@ -11,7 +11,7 @@
 
 namespace VirtualMemory {
 
-const uint64_t ADDRESS_SPACE_PAGES = 0x800000000;
+const u64 ADDRESS_SPACE_PAGES = 0x800000000;
 
 class AddressSpace {
 public:

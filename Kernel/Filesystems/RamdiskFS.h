@@ -28,38 +28,38 @@ private:
 };
 
 struct Superblock {
-    uint32_t magic;// 0x017DCE23
-    uint32_t version;
-    uint32_t inode_table_offset;
-    uint32_t inode_table_size;
-    uint32_t data_table_offset;
+    u32 magic;// 0x017DCE23
+    u32 version;
+    u32 inode_table_offset;
+    u32 inode_table_size;
+    u32 data_table_offset;
 };
 
-enum class DirectoryEntryType : uint16_t {
+enum class DirectoryEntryType : u16 {
     Unknown = 0,
     File = 1,
     Directory = 2,
 };
 
 struct DirectoryEntry {
-    uint16_t type;
-    uint32_t filename_inode;
-    uint32_t data_inode;
+    u16 type;
+    u32 filename_inode;
+    u32 data_inode;
 };
 
 struct Directory {
-    uint32_t entry_count;
+    u32 entry_count;
 };
 
 struct Inode {
-    uint32_t offset;
-    uint32_t size;
+    u32 offset;
+    u32 size;
 };
 
 struct Entry {
     Std::String name;
     DirectoryEntryType type;
-    uint32_t data_inode;
+    u32 data_inode;
 };
 
 class OpenFile;
@@ -72,18 +72,18 @@ public:
 
     Std::Result<OpenFile> open(const Std::String &filename);
 
-    Std::Result<Std::Vector<Entry>> read_directory(BlockDeviceReader &reader, uint32_t directory_inode_number);
+    Std::Result<Std::Vector<Entry>> read_directory(BlockDeviceReader &reader, u32 directory_inode_number);
 
-    Std::Result<void> read(uint8_t *buffer, Inode inode, size_t offset, size_t size);
+    Std::Result<void> read(u8 *buffer, Inode inode, size_t offset, size_t size);
 
 private:
-    Std::Result<uint32_t> find_file_in_directory(uint32_t directory_inode_index, const Std::String &filename);
+    Std::Result<u32> find_file_in_directory(u32 directory_inode_index, const Std::String &filename);
 
-    Std::Result<Std::String> read_filename_inode(BlockDeviceReader &reader, uint32_t index);
+    Std::Result<Std::String> read_filename_inode(BlockDeviceReader &reader, u32 index);
 
-    Std::Result<Inode> read_inode(BlockDeviceReader &reader, uint32_t index) const;
+    Std::Result<Inode> read_inode(BlockDeviceReader &reader, u32 index) const;
 
-    Std::Result<uint32_t> find_file(BlockDeviceReader &reader, Std::String filename);
+    Std::Result<u32> find_file(BlockDeviceReader &reader, Std::String filename);
 
     BlockDevice *m_block_device;
 
@@ -91,14 +91,14 @@ private:
 
     static size_t get_directory_entry_offset(size_t base, size_t index);
 
-    Std::Result<uint32_t> find_directory_containing_file(Std::String path);
+    Std::Result<u32> find_directory_containing_file(Std::String path);
 };
 
 class OpenFile {
 public:
     OpenFile(Inode inode, Filesystem *filesystem) : m_inode(inode), m_filesystem(filesystem) {}
 
-    Std::Result<void> read(uint8_t *buffer, size_t size);
+    Std::Result<void> read(u8 *buffer, size_t size);
 
     size_t size() const { return m_inode.size; }
 

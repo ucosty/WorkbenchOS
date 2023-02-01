@@ -6,8 +6,8 @@
 #include "PS2Mouse.h"
 #include <UnbufferedConsole.h>
 
-inline uint8_t inb(uint16_t port) {
-    uint8_t val;
+inline u8 inb(u16 port) {
+    u8 val;
     asm volatile("inb %1, %0"
                  : "=q"(val)
                  : "Nd"(port));
@@ -35,12 +35,12 @@ void PS2Mouse::interrupt_handler() {
             }
             packet[2] = value;
 
-            int32_t rel_x = packet[1];
+            i32 rel_x = packet[1];
             if (packet[0] & 0x10) {
                 rel_x = packet[1] | 0xFFFFFF00;
             }
 
-            int32_t rel_y = packet[2];
+            i32 rel_y = packet[2];
             if (packet[0] & 0x20) {
                 rel_y = packet[2] | 0xFFFFFF00;
             }

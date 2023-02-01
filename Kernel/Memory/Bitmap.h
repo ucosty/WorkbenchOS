@@ -9,16 +9,16 @@
 #include <LibStd/Types.h>
 
 namespace Kernel {
-constexpr uint64_t BITMAP_FULL = 0xffffffffffffffff;
+constexpr u64 BITMAP_FULL = 0xffffffffffffffff;
 
 struct BlockAndOffset {
-    uint64_t block;
-    uint64_t offset;
+    u64 block;
+    u64 offset;
 };
 
 class Bitmap {
 public:
-    void init(size_t page_size, size_t ram_size, uint64_t base_address, uint64_t storage);
+    void init(size_t page_size, size_t ram_size, u64 base_address, u64 storage);
 
     [[nodiscard]] Std::Result<PhysicalAddress> allocate();
     [[nodiscard]] Std::Result<void> free(PhysicalAddress address);
@@ -33,10 +33,10 @@ private:
     size_t m_free_pages;
     size_t m_block_count;
     size_t m_block_full_size;
-    uint64_t *m_storage;
-    uint64_t m_base_address;
+    u64 *m_storage;
+    u64 m_base_address;
 
-    [[nodiscard]] BlockAndOffset address_to_block_and_offset(uint64_t address) const;
-    static Std::Result<size_t> find_free(uint64_t bitmap);
+    [[nodiscard]] BlockAndOffset address_to_block_and_offset(u64 address) const;
+    static Std::Result<size_t> find_free(u64 bitmap);
 };
 }// namespace Kernel

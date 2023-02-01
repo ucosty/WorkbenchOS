@@ -6,14 +6,14 @@
 
 #include "LibStd/Types.h"
 
-static void inline outl(uint16_t port, uint32_t val) {
+static void inline outl(u16 port, u32 val) {
     asm volatile("outl %0, %1"
                  :
                  : "a"(val), "Nd"(port));
 }
 
-static inline uint32_t inl(uint16_t port) {
-    uint32_t ret;
+static inline u32 inl(u16 port) {
+    u32 ret;
     asm volatile("inl %1, %0"
                  : "=a"(ret)
                  : "Nd"(port));

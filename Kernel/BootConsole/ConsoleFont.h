@@ -8,8 +8,8 @@
 #include <LibStd/Types.h>
 
 struct Glyph {
-    uint16_t row[16];
-    uint8_t width;
+    u16 row[16];
+    u8 width;
 };
 
 Glyph font_basic[] = {

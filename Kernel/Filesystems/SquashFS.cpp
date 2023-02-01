@@ -46,7 +46,7 @@ Result<void> Filesystem::init() {
     println("SquashFS::Filesystem::init()");
     VERIFY(m_block_device != nullptr);
 
-    m_block_device->read(0, sizeof(Superblock), reinterpret_cast<uint8_t *>(&m_superblock));
+    m_block_device->read(0, sizeof(Superblock), reinterpret_cast<u8 *>(&m_superblock));
 
     if (m_superblock.magic != 0x73717368) {
         println("SquashFS: Invalid magic {}", m_superblock.magic);
@@ -78,10 +78,10 @@ Result<void> Filesystem::init() {
     println("Listing root directory...");
     TRY(list(m_superblock.directory_table_start));
 
-    //    uint8_t buffer[12] = {0};
+    //    u8 buffer[12] = {0};
 
     //    TRY(reader.seek(m_superblock.directory_table_start));
-    //    uint16_t metadata_header = TRY(reader.read_uint16());
+    //    u16 metadata_header = TRY(reader.read_uint16());
     //    auto compressed = !(metadata_header & 0x8000);
     //    auto data_size = metadata_header & 0x7FFF;
     //
@@ -96,13 +96,13 @@ Result<void> Filesystem::init() {
     //
     //    int offset = 0;
     //    for (int i = 0; i < directory_header->count + 1; i++) {
-    //        uint8_t directory_entry_buffer[8] = {0};
+    //        u8 directory_entry_buffer[8] = {0};
     //        m_block_device->read(m_superblock.directory_table_start + 2 + 12 + offset, 8, directory_entry_buffer);
     //        auto directory_entry = reinterpret_cast<DirectoryEntry *>(directory_entry_buffer);
     //
     //        char *filename = new char[directory_entry->name_size + 2];
     //        memset(filename, 0, directory_entry->name_size + 2);
-    //        m_block_device->read(m_superblock.directory_table_start + 2 + 12 + 8 + offset, directory_entry->name_size + 1, reinterpret_cast<uint8_t *>(filename));
+    //        m_block_device->read(m_superblock.directory_table_start + 2 + 12 + 8 + offset, directory_entry->name_size + 1, reinterpret_cast<u8 *>(filename));
     //        printf("Entry: offset = %x, inode_offset = %x, type = %x, filename = %s\n", directory_entry->offset, directory_entry->inode_offset, directory_entry->type, filename);
     //
     //        offset += directory_entry->name_size + 1 + 8;
@@ -111,14 +111,14 @@ Result<void> Filesystem::init() {
     //        // Hack to get test.txt file
     //        if (directory_entry->inode_offset == 3) {
     //            // Read the inode
-    //            uint8_t inode_header_buffer[sizeof(CommonInodeHeader)];
+    //            u8 inode_header_buffer[sizeof(CommonInodeHeader)];
     //            TRY(reader.seek(m_superblock.inode_table_start + directory_entry->offset + 2));
     //            TRY(reader.read_buffer(inode_header_buffer, sizeof(CommonInodeHeader)));
     //
     //            auto inode_header = reinterpret_cast<CommonInodeHeader *>(&inode_header_buffer);
     //
     //            if (inode_header->type == 2) {
-    //                uint8_t file_inode_buffer[sizeof(FileInode)];
+    //                u8 file_inode_buffer[sizeof(FileInode)];
     //                TRY(reader.seek(m_superblock.inode_table_start + directory_entry->offset + 2));
     //                TRY(reader.read_buffer(file_inode_buffer, sizeof(FileInode)));
     //                auto file_inode = reinterpret_cast<FileInode *>(&file_inode_buffer);
@@ -126,7 +126,7 @@ Result<void> Filesystem::init() {
     //                printf("File: block_offset = %x, file_offset = %x, size = %d\n", file_inode->block_offset, file_inode->block_offset + sizeof(Superblock), file_inode->file_size);
     //
     //                auto file_offset = file_inode->block_offset + sizeof(Superblock);
-    //                auto file_buffer = new uint8_t[file_inode->file_size + 1];
+    //                auto file_buffer = new u8[file_inode->file_size + 1];
     //                memset(reinterpret_cast<char *>(file_buffer), 0, file_inode->file_size + 1);
     //                TRY(reader.seek(file_offset));
     //                TRY(reader.read_buffer(file_buffer, file_inode->file_size));
@@ -189,17 +189,17 @@ Result<FileInode> Filesystem::find_file_in_directory(StringView filename, size_t
     auto directory_header = TRY(read_directory_header(directory_start));
     println("find_file_in_directory(): Directory count = {}, start = {}, inode_number = {}", directory_header.count + 1, directory_header.start, directory_header.inode_number);
 
-    size_t directory_entry_offset = directory_start + sizeof(uint16_t) + sizeof(DirectoryHeader);
+    size_t directory_entry_offset = directory_start + sizeof(u16) + sizeof(DirectoryHeader);
     DirectoryEntryHeader directory_entry{};
 
     for (int i = 0; i < directory_header.count + 1; i++) {
         // Read the directory entry metadata
-        m_block_device->read(directory_entry_offset, sizeof(DirectoryEntryHeader), reinterpret_cast<uint8_t *>(&directory_entry));
+        m_block_device->read(directory_entry_offset, sizeof(DirectoryEntryHeader), reinterpret_cast<u8 *>(&directory_entry));
 
         // Read the filename
         size_t name_length = directory_entry.name_size + 1;
         char *directory_entry_name = new char[name_length];
-        m_block_device->read(directory_entry_offset + sizeof(DirectoryEntryHeader), name_length, reinterpret_cast<uint8_t *>(directory_entry_name));
+        m_block_device->read(directory_entry_offset + sizeof(DirectoryEntryHeader), name_length, reinterpret_cast<u8 *>(directory_entry_name));
 
         auto name = StringView(directory_entry_name, name_length);
         if (name == filename) {
@@ -218,7 +218,7 @@ Result<FileInode> Filesystem::find_file_in_directory(StringView filename, size_t
 
 Result<DirectoryHeader> Filesystem::read_directory_header(size_t directory_start) {
     DirectoryHeader directory_header;
-    m_block_device->read(directory_start + sizeof(uint16_t), sizeof(DirectoryHeader), reinterpret_cast<uint8_t *>(&directory_header));
+    m_block_device->read(directory_start + sizeof(u16), sizeof(DirectoryHeader), reinterpret_cast<u8 *>(&directory_header));
     return directory_header;
 }
 

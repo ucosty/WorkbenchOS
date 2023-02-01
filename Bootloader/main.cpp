@@ -2,17 +2,17 @@
 // Copyright (c) 2021 Matthew Costa <ucosty@gmail.com>
 //
 // SPDX-License-Identifier: GPL-3.0-only
+
+#include "BootConsole.h"
 #include <ACPI/Tables.h>
 #include <BootState.h>
-//#include <ConsoleIO.h>
 #include <EFI/Efi.h>
 #include <EFI/EfiWrapper.h>
 #include <LibELF/ELF.h>
+#include <LibStd/CString.h>
 #include <LibStd/Try.h>
 #include <PageStructures.h>
 #include <UnbufferedConsole.h>
-#include "BootConsole.h"
-#include <LibStd/CString.h>
 
 using namespace Std;
 
@@ -44,14 +44,6 @@ void inline outb(uint16_t port, uint8_t val) {
                  : "a"(val), "Nd"(port));
 }
 
-void debug_putstring(const char *string) {
-    g_boot_console.print(string);
-    while (*string != '\0') {
-        outb(0xe9, *string);
-        string++;
-    }
-}
-
 void debug_putchar(char c) {
     outb(0xe9, c);
 }
@@ -72,11 +64,11 @@ uint64_t divide_rounded_up(uint64_t value, uint64_t divisor) {
  * @return page count
  */
 uint64_t bytes_to_pages(uint64_t bytes) {
-    return divide_rounded_up(bytes, 0x1000);
+    return divide_rounded_up(bytes, Page);
 }
 
 uint64_t next_virtual_mapping(VirtualMapping &last) {
-    return last.virtual_base + last.size + 0x1000;
+    return last.virtual_base + last.size + Page;
 }
 
 uint64_t get_efi_preserved_page_count(EFI::MemoryMap &memory_map) {
@@ -348,7 +340,7 @@ Result<void> init(EFI::Raw::Handle image_handle, EFI::Raw::SystemTable *system_t
         auto load_pages = bytes_to_pages(program_header->p_memsz);
         auto physical_address = kernel_virtual_to_physical(kernel_physical_base, program_header->p_vaddr);
         auto load_address = (void *) ((char *) kernel_bytes + program_header->p_offset);
-        memset((char *) physical_address, 0, load_pages * 0x1000);
+        memset((char *) physical_address, 0, load_pages * Page);
         memcpy((void *) physical_address, load_address, program_header->p_filesz);
     }
 
@@ -416,18 +408,18 @@ Result<void> init(EFI::Raw::Handle image_handle, EFI::Raw::SystemTable *system_t
 
     // Set up initial paging
     auto paging_physical_base = boot_state->kernel_address_space.initial_pages.physical_base;
-    auto pml4 = (PML4Entry *) paging_physical_base;                                         // 256 TiB / 512 GiB per entry
-    auto pdpt = (PageDirectoryPointerTableEntry *) (paging_physical_base + 0x1000);         // 512 GiB / 1 GiB per entry
-    auto pdpt_identity = (PageDirectoryPointerTableEntry *) (paging_physical_base + 0x2000);// 512 GiB / 1 GiB per entry
-    auto kernel_page_directory = (PageDirectoryEntry *) (paging_physical_base + 0x3000);    // 1 GiB / 2 MiB per entry.
-    auto kernel_page_tables = (PageTableEntry *) (paging_physical_base + 0x4000);           // 2 MiB / 4 KiB per entry
+    auto pml4 = reinterpret_cast<PML4Entry *>(paging_physical_base);                                         // 256 TiB / 512 GiB per entry
+    auto pdpt = reinterpret_cast<PageDirectoryPointerTableEntry *>(paging_physical_base + 0x1000);         // 512 GiB / 1 GiB per entry
+    auto pdpt_identity = reinterpret_cast<PageDirectoryPointerTableEntry *>(paging_physical_base + 0x2000);// 512 GiB / 1 GiB per entry
+    auto kernel_page_directory = reinterpret_cast<PageDirectoryEntry *>(paging_physical_base + 0x3000);    // 1 GiB / 2 MiB per entry.
+    auto kernel_page_tables = reinterpret_cast<PageTableEntry *>(paging_physical_base + 0x4000);           // 2 MiB / 4 KiB per entry
 
     // Zeroise page structures
-    memset((char *) pml4, 0, 0x1000);
-    memset((char *) pdpt, 0, 0x1000);
-    memset((char *) pdpt_identity, 0, 0x1000);
-    memset((char *) kernel_page_directory, 0, 0x1000);
-    memset((char *) kernel_page_tables, 0, 0x1000);
+    memset(reinterpret_cast<char *>(pml4), 0, Page);
+    memset(reinterpret_cast<char *>(pdpt), 0, Page);
+    memset(reinterpret_cast<char *>(pdpt_identity), 0, Page);
+    memset(reinterpret_cast<char *>(kernel_page_directory), 0, Page);
+    memset(reinterpret_cast<char *>(kernel_page_tables), 0, Page);
 
     boot_state->kernel_address_space.kernel_page_directory_virtual_address = boot_state->kernel_address_space.initial_pages.virtual_base + 0x3000;
 
@@ -459,7 +451,7 @@ Result<void> init(EFI::Raw::Handle image_handle, EFI::Raw::SystemTable *system_t
 
     auto page_tables_count = divide_rounded_up(pages, 512);
     for (int i = 0; i < page_tables_count; i++) {
-        auto page_table_address = ((uint64_t) kernel_page_tables) + (i * 0x1000);
+        auto page_table_address = ((uint64_t) kernel_page_tables) + (i * Page);
         kernel_page_directory[i].present = 1;
         kernel_page_directory[i].writeable = 1;
         kernel_page_directory[i].physical_address = page_table_address >> 12;
@@ -471,10 +463,10 @@ Result<void> init(EFI::Raw::Handle image_handle, EFI::Raw::SystemTable *system_t
     };
 
     auto map_address_space = [&virtual_to_page_table, &kernel_page_tables](VirtualMapping &address_space) {
-        auto pages = address_space.size / 0x1000;
+        auto pages = address_space.size / Page;
         for (auto i = 0ull; i < pages; i++) {
-            auto page_physical = address_space.physical_base + (i * 0x1000);
-            auto page_virtual = address_space.virtual_base + (i * 0x1000);
+            auto page_physical = address_space.physical_base + (i * Page);
+            auto page_virtual = address_space.virtual_base + (i * Page);
             auto page_table_entry = virtual_to_page_table(page_virtual);
             kernel_page_tables[page_table_entry].present = 1;
             kernel_page_tables[page_table_entry].writeable = 1;
@@ -503,7 +495,7 @@ Result<void> init(EFI::Raw::Handle image_handle, EFI::Raw::SystemTable *system_t
                  "push %%rcx\n"
                  "jmp *(%%rdx)"
                  : /* no output */
-                 : "a"(boot_state->kernel_address_space.stack.virtual_base + boot_state->kernel_address_space.stack.size - 0x1000),
+                 : "a"(boot_state->kernel_address_space.stack.virtual_base + boot_state->kernel_address_space.stack.size - Page),
                    "c"(boot_state->kernel_address_space.boot_state.virtual_base),
                    "d"(&entrypoint)
                  : "memory");

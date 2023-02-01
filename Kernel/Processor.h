@@ -9,16 +9,16 @@
 
 namespace Kernel {
 struct CpuidResponse {
-    uint64_t rax;
-    uint64_t rbx;
-    uint64_t rcx;
-    uint64_t rdx;
+    u64 rax;
+    u64 rbx;
+    u64 rcx;
+    u64 rdx;
 };
 
 class Processor {
 public:
     [[noreturn]] static void halt();
-    static CpuidResponse cpuid(uint64_t cpuid_function);
+    static CpuidResponse cpuid(u64 cpuid_function);
 
     static bool has_apic();
     static bool has_x2apic();
@@ -26,13 +26,13 @@ public:
 
     static void disable_interrupts();
     static void enable_interrupts();
-    static void load_task_register(uint16_t selector);
+    static void load_task_register(u16 selector);
 
     static void interrupt();
 
-    static uint64_t read_msr(uint32_t id);
+    static u64 read_msr(u32 id);
 
-    static uint8_t local_apic_id();
+    static u8 local_apic_id();
 
     static void disable_pic();
 };

@@ -30,8 +30,8 @@ public:
 
     template<typename T>
     Std::Result<DescriptorTable<T>> find_table(const Std::StringView signature_to_find) {
-        auto entry_count = (m_xsdt->length - sizeof(SystemDescriptionTableHeader)) / sizeof(uint64_t);
-        auto *entries = reinterpret_cast<uint64_t *>(m_xsdt + 1);
+        auto entry_count = (m_xsdt->length - sizeof(SystemDescriptionTableHeader)) / sizeof(u64);
+        auto *entries = reinterpret_cast<u64 *>(m_xsdt + 1);
         for (int i = 0; i < entry_count; i++) {
             auto entry_address = PhysicalAddress(entries[i]);
             auto header = entry_address.as_ptr<SystemDescriptionTableHeader>();

@@ -49,15 +49,15 @@ Result<void> Slab::initialise(size_t size) {
     return {};
 }
 
-Result<NonNullPtr<uint8_t>> Slab::allocate() {
+Result<NonNullPtr<u8>> Slab::allocate() {
     VERIFY(m_head != nullptr);
     for (auto page = m_head; page != nullptr; page = page->next()) {
         if (page->has_free_objects()) {
             auto object = TRY(page->allocate());
-            return NonNullPtr<uint8_t>::from(object);
+            return NonNullPtr<u8>::from(object);
         }
     }
-    return NonNullPtr<uint8_t>::from(reinterpret_cast<unsigned char *>(0xdeadc0de));
+    return NonNullPtr<u8>::from(reinterpret_cast<unsigned char *>(0xdeadc0de));
 }
 
 Result<void> Slab::free(VirtualAddress address) {
@@ -84,14 +84,14 @@ Result<void> SlabPage::initialise(size_t size) {
     return {};
 }
 
-Result<uint8_t *> SlabPage::allocate() {
+Result<u8 *> SlabPage::allocate() {
     if (m_free_list == nullptr) {
         return Error::from_code(1);
     }
     auto free_object = m_free_list;
     m_free_list = free_object->next;
     m_free_objects--;
-    return reinterpret_cast<uint8_t *>(free_object);
+    return reinterpret_cast<u8 *>(free_object);
 }
 
 Result<void> SlabPage::free(VirtualAddress address) {
