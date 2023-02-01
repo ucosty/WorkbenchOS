@@ -4,13 +4,13 @@
 // SPDX-License-Identifier: GPL-3.0-only
 #include <ACPI/Tables.h>
 #include <BootState.h>
-#include <ConsoleIO.h>
+//#include <ConsoleIO.h>
 #include <EFI/Efi.h>
 #include <EFI/EfiWrapper.h>
 #include <LibELF/ELF.h>
 #include <LibStd/Try.h>
 #include <PageStructures.h>
-//#include <UnbufferedConsole.h>
+#include <UnbufferedConsole.h>
 #include "BootConsole.h"
 #include <LibStd/CString.h>
 
@@ -176,7 +176,7 @@ Result<uint64_t> find_acpi_root_table(EFI::Raw::SystemTable *system_table) {
 
         return reinterpret_cast<uint64_t>(table.vendor_table);
     }
-    printf("PANIC: Could not find ACPI configuration table!\n");
+    println("PANIC: Could not find ACPI configuration table!");
     return Error::from_code(1);
 }
 
@@ -513,7 +513,7 @@ Result<void> init(EFI::Raw::Handle image_handle, EFI::Raw::SystemTable *system_t
 extern "C" [[noreturn]] EFI::Raw::Status efi_main(EFI::Raw::Handle *image_handle, EFI::Raw::SystemTable *system_table) {
     auto response = init(image_handle, system_table);
     if (response.is_error()) {
-        printf("Got error: %v\r\n", response.get_error().get_message());
+        println("Got error: {}", response.get_error().get_message());
         //        g_boot_console.println(response.get_error().get_message());
     }
     panic("You should not be here");

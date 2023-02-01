@@ -4,7 +4,7 @@
 // SPDX-License-Identifier: GPL-3.0-only
 
 #include "PS2Mouse.h"
-#include <ConsoleIO.h>
+#include <UnbufferedConsole.h>
 
 inline uint8_t inb(uint16_t port) {
     uint8_t val;
@@ -51,6 +51,6 @@ void PS2Mouse::interrupt_handler() {
             break;
         }
         default:
-            printf("Unknown state %d\n", cycle);
+            println("Unknown state {}", cycle);
     }
 }

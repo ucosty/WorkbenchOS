@@ -49,7 +49,6 @@ SET(SOURCES
         Filesystems/RamdiskFS.h
         Devices/BlockDeviceReader.cpp
         Devices/BlockDeviceReader.h
-        ../Library/ConsoleIO.cpp
         ../Library/UnbufferedConsole.cpp
         ../Library/LinearFramebuffer.cpp
         ../Library/VirtualAddress.cpp
@@ -254,7 +253,7 @@ add_link_options(-no-pie)
 add_link_options(-Wl,-T${LINKER_SCRIPT})
 
 include_directories(.)
-include_directories(../Libraries/LibACPICA/ACPICA/source/include)
+#include_directories(../Libraries/LibACPICA/ACPICA/source/include)
 
 add_executable(Kernel ${SOURCES})
 

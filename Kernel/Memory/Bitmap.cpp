@@ -56,7 +56,6 @@ void Bitmap::set_allocated(PhysicalAddress address) {
 void Bitmap::set_allocated(BlockAndOffset block_and_offset) {
     uint64_t mask = 1ull << block_and_offset.offset;
     m_storage[block_and_offset.block] |= mask;
-    //    printf("Set m_storage[%d] |= %X\n", block_and_offset.block, mask);
 }
 
 bool Bitmap::is_allocated(PhysicalAddress address) {

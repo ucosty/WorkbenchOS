@@ -2,10 +2,10 @@
 // Copyright (c) 2021 Matthew Costa <ucosty@gmail.com>
 //
 // SPDX-License-Identifier: GPL-3.0-only
-#include <ConsoleIO.h>
 #include <EFI/EfiWrapper.h>
 #include <EFI/Error.h>
 #include <EFI/MemoryMap.h>
+#include <UnbufferedConsole.h>
 
 using namespace EFI;
 using Std::Result;
@@ -134,7 +134,7 @@ Result<uint64_t, EFI::Error> BootServices::allocate_pages(Raw::AllocateType type
     uint64_t value = 0;
     auto status = m_boot_services->allocate_pages(type, memory_type, pages, &value);
     if (status != 0) {
-        printf("Oh no! Got status code %d\r\n", status);
+        println("Oh no! Got status code {}", status);
         return Error(status);
     }
     return value;

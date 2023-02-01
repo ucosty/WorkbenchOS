@@ -5,19 +5,19 @@
 
 #include "VirtioBlockDevice.h"
 #include "PhysicalAddress.h"
-#include <ConsoleIO.h>
+#include <UnbufferedConsole.h>
 
 void VirtioBlockDevice::detect(PCI *pci) {
     auto pci_device_or_empty = pci->find_device(0x1af4, 0x1001);
-    if(!pci_device_or_empty.is_present()) {
+    if (!pci_device_or_empty.is_present()) {
         return;
     }
 
     auto pci_device = pci_device_or_empty.get();
 
-    printf("Virtio Block Device found\n");
-    printf("BAR0 = %x\n", pci_device->bar0());
-    printf("BAR1 = %x\n", pci_device->bar1());
-    printf("BAR2 = %x\n", pci_device->bar2());
-    printf("BAR3 = %x\n", pci_device->bar3());
+    println("Virtio Block Device found");
+    println("BAR0 = {}", pci_device->bar0());
+    println("BAR1 = {}", pci_device->bar1());
+    println("BAR2 = {}", pci_device->bar2());
+    println("BAR3 = {}", pci_device->bar3());
 }

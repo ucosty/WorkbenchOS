@@ -4,6 +4,7 @@
 // SPDX-License-Identifier: GPL-3.0-only
 
 #include "APIC.h"
+#include "UnbufferedConsole.h"
 #include <ACPI/ACPI.h>
 #include <ConsoleIO.h>
 #include <LibStd/Try.h>
@@ -121,10 +122,10 @@ Std::Result<void> APIC::initialise() {
 
     auto has_apic = Kernel::Processor::has_apic();
     if (!has_apic) {
-        printf("APIC not found\n");
+        println("APIC not found");
     }
 
-    printf("Local APIC ID = %d\n", Kernel::Processor::local_apic_id());
+    println("Local APIC ID = {}", Kernel::Processor::local_apic_id());
     auto apic_base_msr = Kernel::Processor::read_msr(0x1B);
     m_register_base = apic_base_msr & ~0xfff;
     //    auto bsp = (apic_base_msr >> 8) & 1;
@@ -160,7 +161,7 @@ Std::Result<void> APIC::initialise() {
 
 
     auto madt_header = reinterpret_cast<MultipleApicDescriptionTable *>(madt.header);
-    printf("MADT: length = %d\n", madt_header->length);
+    println("MADT: length = {}", madt_header->length);
 
 
     auto entry = reinterpret_cast<MultipleApicDescriptionEntry *>(madt_header + 1);
@@ -180,7 +181,7 @@ Std::Result<void> APIC::initialise() {
             auto override = reinterpret_cast<MadtInterruptSourceOverride *>(entry);
             uint32_t bus_source = override->bus_source;
             uint32_t irq_source = override->irq_source;
-            printf("Override: bus = %d, irq = %d\n", bus_source, irq_source);
+            println("Override: bus = {}, irq = {}", bus_source, irq_source);
         }
 
         // is IO/APIC entry
@@ -188,7 +189,7 @@ Std::Result<void> APIC::initialise() {
             auto ioapic = reinterpret_cast<MadtIoApic *>(entry);
             io_apic_address = 0xfec00000;
             uint32_t id = ioapic->id;
-            printf("IO/APIC found: id = %x, address = %x, GSI base = %x\n", id, ioapic->address, ioapic->global_system_interrupt_base);
+            println("IO/APIC found: id = {}, address = {}, GSI base = {}", id, ioapic->address, ioapic->global_system_interrupt_base);
         }
 
         table_bytes += entry->length;
@@ -198,10 +199,8 @@ Std::Result<void> APIC::initialise() {
 
     // Set up the keyboard interrupt
 
-    printf("io_apic_address = %x\n", io_apic_address);
-
-
-    printf(">> Setting up keyboard interrupt!!\n");
+    println("io_apic_address = {}", io_apic_address);
+    println(">> Setting up keyboard interrupt!!");
     auto io_apic = PhysicalAddress(io_apic_address).as_ptr<void>();
     //    auto value = read_io_apic(io_apic, 0x12);
     //    value |= 0x20;
@@ -226,7 +225,7 @@ Std::Result<void> APIC::initialise() {
     write_io_apic(io_apic, 0x28, 0x22);
     write_io_apic(io_apic, 0x29, 0);
 
-    printf(">> Done!!\n");
+    println(">> Done!!");
 
     TRY(enable_mouse());
     asm("sti");

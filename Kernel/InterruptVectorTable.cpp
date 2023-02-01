@@ -19,18 +19,18 @@ PS2Keyboard g_keyboard;
 
 INTERRUPT_HANDLER(0, not_implemented);
 void not_implemented_handler(StackFrame *frame) {
-    printf("\u001b[31mNot implemented!\u001b[0m\n");
-    printf("    rip = %X\n", frame->rip);
-    printf("     cs = %X\n", frame->cs);
-    printf(" rflags = %X\n", frame->rflags);
-    printf("    rsp = %X\n", frame->rsp);
-    printf("     ss = %X\n", frame->ss);
+    println("\u001b[31mNot implemented!\u001b[0m");
+    println("    rip = {}", frame->rip);
+    println("     cs = {}", frame->cs);
+    println(" rflags = {}", frame->rflags);
+    println("    rsp = {}", frame->rsp);
+    println("     ss = {}", frame->ss);
 }
 
 INTERRUPT_HANDLER(32, timer)
 void timer_handler(StackFrame *frame) {
     //    if (counter++ % 100 == 0) {
-    printf("\u001b[42;97m Timer \u001b[0m rsp = %X, counter = %d\n", frame->rsp, counter++);
+    println("\u001b[42;97m Timer \u001b[0m rsp = {}, counter = {}", frame->rsp, counter++);
     //    }
 
     auto eoi_register = PhysicalAddress(0xFEE00000 + 0xb0).as_ptr<uint32_t>();

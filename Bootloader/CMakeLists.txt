@@ -8,7 +8,6 @@ SET(LIBRARY_SOURCES
         ../Library/EFI/EfiWrapper.h
         ../Library/EFI/GUID.h
         ../Library/UnbufferedConsole.cpp
-        ../Library/ConsoleIO.cpp
         ../Library/LinearFramebuffer.cpp
         ../Library/LinearFramebuffer.h
         ../Library/ConsoleFont.h

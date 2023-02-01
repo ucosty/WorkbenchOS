@@ -5,4 +5,3 @@
 #pragma once
 
 void debug_putstring(const char *string);
-void printf(const char *fmt...);

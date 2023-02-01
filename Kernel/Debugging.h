@@ -5,19 +5,18 @@
 
 #pragma once
 
-#include <ConsoleIO.h>
 #include <LibStd/Error.h>
 #include <LibStd/Types.h>
+#include <UnbufferedConsole.h>
 
-#define VERIFY(expression) ({                                             \
-    if (!(expression)) {                                                  \
-        printf("PANIC: " #expression " failed\n");                        \
-        printf("PANIC: %s in %s:%d\n", __PRETTY_FUNCTION__, __FILE__, __LINE__); \
-        panic();                                                          \
-    }                                                                     \
+#define VERIFY(expression) ({                                                   \
+    if (!(expression)) {                                                        \
+        println("PANIC: " #expression " failed");                               \
+        println("PANIC: {} in {}:{}", __PRETTY_FUNCTION__, __FILE__, __LINE__); \
+        panic();                                                                \
+    }                                                                           \
 })
 
 [[noreturn]] void panic();
 [[noreturn]] void panic(Std::Error error);
 void delay(size_t microseconds);
-

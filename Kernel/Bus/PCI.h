@@ -23,7 +23,7 @@ public:
         auto allocator_or_error = slab_allocator.get_or_create_slab(sizeof(Device));
 
         if(allocator_or_error.is_error()) {
-            printf("FATAL: Could not get allocator for size %d\n", sizeof(Device));
+            println("FATAL: Could not get allocator for size {}", sizeof(Device));
             return nullptr;
         }
 
@@ -31,7 +31,7 @@ public:
 
         auto ptr_or_error = allocator->allocate<Device>();
         if(ptr_or_error.is_error()) {
-            printf("FATAL: Failed to allocate Device in Slab\n");
+            println("FATAL: Failed to allocate Device in Slab");
             return nullptr;
         }
 
@@ -45,17 +45,17 @@ public:
         if(!allocator_or_error.is_error()) {
             auto allocator = allocator_or_error.get().as_ptr();
             if(allocator->free(VirtualAddress{ptr}).is_error()) {
-                printf("PCI: failed to free device address = %X\n", ptr);
+                println("PCI: failed to free device address = {}", ptr);
             }
         }
     }
 
-    uint16_t vendor_id() const { return m_vendor_id; }
-    uint16_t device_id() const { return m_device_id; }
-    uint32_t bar0() const { return m_bar0; }
-    uint32_t bar1() const { return m_bar1; }
-    uint32_t bar2() const { return m_bar2; }
-    uint32_t bar3() const { return m_bar3; }
+    [[nodiscard]] uint16_t vendor_id() const { return m_vendor_id; }
+    [[nodiscard]] uint16_t device_id() const { return m_device_id; }
+    [[nodiscard]] uint32_t bar0() const { return m_bar0; }
+    [[nodiscard]] uint32_t bar1() const { return m_bar1; }
+    [[nodiscard]] uint32_t bar2() const { return m_bar2; }
+    [[nodiscard]] uint32_t bar3() const { return m_bar3; }
 
 private:
     uint16_t m_vendor_id;

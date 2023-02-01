@@ -3,96 +3,96 @@
 //
 // SPDX-License-Identifier: GPL-3.0-only
 
-#include "InterruptVectorTable.h"
-#include "LibStd/Types.h"
-#include <ConsoleIO.h>
+#include <InterruptVectorTable.h>
+#include <LibStd/Types.h>
+#include <UnbufferedConsole.h>
 
 EXCEPTION_HANDLER(0, divide_by_zero_exception);
 void divide_by_zero_exception_handler(StackFrame *frame) {
-    printf("Divide by zero!\n");
+    println("Divide by zero!");
 }
 
 EXCEPTION_HANDLER(1, debug_exception);
 void debug_exception_handler(StackFrame *frame) {
-    printf("Debug Exception!\n");
-    printf("   rip = %X\n", frame->rip);
-    printf("    cs = %X\n", frame->cs);
-    printf("rflags = %X\n", frame->rflags);
-    printf("   rsp = %X\n", frame->rsp);
-    printf("    ss = %X\n", frame->ss);
+    println("Debug Exception!");
+    println("   rip = {}", frame->rip);
+    println("    cs = {}", frame->cs);
+    println("rflags = {}", frame->rflags);
+    println("   rsp = {}", frame->rsp);
+    println("    ss = {}", frame->ss);
 }
 
 EXCEPTION_HANDLER(2, nmi_interrupt);
 void nmi_interrupt_handler(StackFrame *frame) {
-    printf("NMI Interrupt Exception!\n");
+    println("NMI Interrupt Exception!");
 }
 
 EXCEPTION_HANDLER(3, breakpoint_exception);
 void breakpoint_exception_handler(StackFrame *frame) {
-    printf("Breakpoint Exception!\n");
+    println("Breakpoint Exception!");
 }
 
 EXCEPTION_HANDLER(4, overflow_exception);
 void overflow_exception_handler(StackFrame *frame) {
-    printf("Overflow Exception!\n");
+    println("Overflow Exception!");
 }
 
 EXCEPTION_HANDLER(5, bound_range_exceeded_exception);
 void bound_range_exceeded_exception_handler(StackFrame *frame) {
-    printf("Bound Range Exceeded Exception!\n");
+    println("Bound Range Exceeded Exception!");
 }
 
 EXCEPTION_HANDLER(6, invalid_opcode_exception);
 void invalid_opcode_exception_handler(StackFrame *frame) {
-    printf("Invalid Opcode Exception!\n");
-    printf("    rip = %X\n", frame->rip);
-    printf("     cs = %X\n", frame->cs);
-    printf(" rflags = %X\n", frame->rflags);
-    printf("    rbp = %X\n", frame->rbp);
-    printf("    rsp = %X\n", frame->rsp);
-    printf("     ss = %X\n", frame->ss);
+    println("Invalid Opcode Exception!");
+    println("    rip = {}", frame->rip);
+    println("     cs = {}", frame->cs);
+    println(" rflags = {}", frame->rflags);
+    println("    rbp = {}", frame->rbp);
+    println("    rsp = {}", frame->rsp);
+    println("     ss = {}", frame->ss);
 }
 
 EXCEPTION_HANDLER(7, device_not_available_exception);
 void device_not_available_exception_handler(StackFrame *frame) {
-    printf("Device Not Available Exception!\n");
+    println("Device Not Available Exception!");
 }
 
 EXCEPTION_HANDLER_WITH_CODE(8, double_fault_exception);
 void double_fault_exception_handler(StackFrameErrorCode *frame) {
-    printf("Double Fault Exception!\n");
+    println("Double Fault Exception!");
 }
 
 EXCEPTION_HANDLER(9, coprocessor_segment_overrun_exception);
 void coprocessor_segment_overrun_exception_handler(StackFrame *frame) {
-    printf("Co-Processor Segment Overrun Exception!\n");
+    println("Co-Processor Segment Overrun Exception!");
 }
 
 EXCEPTION_HANDLER_WITH_CODE(10, invalid_tss_exception);
 void invalid_tss_exception_handler(StackFrameErrorCode *frame) {
-    printf("Invalid TSS Exception!\n");
+    println("Invalid TSS Exception!");
 }
 
 EXCEPTION_HANDLER_WITH_CODE(11, segment_not_present_exception);
 void segment_not_present_exception_handler(StackFrameErrorCode *frame) {
-    printf("Segment Not Present Exception!\n");
+    println("Segment Not Present Exception!");
 }
 
 EXCEPTION_HANDLER_WITH_CODE(12, stack_fault_exception);
 void stack_fault_exception_handler(StackFrameErrorCode *frame) {
-    printf("Stack Fault Exception!\n");
+    println("Stack Fault Exception!");
 }
 
 EXCEPTION_HANDLER_WITH_CODE(13, general_protection_fault_exception);
 void general_protection_fault_exception_handler(StackFrameErrorCode *frame) {
-    printf("\u001b[31mGeneral Protection Fault Exception!\u001b[0m\n");
-    printf("        rip = %X\n", frame->rip);
-    printf("         cs = %X\n", frame->cs);
-    printf("     rflags = %X\n", frame->rflags);
-    printf("        rsp = %X\n", frame->rsp);
-    printf("         ss = %X\n", frame->ss);
-    printf("      error = %X\n", frame->error);
-    printf("  interrupt = %X\n", frame->interrupt);
+    println("\u001b[31mGeneral Protection Fault Exception!\u001b[0m");
+    println("        rip = {}", frame->rip);
+    println("         cs = {}", frame->cs);
+    println("     rflags = {}", frame->rflags);
+    println("        rsp = {}", frame->rsp);
+    println("         ss = {}", frame->ss);
+    println("      error = {}", frame->error);
+    println("  interrupt = {}", frame->interrupt);
 }
 
 struct PACKED BacktraceFrame {
@@ -106,23 +106,23 @@ void page_fault_exception_handler(StackFrameErrorCode *frame) {
     uint64_t address = 0;
     asm volatile("movq %%cr2, %%rax"
                  : "=a"(address));
-    printf("\u001b[31mPage Fault Exception!\u001b[0m\n");
-    printf("    rip = %X\n", frame->rip);
-    printf("     cs = %X\n", frame->cs);
-    printf(" rflags = %X\n", frame->rflags);
-    printf("    rbp = %X\n", frame->rbp);
-    printf("    rsp = %X\n", frame->rsp);
-    printf("     ss = %X\n", frame->ss);
-    printf("  error = %X\n", frame->error);
-    printf("address = %X\n", address);
+    println("\u001b[31mPage Fault Exception!\u001b[0m");
+    println("    rip = {}", frame->rip);
+    println("     cs = {}", frame->cs);
+    println(" rflags = {}", frame->rflags);
+    println("    rbp = {}", frame->rbp);
+    println("    rsp = {}", frame->rsp);
+    println("     ss = {}", frame->ss);
+    println("  error = {}", frame->error);
+    println("address = {}", address);
 
-    printf("\nBacktrace:\n");
+    println("\nBacktrace:");
     BacktraceFrame *stack_frame;
     asm("movq %%rbp, %0"
         : "=r"(stack_frame));
 
     for (int i = 0; i < 10; i++) {
-        printf("%i: rip = %X\n", i, stack_frame->rip);
+        println("%i: rip = {}", i, stack_frame->rip);
 
         if (stack_frame->rbp == nullptr || stack_frame->rbp == stack_frame)
             break;
@@ -133,27 +133,27 @@ void page_fault_exception_handler(StackFrameErrorCode *frame) {
 
 EXCEPTION_HANDLER(16, floating_point_error_exception);
 void floating_point_error_exception_handler(StackFrame *frame) {
-    printf("Floating Point Exception!\n");
+    println("Floating Point Exception!");
 }
 
 EXCEPTION_HANDLER_WITH_CODE(17, alignment_check_exception);
 void alignment_check_exception_handler(StackFrameErrorCode *frame) {
-    printf("Alignment Check Exception!\n");
+    println("Alignment Check Exception!");
 }
 
 EXCEPTION_HANDLER(18, machine_check_exception);
 void machine_check_exception_handler(StackFrame *frame) {
-    printf("Machine Check Exception!\n");
+    println("Machine Check Exception!");
 }
 
 EXCEPTION_HANDLER(19, simd_floating_point_exception);
 void simd_floating_point_exception_handler(StackFrame *frame) {
-    printf("SIMD Floating Point Exception!\n");
+    println("SIMD Floating Point Exception!");
 }
 
 EXCEPTION_HANDLER(20, virtualisation_exception);
 void virtualisation_exception_handler(StackFrame *frame) {
-    printf("Virtualisation Exception!\n");
+    println("Virtualisation Exception!");
 }
 
 void configure_exceptions(InterruptVectorTable &ivt) {

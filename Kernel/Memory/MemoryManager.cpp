@@ -201,8 +201,8 @@ Result<void> MemoryManager::map_user_page(PhysicalAddress pdpt_physical_address,
 
     auto page = &page_table[page_table_index];
     if (page->present) {
-        printf("FATAL: Page already allocated for %X to %X", virtual_address.as_address(), page->get_physical_address().as_address());
-        while (true) {}
+        println("FATAL: Page already allocated for {} to {}", virtual_address.as_address(), page->get_physical_address().as_address());
+        while (true) {} // FIXME: do something useful here
     }
 
     page->present = 1;

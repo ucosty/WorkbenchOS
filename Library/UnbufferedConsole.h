@@ -32,7 +32,7 @@ void println_internal(Formatter *formatter, T a, Args... args) {
 }
 
 template <class ...Args>
-void println(const char *fmt, Args... args) {
+void print(const char *fmt, Args... args) {
     auto formatter = Formatter{
         .fmt = fmt,
         .index = 0,
@@ -40,5 +40,10 @@ void println(const char *fmt, Args... args) {
 
     println_internal(&formatter);
     println_internal(&formatter, args...);
+}
+
+template <class ...Args>
+void println(const char *fmt, Args... args) {
+    print(fmt, args...);
     debug_putchar('\n');
 }

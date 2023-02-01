@@ -49,10 +49,10 @@ Result<void> PCI::initialise() {
     if (acpi.has_mcfg_table()) {
         // Use the MCFG table to get the ACPI configuration space
         // TODO: implement this code path when I can get it working with QEMU
-        printf("PCI: using memory-mapped mechanism\n");
+        println("PCI: using memory-mapped mechanism");
         return {};
     }
-    printf("PCI: using io-port mechanism\n");
+    println("PCI: using io-port mechanism");
     return initialise_legacy();
 }
 
@@ -94,7 +94,7 @@ Result<void> PCI::read_device_function(uint8_t bus, uint8_t device, uint8_t func
 
     m_devices.append(device_object);
 
-    printf("PCI: vendor_id = %x, device_id = %x, status = %x, class = %x, subclass = %x, bar0 = %x\n", vendor_id, device_id, status_value, class_code, subclass);
+    println("PCI: vendor_id = {}, device_id = {}, status = {}, class = {}, subclass = {}, bar0 = {}", vendor_id, device_id, status_value, class_code, subclass);
     if (is_multifunction) {
         for (int i = 1; i < 8; i++) {
             read_device_function(bus, device, i);

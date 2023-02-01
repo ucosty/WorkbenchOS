@@ -50,23 +50,23 @@ Console g_console;
 void hexdump(uint8_t *buffer, size_t size) {
     for(auto i = 0; i < size; i++) {
         if((i + 1) % 16 == 0) {
-            printf(" | ");
+            print(" | ");
             for(int y = 15; y >= 0; y--) {
                 auto character = buffer[i - y];
                 if(character >= 32 && character < 127) {
-                    printf("%c ", buffer[i - y]);
+                    print("{} ", buffer[i - y]);
                 } else {
-                    printf(". ");
+                    print(". ");
                 }
             }
-            printf("\n");
+            println("");
         }
 
         auto value = static_cast<uint32_t>(buffer[i]);
         if(value <= 0x0f) {
-            printf("0%x ", value);
+            print("0{} ", value);
         } else {
-            printf("%x ", value);
+            print("{} ", value);
         }
     }
 }
@@ -115,12 +115,9 @@ Result<VirtualAddress> load_executable(uint8_t *buffer) {
 //        println("Loading section: type = {}, vaddr = {}, size = {}", program_header->p_type, (void *) program_header->p_vaddr, program_header->p_memsz);
 
         auto load_pages = bytes_to_pages(program_header->p_memsz);
-        TRY(directory.allocate_pages_with_virtual_base(program_header->p_vaddr, load_pages));
+//        TRY(directory.allocate_pages_with_virtual_base(program_header->p_vaddr, load_pages));
 
         // copy section into directory pages
-
-
-
 
 //        auto physical_address = kernel_virtual_to_physical(kernel_physical_base, program_header->p_vaddr);
 //        auto load_address = (void *) ((char *) kernel_bytes + program_header->p_offset);

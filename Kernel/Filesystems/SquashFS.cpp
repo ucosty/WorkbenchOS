@@ -43,39 +43,39 @@ const char *inode_types[] = {
 };
 
 Result<void> Filesystem::init() {
-    printf("SquashFS::Filesystem::init()\n");
+    println("SquashFS::Filesystem::init()");
     VERIFY(m_block_device != nullptr);
 
     m_block_device->read(0, sizeof(Superblock), reinterpret_cast<uint8_t *>(&m_superblock));
 
     if (m_superblock.magic != 0x73717368) {
-        printf("SquashFS: Invalid magic %x\n", m_superblock.magic);
+        println("SquashFS: Invalid magic {}", m_superblock.magic);
         return Error::from_code(1);
     }
 
-    printf("SquashFS: Compressor = %s\n", compression_type[m_superblock.compression_id - 1]);
-    printf("SquashFS: Inode Table Start = %X\n", m_superblock.inode_table_start);
-    printf("SquashFS: Directory Table Start = %X\n", m_superblock.directory_table_start);
-    printf("SquashFS: Root directory inode = %X, offset_bytes = %X\n", m_superblock.root_inode_ref, m_superblock.root_inode_ref * m_superblock.block_size);
+    println("SquashFS: Compressor = {}", compression_type[m_superblock.compression_id - 1]);
+    println("SquashFS: Inode Table Start = {}", m_superblock.inode_table_start);
+    println("SquashFS: Directory Table Start = {}", m_superblock.directory_table_start);
+    println("SquashFS: Root directory inode = {}, offset_bytes = {}", m_superblock.root_inode_ref, m_superblock.root_inode_ref * m_superblock.block_size);
 
     if (m_superblock.flags & Flags::UncompressedData) {
-        printf("SquashFS: Data compression disabled\n");
+        println("SquashFS: Data compression disabled");
     }
     if (m_superblock.flags & Flags::UncompressedFragments) {
-        printf("SquashFS: Fragments compression disabled\n");
+        println("SquashFS: Fragments compression disabled");
     }
     if (m_superblock.flags & Flags::UncompressedIds) {
-        printf("SquashFS: Ids compression disabled\n");
+        println("SquashFS: Ids compression disabled");
     }
     if (m_superblock.flags & Flags::UncompressedInodes) {
-        printf("SquashFS: Inodes compression disabled\n");
+        println("SquashFS: Inodes compression disabled");
     }
     if (m_superblock.flags & Flags::UncompressedXattrs) {
-        printf("SquashFS: Xattrs compression disabled\n");
+        println("SquashFS: Xattrs compression disabled");
     }
     //    auto reader = BlockDeviceReader(m_block_device);
 
-    printf("Listing root directory...\n");
+    println("Listing root directory...");
     TRY(list(m_superblock.directory_table_start));
 
     //    uint8_t buffer[12] = {0};
@@ -141,31 +141,31 @@ Result<void> Filesystem::init() {
 Result<void> read_next_directory_entry(BlockDeviceReader *reader) {
     auto directory_entry = TRY(reader->read<DirectoryEntryHeader>());
     auto name = TRY(reader->read_string(directory_entry.name_size + 1));
-    printf("\nDirectory Entry: type = %s, offset = %d, name = %V\n", inode_types[directory_entry.type - 1], directory_entry.offset, &name);
+    println("\nDirectory Entry: type = {}, offset = {}, name = {}", inode_types[directory_entry.type - 1], directory_entry.offset, &name);
     return {};
 }
 
 // Assume root directory for now
 Result<void> Filesystem::list(size_t directory_start) {
-    printf("Filesystem::list(): Listing root directory...\n");
+    println("Filesystem::list(): Listing root directory...");
     auto reader = BlockDeviceReader(m_block_device);
     TRY(reader.seek(directory_start));
 
     auto metablock_header = TRY(reader.read_uint16());
-    printf("metablock_header = %x\n", metablock_header);
+    println("metablock_header = {}", metablock_header);
 
     auto directory_header = TRY(reader.read<DirectoryHeader>());
-    printf("directory_header.count = %d\n", directory_header.count);
-    printf("directory_header.inode_number = %d\n", directory_header.inode_number);
-    printf("directory_header.start = %d\n", directory_header.start);
+    println("directory_header.count = {}", directory_header.count);
+    println("directory_header.inode_number = {}", directory_header.inode_number);
+    println("directory_header.start = {}", directory_header.start);
 
 
-    printf("Filesystem::list(): reading %d entries\n", directory_header.count + 1);
+    println("Filesystem::list(): reading {} entries", directory_header.count + 1);
     for (int i = 0; i < directory_header.count + 1; i++) {
-        printf("Reading directory entry %d...\n", i);
+        println("Reading directory entry {}...", i);
         TRY(read_next_directory_entry(&reader));
     }
-    printf("Filesystem::list(): done!\n");
+    println("Filesystem::list(): done!");
     return {};
 }
 
@@ -187,7 +187,7 @@ Result<FileInode> Filesystem::find_file_by_filename(StringView filename) {
 
 Result<FileInode> Filesystem::find_file_in_directory(StringView filename, size_t directory_start) {
     auto directory_header = TRY(read_directory_header(directory_start));
-    printf("find_file_in_directory(): Directory count = %x, start = %x, inode_number = %x\n", directory_header.count + 1, directory_header.start, directory_header.inode_number);
+    println("find_file_in_directory(): Directory count = {}, start = {}, inode_number = {}", directory_header.count + 1, directory_header.start, directory_header.inode_number);
 
     size_t directory_entry_offset = directory_start + sizeof(uint16_t) + sizeof(DirectoryHeader);
     DirectoryEntryHeader directory_entry{};
@@ -212,7 +212,7 @@ Result<FileInode> Filesystem::find_file_in_directory(StringView filename, size_t
         delete[] directory_entry_name;
     }
 
-    printf("File not found :(\n");
+    println("File not found :(");
     return FileInode();
 }
 
