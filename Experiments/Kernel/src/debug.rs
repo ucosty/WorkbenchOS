@@ -51,3 +51,15 @@ macro_rules! debugln {
         outport_byte(0xe9, b'\n');
     }};
 }
+
+#[macro_export]
+macro_rules! debug {
+    ($($arg:tt)*) => {{
+        use core::fmt;
+        use crate::debug::DebuggingConsoleWriter;
+        use crate::debug::outport_byte;
+
+        let mut output = DebuggingConsoleWriter{};
+        fmt::write(&mut output, format_args!($($arg)*)).unwrap();
+    }};
+}
