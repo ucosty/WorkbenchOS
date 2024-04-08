@@ -6,7 +6,6 @@
 #include "LibELF/ELF.h"
 #include "Platform/x86_64/PIC.h"
 #include <ACPI/ACPI.h>
-#include <ACPI/ACPICA.h>
 #include <APIC.h>
 #include <BootConsole/Console.h>
 #include <BootState.h>
@@ -170,9 +169,9 @@ extern "C" [[noreturn]] void kernel_stage2(const BootState &boot_state) {
     tss0.rsp0 = stack.as_address() + Page;
     Processor::load_task_register(0x28);
 
-//    auto pci = PCI();
-//    TRY_PANIC(pci.initialise());
-//
+    auto pci = PCI();
+    TRY_PANIC(pci.initialise());
+
     auto ram_block_device = MemoryBlockDevice(boot_state.ramdisk.address.as_virtual_address(), boot_state.ramdisk.size);
     auto ramdisk_fs = RamdiskFS::Filesystem(&ram_block_device);
     TRY_PANIC(ramdisk_fs.init());

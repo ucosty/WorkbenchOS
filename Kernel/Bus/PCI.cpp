@@ -94,7 +94,7 @@ Result<void> PCI::read_device_function(u8 bus, u8 device, u8 function) {
 
     m_devices.append(device_object);
 
-    println("PCI: vendor_id = {}, device_id = {}, status = {}, class = {}, subclass = {}, bar0 = {}", vendor_id, device_id, status_value, class_code, subclass);
+    println("PCI: vendor_id = {}, device_id = {}, status = {}, class = {}, subclass = {}, bar0 = {}", vendor_id, device_id, status_value, class_code, subclass, bar0);
     if (is_multifunction) {
         for (int i = 1; i < 8; i++) {
             read_device_function(bus, device, i);

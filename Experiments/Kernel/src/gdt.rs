@@ -7,4 +7,6 @@
 
 static G_SEGMENTS: [u64; 7] = [0, 0, 0, 0, 0, 0, 0];
 
-pub fn initialise() {}
+pub fn initialise() {
+
+}
