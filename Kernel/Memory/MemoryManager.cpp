@@ -66,11 +66,18 @@ void MemoryManager::unmap_identity_mapping() {
 }
 
 Result<PhysicalAddress> MemoryManager::allocate_physical_page() {
-    return m_bitmap.allocate();
+    const auto result = m_bitmap.allocate();
+    if (result.is_error()) {
+        return Error::from_code(1);
+    }
+    return result.get();
 }
 
-Result<void> MemoryManager::free_page(PhysicalAddress address) {
-    return m_bitmap.free(address);
+Result<void> MemoryManager::free_page(const PhysicalAddress address) {
+    if (const auto result = m_bitmap.free(address); result.is_error()) {
+        return Error::from_code(1);
+    }
+    return {};
 }
 
 Result<VirtualAddress> MemoryManager::allocate_kernel_heap_page() {

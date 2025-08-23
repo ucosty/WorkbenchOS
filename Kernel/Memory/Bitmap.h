@@ -16,27 +16,37 @@ struct BlockAndOffset {
     u64 offset;
 };
 
+enum class BitmapError {
+    InitInvalidPageSize,
+    InitNoPages,
+    NoFreeMemory,
+    AllocationFailure,
+    Range,
+    DoubleFree,
+    Full
+};
+
 class Bitmap {
 public:
-    void init(size_t page_size, size_t ram_size, u64 base_address, u64 storage);
+    Std::Result<void, BitmapError> init(size_t page_size, size_t ram_size, u64 base_address, u64 storage_address);
 
-    [[nodiscard]] Std::Result<PhysicalAddress> allocate();
-    [[nodiscard]] Std::Result<void> free(PhysicalAddress address);
+    [[nodiscard]] Std::Result<PhysicalAddress, BitmapError> allocate();
+    [[nodiscard]] Std::Result<void, BitmapError> free(PhysicalAddress address);
     void set_allocated(PhysicalAddress address);
     void set_allocated(BlockAndOffset block_and_offset);
-    bool is_allocated(PhysicalAddress address);
+    [[nodiscard]] bool is_allocated(PhysicalAddress address) const;
 
 private:
     static constexpr size_t pages_per_block = 64;
-    size_t m_page_size;
-    size_t m_total_pages;
-    size_t m_free_pages;
-    size_t m_block_count;
-    size_t m_block_full_size;
-    u64 *m_storage;
-    u64 m_base_address;
+    size_t m_page_size = 0;
+    size_t m_total_pages = 0;
+    size_t m_free_pages = 0;
+    size_t m_block_count = 0;
+    size_t m_block_full_size = 0;
+    u64 *m_storage = nullptr;
+    u64 m_base_address = 0;
 
     [[nodiscard]] BlockAndOffset address_to_block_and_offset(u64 address) const;
-    static Std::Result<size_t> find_free(u64 bitmap);
+    static Std::Result<size_t, BitmapError> find_free(u64 bitmap);
 };
 }// namespace Kernel
