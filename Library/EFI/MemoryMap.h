@@ -34,7 +34,7 @@ struct MemoryDescriptor {
     uint64_t pad;
 };
 
-struct MemoryMap {
+struct PACKED MemoryMap {
     MemoryDescriptor *m_descriptors{nullptr};
     uint64_t m_size{0};
     uint64_t m_descriptor_count{0};
