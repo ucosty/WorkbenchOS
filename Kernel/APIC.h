@@ -69,9 +69,22 @@ enum AssertLevel {
     Assert = 0x1
 };
 
-enum TriggerMode {
+enum class TriggerMode: u8 {
     Edge = 0x0,
     Level = 0x1,
+};
+
+enum class Polarity    : u8 { High, Low   };
+enum class Cpu : u16 { Any = 0xFFFF };
+
+// Public request types the driver can use.
+struct IsaIrqRequest {
+    uint8_t        irq;                 // 0..15 (e.g., keyboard = 1)
+    TriggerMode    trigger = TriggerMode::Edge;
+    Polarity       polarity = Polarity::High;
+    Cpu            affinity = Cpu::Any;
+    void *         handler;
+    void*          driver_ctx;
 };
 
 struct ICR {
@@ -85,7 +98,7 @@ struct ICR {
 
     [[nodiscard]] constexpr u32 high() const { return destination << 24; }
     [[nodiscard]] constexpr u32 low() const {
-        return vector | delivery_mode << 8 | destination_mode << 11 | level << 14 | trigger_mode << 15 | destination_shorthand << 18;
+        return vector | delivery_mode << 8 | destination_mode << 11 | level << 14 | (u32)trigger_mode << 15 | destination_shorthand << 18;
     }
 };
 static_assert(ICR{0x08, 1, DeliveryMode::INIT, DestinationMode::Physical, DestinationShorthand::NoShorthand, AssertLevel::Assert, TriggerMode::Edge}.high() == 0x1000000);
