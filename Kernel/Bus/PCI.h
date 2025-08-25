@@ -11,7 +11,7 @@
 
 class Device {
 public:
-    Device(u16 vendor_id, u16 device_id, u32 bar0, u32 bar1, u32 bar2, u32 bar3) : m_vendor_id(vendor_id)
+    Device(const u16 vendor_id, const u16 device_id, const u32 bar0, const u32 bar1, const u32 bar2, const u32 bar3) : m_vendor_id(vendor_id)
                                                                     , m_device_id(device_id)
                                                                     , m_bar0(bar0)
                                                                     , m_bar1(bar1)
@@ -27,9 +27,8 @@ public:
             return nullptr;
         }
 
-        auto allocator = allocator_or_error.get().as_ptr();
-
-        auto ptr_or_error = allocator->allocate<Device>();
+        const auto allocator = allocator_or_error.get().as_ptr();
+        const auto ptr_or_error = allocator->allocate<Device>();
         if(ptr_or_error.is_error()) {
             println("FATAL: Failed to allocate Device in Slab");
             return nullptr;
@@ -40,11 +39,10 @@ public:
 
     void operator delete(void *ptr) {
         auto &slab_allocator = Kernel::SlabAllocator::get_instance();
-        auto allocator_or_error = slab_allocator.get_or_create_slab(sizeof(Device));
+        const auto allocator_or_error = slab_allocator.get_or_create_slab(sizeof(Device));
 
         if(!allocator_or_error.is_error()) {
-            auto allocator = allocator_or_error.get().as_ptr();
-            if(allocator->free(VirtualAddress{ptr}).is_error()) {
+            if(const auto allocator = allocator_or_error.get().as_ptr(); allocator->free(VirtualAddress{ptr}).is_error()) {
                 println("PCI: failed to free device address = {}", ptr);
             }
         }
@@ -58,14 +56,14 @@ public:
     [[nodiscard]] u32 bar3() const { return m_bar3; }
 
 private:
-    u16 m_vendor_id;
-    u16 m_device_id;
-    u32 m_bar0;
-    u32 m_bar1;
-    u32 m_bar2;
-    u32 m_bar3;
-    u32 m_bar4;
-    u32 m_bar5;
+    u16 m_vendor_id{0};
+    u16 m_device_id{0};
+    u32 m_bar0{0};
+    u32 m_bar1{0};
+    u32 m_bar2{0};
+    u32 m_bar3{0};
+    u32 m_bar4{0};
+    u32 m_bar5{0};
     Std::Vector<Device *> m_children;
 };
 
