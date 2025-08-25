@@ -3,7 +3,6 @@
 //
 // SPDX-License-Identifier: GPL-3.0-only
 
-#include <ConsoleIO.h>
 #include <Exceptions.h>
 #include <PhysicalAddress.h>
 #include <Process/ProcessManager.h>
@@ -29,9 +28,7 @@ void not_implemented_handler(StackFrame *frame) {
 
 INTERRUPT_HANDLER(32, timer)
 void timer_handler(StackFrame *frame) {
-    //    if (counter++ % 100 == 0) {
     println("\u001b[42;97m Timer \u001b[0m rsp = {}, counter = {}", frame->rsp, counter++);
-    //    }
 
     const auto eoi_register = PhysicalAddress(0xFEE00000 + 0xb0).as_ptr<u32>();
     *eoi_register = 0;
