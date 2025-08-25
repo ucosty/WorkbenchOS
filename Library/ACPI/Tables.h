@@ -77,6 +77,7 @@ struct PACKED MadtIoApic {
     uint8_t type;
     uint8_t length;
     uint8_t id;
+    uint8_t _reserved;
     uint32_t address;
     uint32_t global_system_interrupt_base;
 };
