@@ -11,35 +11,35 @@
 
 namespace Std {
 struct PACKED RootSystemDescriptionPointer {
-    uint64_t signature;
-    uint8_t checksum;
-    uint8_t oem_id[6];
-    uint8_t revision;
-    uint32_t rsdt_address;
-    uint32_t length;
-    uint64_t xsdt_address;
-    uint8_t extended_checksum;
-    uint8_t reserved[8];
+    u64 signature;
+    u8 checksum;
+    u8 oem_id[6];
+    u8 revision;
+    u32 rsdt_address;
+    u32 length;
+    u64 xsdt_address;
+    u8 extended_checksum;
+    u8 reserved[8];
 };
 
 struct PACKED ExtendedAddress {
-    uint8_t address_space;
-    uint8_t bit_width;
-    uint8_t bit_offset;
-    uint8_t access_size;
-    uint64_t address;
+    u8 address_space;
+    u8 bit_width;
+    u8 bit_offset;
+    u8 access_size;
+    u64 address;
 };
 
 struct PACKED SystemDescriptionTableHeader {
-    uint32_t signature;
-    uint32_t length;
-    uint8_t revision;
-    uint8_t checksum;
-    uint8_t oem_id[6];
-    uint8_t oem_table_id[8];
-    uint32_t oem_revision;
-    uint32_t creator_id;
-    uint32_t creator_revision;
+    u32 signature;
+    u32 length;
+    u8 revision;
+    u8 checksum;
+    u8 oem_id[6];
+    u8 oem_table_id[8];
+    u32 oem_revision;
+    u32 creator_id;
+    u32 creator_revision;
 };
 static_assert(sizeof(SystemDescriptionTableHeader) == 36);
 
@@ -47,102 +47,102 @@ struct PACKED MCFGTable {
 };
 
 struct PACKED MultipleApicDescriptionTable {
-    uint32_t signature;
-    uint32_t length;
-    uint8_t revision;
-    uint8_t checksum;
-    uint8_t oem_id[6];
-    uint8_t oem_table_id[8];
-    uint32_t oem_revision;
-    uint32_t creator_id;
-    uint32_t creator_revision;
-    uint32_t local_interrupt_controller_address;
-    uint32_t flags;
+    u32 signature;
+    u32 length;
+    u8 revision;
+    u8 checksum;
+    u8 oem_id[6];
+    u8 oem_table_id[8];
+    u32 oem_revision;
+    u32 creator_id;
+    u32 creator_revision;
+    u32 local_interrupt_controller_address;
+    u32 flags;
 };
 
 struct PACKED MultipleApicDescriptionEntry {
-    uint8_t type;
-    uint8_t length;
+    u8 type;
+    u8 length;
 };
 
 struct PACKED MadtLocalApicEntry {
-    uint8_t type;
-    uint8_t length;
-    uint8_t processor_id;
-    uint8_t apic_id;
-    uint32_t flags;
+    u8 type;
+    u8 length;
+    u8 processor_id;
+    u8 apic_id;
+    u32 flags;
 };
 
 struct PACKED MadtIoApic {
-    uint8_t type;
-    uint8_t length;
-    uint8_t id;
-    uint8_t _reserved;
-    uint32_t address;
-    uint32_t global_system_interrupt_base;
+    u8 type;
+    u8 length;
+    u8 id;
+    u8 _reserved;
+    u32 address;
+    u32 global_system_interrupt_base;
 };
 
 struct PACKED MadtInterruptSourceOverride {
-    uint8_t type;
-    uint8_t length;
-    uint8_t bus_source;
-    uint8_t irq_source;
-    uint32_t global_system_interrupt;
-    uint16_t flags;
+    u8 type;
+    u8 length;
+    u8 bus_source;
+    u8 irq_source;
+    u32 global_system_interrupt;
+    u16 flags;
 };
 
 
 struct PACKED FixedAcpiDescriptionTable {
-    uint32_t firmware_ctrl;
-    uint32_t dsdt;
+    u32 firmware_ctrl;
+    u32 dsdt;
 
-    uint8_t reserved;
+    u8 reserved;
 
-    uint8_t preferred_power_management_profile;
-    uint16_t sci_interrupt;
-    uint32_t smi_command_port;
-    uint8_t acpi_enable;
-    uint8_t acpi_disable;
-    uint8_t s4_bios_req;
-    uint8_t pstate_control;
-    uint32_t pm1a_event_block;
-    uint32_t pm1b_event_block;
-    uint32_t pm1a_control_block;
-    uint32_t pm1b_control_block;
-    uint32_t pm2_control_block;
-    uint32_t pm_timer_block;
-    uint32_t gpe0_block;
-    uint32_t gpe1_block;
-    uint8_t pm1_event_length;
-    uint8_t pm1_control_length;
-    uint8_t pm2_control_length;
-    uint8_t pm_timer_length;
-    uint8_t gpe0_length;
-    uint8_t gpe1_length;
-    uint8_t gpe1_base;
-    uint8_t c_state_control;
-    uint16_t worst_c2_latency;
-    uint16_t worst_c3_latency;
-    uint16_t flush_size;
-    uint16_t flush_stride;
-    uint8_t duty_offset;
-    uint8_t duty_width;
-    uint8_t day_alarm;
-    uint8_t month_alarm;
-    uint8_t century;
+    u8 preferred_power_management_profile;
+    u16 sci_interrupt;
+    u32 smi_command_port;
+    u8 acpi_enable;
+    u8 acpi_disable;
+    u8 s4_bios_req;
+    u8 pstate_control;
+    u32 pm1a_event_block;
+    u32 pm1b_event_block;
+    u32 pm1a_control_block;
+    u32 pm1b_control_block;
+    u32 pm2_control_block;
+    u32 pm_timer_block;
+    u32 gpe0_block;
+    u32 gpe1_block;
+    u8 pm1_event_length;
+    u8 pm1_control_length;
+    u8 pm2_control_length;
+    u8 pm_timer_length;
+    u8 gpe0_length;
+    u8 gpe1_length;
+    u8 gpe1_base;
+    u8 c_state_control;
+    u16 worst_c2_latency;
+    u16 worst_c3_latency;
+    u16 flush_size;
+    u16 flush_stride;
+    u8 duty_offset;
+    u8 duty_width;
+    u8 day_alarm;
+    u8 month_alarm;
+    u8 century;
 
-    uint16_t boot_architecture_flags;
+    u16 boot_architecture_flags;
 
-    uint8_t reserved_2;
-    uint32_t flags;
+    u8 reserved_2;
+    u32 flags;
 
     ExtendedAddress reset_reg;
 
-    uint8_t reset_value;
-    uint8_t reserved_3[3];
+    u8 reset_value;
+    u8 reserved_3[3];
 
-    uint64_t x_firmware_control;
-    uint64_t x_dsdt;
+    u64 x_firmware_control;
+    u64 x_dsdt;
 
     ExtendedAddress x_pm1a_event_block;
     ExtendedAddress x_pm1b_event_block;
