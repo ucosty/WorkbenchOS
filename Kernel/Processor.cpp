@@ -35,7 +35,7 @@ bool Processor::tsc_deadline() {
 }
 
 u8 Processor::local_apic_id() {
-    auto feature_bits = cpuid(1);
+    const auto feature_bits = cpuid(1);
     return (feature_bits.rbx >> 24) & 0xFF;
 }
 

@@ -16,7 +16,7 @@ void MemoryManager::init(const BootState &boot_state) {
     m_bitmap.init(Page, boot_state.physical_memory_size, 0, boot_state.kernel_address_space.frame_allocator.virtual_base);
 
     // Parse the memory map and block out any used memory regions
-    for (auto &descriptor: boot_state.memory_map) {
+    for (const auto &descriptor: boot_state.memory_map) {
         switch (descriptor.type) {
             // Consider these memory map types as 'used' and block them out of the bitmap
             case EFI::EFI_PAL_CODE:
@@ -29,7 +29,7 @@ void MemoryManager::init(const BootState &boot_state) {
             case EFI::EFI_UNUSABLE_MEMORY:
             case EFI::EFI_PERSISTENT_MEMORY:
                 for (int i = 0; i < descriptor.number_of_pages; i++) {
-                    auto address = PhysicalAddress::from_base_and_page_offset(descriptor.physical_start, i);
+                    const auto address = PhysicalAddress::from_base_and_page_offset(descriptor.physical_start, i);
                     m_bitmap.set_allocated(address);
                 }
                 break;
@@ -41,7 +41,7 @@ void MemoryManager::init(const BootState &boot_state) {
 
     // Reserve all memory below 1 MiB for the APs
     for (int i = 0; i < 256; i++) {
-        auto address = PhysicalAddress::from_base_and_page_offset(0, i);
+        const auto address = PhysicalAddress::from_base_and_page_offset(0, i);
         m_bitmap.set_allocated(address);
     }
 
@@ -49,8 +49,8 @@ void MemoryManager::init(const BootState &boot_state) {
     m_kernel_page_directory = reinterpret_cast<PageDirectoryEntry *>(boot_state.kernel_address_space.kernel_page_directory_virtual_address);
 
     // Set the start of the kernel heap virtual address space
-    auto heap_virtual_base = VirtualAddress(boot_state.kernel_address_space.frame_allocator.virtual_base + boot_state.kernel_address_space.frame_allocator.size).offset(Page);
-    auto heap_size = VirtualAddress(0xffffffffffffffff).difference(heap_virtual_base);
+    const auto heap_virtual_base = VirtualAddress(boot_state.kernel_address_space.frame_allocator.virtual_base + boot_state.kernel_address_space.frame_allocator.size).offset(Page);
+    const auto heap_size = VirtualAddress(0xffffffffffffffff).difference(heap_virtual_base);
     m_kernel_heap_address_space = VirtualAddressSpace(heap_virtual_base, heap_size);
 
     // TODO: Remap kernel code as R+X

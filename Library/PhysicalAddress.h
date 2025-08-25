@@ -10,7 +10,7 @@
 
 constexpr uint64_t PHYSICAL_MAPPING_BASE = 0xffffff0000000000;
 
-class PhysicalAddress {
+class PACKED PhysicalAddress {
 public:
     PhysicalAddress() = default;
     explicit PhysicalAddress(uint64_t address) : m_address(address) {}

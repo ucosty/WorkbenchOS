@@ -12,7 +12,7 @@ using namespace Std;
 
 MemoryBlockDevice::MemoryBlockDevice(VirtualAddress address, size_t size) : m_address(address), m_size(size) {}
 
-void hexdump(u8 *buffer, size_t size);
+void hexdump(const u8 *buffer, size_t size);
 
 void *copy(void *destination, const void *source, size_t num) {
     if (destination == nullptr || source == nullptr) return nullptr;

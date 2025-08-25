@@ -33,21 +33,21 @@ void timer_handler(StackFrame *frame) {
     println("\u001b[42;97m Timer \u001b[0m rsp = {}, counter = {}", frame->rsp, counter++);
     //    }
 
-    auto eoi_register = PhysicalAddress(0xFEE00000 + 0xb0).as_ptr<u32>();
+    const auto eoi_register = PhysicalAddress(0xFEE00000 + 0xb0).as_ptr<u32>();
     *eoi_register = 0;
 }
 
 INTERRUPT_HANDLER(33, ps2_keyboard)
 void ps2_keyboard_handler(StackFrame *frame) {
     g_keyboard.interrupt_handler();
-    auto eoi_register = PhysicalAddress(0xFEE00000 + 0xb0).as_ptr<u32>();
+    const auto eoi_register = PhysicalAddress(0xFEE00000 + 0xb0).as_ptr<u32>();
     *eoi_register = 0;
 }
 
 INTERRUPT_HANDLER(34, ps2_mouse)
 void ps2_mouse_handler(StackFrame *frame) {
     g_mouse.interrupt_handler();
-    auto eoi_register = PhysicalAddress(0xFEE00000 + 0xb0).as_ptr<u32>();
+    const auto eoi_register = PhysicalAddress(0xFEE00000 + 0xb0).as_ptr<u32>();
     *eoi_register = 0;
 }
 
@@ -85,8 +85,8 @@ void InterruptVectorTable::initialise() {
 }
 
 void InterruptVectorTable::set_interrupt_gate(u8 id, PrivilegeLevel dpl, void (*handler)()) {
-    auto descriptor_privilege_level = dpl == PrivilegeLevel::User ? 3 : 0;
-    auto address = reinterpret_cast<u64>(handler);
+    const auto descriptor_privilege_level = dpl == PrivilegeLevel::User ? 3 : 0;
+    const auto address = reinterpret_cast<u64>(handler);
     g_interrupts[id].offset = address & 0xffff;
     g_interrupts[id].offset_2 = (address >> 16) & 0xffff;
     g_interrupts[id].offset_3 = address >> 32;

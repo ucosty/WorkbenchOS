@@ -76,6 +76,6 @@ private:
 };
 }// namespace Lib
 
-constexpr Std::StringView operator"" _sv(const char *characters, size_t length) {
+constexpr Std::StringView operator""_sv(const char *characters, size_t length) {
     return {characters, length};
 }
