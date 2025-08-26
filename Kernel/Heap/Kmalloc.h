@@ -26,7 +26,7 @@ private:
 
 class FreeBlock {
 public:
-    FreeBlock(size_t size) : m_block_size(size) {}
+    FreeBlock(const size_t size) : m_block_size(size) {}
 
     [[nodiscard]] FreeBlock *next() const { return m_next; };
 
@@ -34,7 +34,7 @@ public:
 
     void coalesce_with_next_block();
 
-    void coalesce_with_previous_block();
+    void coalesce_with_previous_block() const;
 
     [[nodiscard]] size_t block_size() const {
         return m_block_size;
@@ -46,7 +46,7 @@ public:
 
     bool can_coalesce_next();
 
-    bool can_coalesce_previous();
+    [[nodiscard]] bool can_coalesce_previous() const;
 
     void split_if_required(size_t allocation_request);
 
@@ -74,9 +74,9 @@ public:
 
     void remove_from_free_list(FreeBlock *free_block);
 
-    bool can_allocate(size_t size) { return m_available >= size; }
+    [[nodiscard]] bool can_allocate(const size_t size) const { return m_available >= size; }
 
-    KmallocSubHeap *next() { return m_next; }
+    [[nodiscard]] KmallocSubHeap *next() const { return m_next; }
 
     bool contains_allocation(VirtualAddress address);
 
@@ -102,9 +102,9 @@ public:
 private:
     Std::Result<void> grow();
 
-    KmallocSubHeap *m_subheaps{nullptr};
+    KmallocSubHeap *m_sub_heaps{nullptr};
 
-    Slab *m_subheap_allocator{nullptr};
+    Slab *m_sub_heap_allocator{nullptr};
 };
 
 }// namespace Kernel
