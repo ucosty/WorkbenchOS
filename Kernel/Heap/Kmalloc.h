@@ -72,7 +72,7 @@ public:
 
     void insert_into_free_list(FreeBlock *free_block_to_insert);
 
-    void remove_from_free_list(FreeBlock *free_block);
+    void remove_from_free_list(const FreeBlock *free_block);
 
     [[nodiscard]] bool can_allocate(const size_t size) const { return m_available >= size; }
 

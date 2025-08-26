@@ -86,7 +86,7 @@ void FreeBlock::split_if_required(const size_t allocation_request) {
 }
 
 Result<void> KmallocSubHeap::initialise() {
-    auto sub_heap_size_pages = 0x1000000 / Page;
+    const auto sub_heap_size_pages = 0x1000000 / Page;
     auto &memory_manager = MemoryManager::get_instance();
     m_storage = TRY(memory_manager.allocate_kernel_heap_pages(sub_heap_size_pages)).as_ptr();
     m_capacity = 0x1000000;
@@ -100,14 +100,12 @@ Result<void> KmallocSubHeap::initialise(KmallocSubHeap *next) {
     return initialise();
 }
 
-void KmallocSubHeap::remove_from_free_list(FreeBlock *free_block) {
-    auto next_free_block = free_block->m_next;
-    if (next_free_block != nullptr) {
+void KmallocSubHeap::remove_from_free_list(const FreeBlock *free_block) {
+    if (const auto next_free_block = free_block->m_next; next_free_block != nullptr) {
         next_free_block->m_previous = free_block->m_previous;
     }
 
-    auto previous_free_block = free_block->m_previous;
-    if (previous_free_block != nullptr) {
+    if (const auto previous_free_block = free_block->m_previous; previous_free_block != nullptr) {
         previous_free_block->m_next = free_block->m_next;
     }
 
