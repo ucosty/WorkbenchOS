@@ -13,7 +13,7 @@ constexpr uint64_t PHYSICAL_MAPPING_BASE = 0xffffff0000000000;
 class PACKED PhysicalAddress {
 public:
     PhysicalAddress() = default;
-    explicit PhysicalAddress(uint64_t address) : m_address(address) {}
+    explicit PhysicalAddress(const uint64_t address) : m_address(address) {}
     [[nodiscard]] uint64_t as_address() const { return m_address; }
     [[nodiscard]] uint64_t as_mapped_address() const { return m_address + PHYSICAL_MAPPING_BASE; }
     [[nodiscard]] VirtualAddress as_virtual_address() const { return VirtualAddress{m_address + PHYSICAL_MAPPING_BASE}; }

@@ -7,7 +7,6 @@
 #include "LibStd/Result.h"
 #include <Heap/SlabAllocator.h>
 #include "LibStd/Vector.h"
-#include <ConsoleIO.h>
 
 class Device {
 public:

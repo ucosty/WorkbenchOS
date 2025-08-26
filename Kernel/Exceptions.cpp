@@ -15,11 +15,11 @@ void divide_by_zero_exception_handler(StackFrame *frame) {
 EXCEPTION_HANDLER(1, debug_exception);
 void debug_exception_handler(StackFrame *frame) {
     println("Debug Exception!");
-    println("   rip = {}", frame->rip);
-    println("    cs = {}", frame->cs);
-    println("rflags = {}", frame->rflags);
-    println("   rsp = {}", frame->rsp);
-    println("    ss = {}", frame->ss);
+    println("   rip = {:#x}", frame->rip);
+    println("    cs = {:#x}", frame->cs);
+    println("rflags = {:#x}", frame->rflags);
+    println("   rsp = {:#x}", frame->rsp);
+    println("    ss = {:#x}", frame->ss);
 }
 
 EXCEPTION_HANDLER(2, nmi_interrupt);
@@ -45,12 +45,12 @@ void bound_range_exceeded_exception_handler(StackFrame *frame) {
 EXCEPTION_HANDLER(6, invalid_opcode_exception);
 void invalid_opcode_exception_handler(StackFrame *frame) {
     println("Invalid Opcode Exception!");
-    println("    rip = {}", frame->rip);
-    println("     cs = {}", frame->cs);
-    println(" rflags = {}", frame->rflags);
-    println("    rbp = {}", frame->rbp);
-    println("    rsp = {}", frame->rsp);
-    println("     ss = {}", frame->ss);
+    println("    rip = {:#x}", frame->rip);
+    println("     cs = {:#x}", frame->cs);
+    println(" rflags = {:#x}", frame->rflags);
+    println("    rbp = {:#x}", frame->rbp);
+    println("    rsp = {:#x}", frame->rsp);
+    println("     ss = {:#x}", frame->ss);
 }
 
 EXCEPTION_HANDLER(7, device_not_available_exception);
@@ -86,13 +86,13 @@ void stack_fault_exception_handler(StackFrameErrorCode *frame) {
 EXCEPTION_HANDLER_WITH_CODE(13, general_protection_fault_exception);
 void general_protection_fault_exception_handler(StackFrameErrorCode *frame) {
     println("\u001b[31mGeneral Protection Fault Exception!\u001b[0m");
-    println("        rip = {}", frame->rip);
-    println("         cs = {}", frame->cs);
-    println("     rflags = {}", frame->rflags);
-    println("        rsp = {}", frame->rsp);
-    println("         ss = {}", frame->ss);
-    println("      error = {}", frame->error);
-    println("  interrupt = {}", frame->interrupt);
+    println("        rip = {:#x}", frame->rip);
+    println("         cs = {:#x}", frame->cs);
+    println("     rflags = {:#x}", frame->rflags);
+    println("        rsp = {:#x}", frame->rsp);
+    println("         ss = {:#x}", frame->ss);
+    println("      error = {:#x}", frame->error);
+    println("  interrupt = {:#x}", frame->interrupt);
 }
 
 struct PACKED BacktraceFrame {
@@ -107,14 +107,14 @@ void page_fault_exception_handler(StackFrameErrorCode *frame) {
     asm volatile("movq %%cr2, %%rax"
                  : "=a"(address));
     println("\u001b[31mPage Fault Exception!\u001b[0m");
-    println("    rip = {}", frame->rip);
-    println("     cs = {}", frame->cs);
-    println(" rflags = {}", frame->rflags);
-    println("    rbp = {}", frame->rbp);
-    println("    rsp = {}", frame->rsp);
-    println("     ss = {}", frame->ss);
-    println("  error = {}", frame->error);
-    println("address = {}", address);
+    println("    rip = {:#x}", frame->rip);
+    println("     cs = {:#x}", frame->cs);
+    println(" rflags = {:#x}", frame->rflags);
+    println("    rbp = {:#x}", frame->rbp);
+    println("    rsp = {:#x}", frame->rsp);
+    println("     ss = {:#x}", frame->ss);
+    println("  error = {:#x}", frame->error);
+    println("address = {:#x}", address);
 
     println("\nBacktrace:");
     BacktraceFrame *stack_frame;
@@ -122,7 +122,7 @@ void page_fault_exception_handler(StackFrameErrorCode *frame) {
         : "=r"(stack_frame));
 
     for (int i = 0; i < 10; i++) {
-        println("%i: rip = {}", i, stack_frame->rip);
+        println("{}: rip = {:#x}", i, stack_frame->rip);
 
         if (stack_frame->rbp == nullptr || stack_frame->rbp == stack_frame)
             break;

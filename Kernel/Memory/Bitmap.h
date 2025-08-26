@@ -32,6 +32,7 @@ public:
 
     [[nodiscard]] Std::Result<PhysicalAddress, BitmapError> allocate();
     [[nodiscard]] Std::Result<void, BitmapError> free(PhysicalAddress address);
+    [[nodiscard]] Std::Result<PhysicalAddress, BitmapError> allocate_contiguous(size_t pages);
     void set_allocated(PhysicalAddress address);
     void set_allocated(BlockAndOffset block_and_offset);
     [[nodiscard]] bool is_allocated(PhysicalAddress address) const;
@@ -48,5 +49,7 @@ private:
 
     [[nodiscard]] BlockAndOffset address_to_block_and_offset(u64 address) const;
     static Std::Result<size_t, BitmapError> find_free(u64 bitmap);
+    static Std::Result<size_t, BitmapError> find_n_free(u64 bitmap, u8 n);
+    void set_n_allocated(const BlockAndOffset block_and_offset, u8 n);
 };
 }// namespace Kernel

@@ -5,20 +5,32 @@
 
 #include "PS2Keyboard.h"
 
-inline u8 inb(u16 port) {
-    u8 val;
-    asm volatile("inb %1, %0"
-                 : "=q"(val)
-                 : "Nd"(port));
-    return val;
+#include <UnbufferedConsole.h>
+
+#include <APIC.h>
+
+#include "Platform/x86_64/PortIO.h"
+
+void PS2Keyboard::init() {
+    // Kernel::IsaIrqRequest req{
+    //     .irq        = 1,
+    //     .trigger    = Kernel::TriggerMode::Edge,
+    //     .polarity   = Kernel::Polarity::High,
+    //     .affinity   = Kernel::Cpu::Any,
+    //     .handler    = keyboard_isr,
+    //     .driver_ctx = this
+    // };
+
+    // m_irq = Interrupts::register_isa_irq(req);
+    // m_irq.enable();
 }
 
-
 void PS2Keyboard::interrupt_handler() {
-    auto key = inb(0x60);
+    const auto key = PortIO::in8(0x60);
     if(m_buffer_items < m_buffer_size - 1) {
         m_buffer[m_buffer_items++] = key;
     }
+    println("!");
 }
 
 u8 PS2Keyboard::read() {

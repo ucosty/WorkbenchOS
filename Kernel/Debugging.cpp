@@ -4,9 +4,10 @@
 // SPDX-License-Identifier: GPL-3.0-only
 #include <UnbufferedConsole.h>
 #include <BootConsole/Console.h>
-#include <ConsoleIO.h>
 #include <Debugging.h>
 #include <LibStd/Error.h>
+
+#include "Platform/x86_64/PortIO.h"
 
 extern Console g_console;
 
@@ -28,30 +29,16 @@ extern Console g_console;
     while (true) {}
 }
 
-void inline outb(u16 port, u8 val) {
-    asm volatile("outb %0, %1"
-                 :
-                 : "a"(val), "Nd"(port));
-}
-
-void delay(size_t microseconds) {
+void delay(const size_t microseconds) {
     for (size_t i = 0; i < microseconds; i++)
-        outb(0x80, 0);
+        PortIO::out8(0x80, 0);
 }
 
-void debug_putchar(char c) {
-    outb(0xe9, c);
+void debug_putchar(const char c) {
+    PortIO::out8(0xe9, c);
     g_console.write_character(c);
     if(c == '\n') {
         g_console.flip_buffer_screen();
-    }
-}
-
-void debug_putstring(const char *string) {
-//    g_console.print(string);
-    while (*string != '\0') {
-        outb(0xe9, *string);
-        string++;
     }
 }
 

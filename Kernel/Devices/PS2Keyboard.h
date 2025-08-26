@@ -9,6 +9,7 @@
 
 class PS2Keyboard {
 public:
+    void init();
     void interrupt_handler();
 
     [[nodiscard]] bool is_buffer_empty() const { return m_buffer_items == 0; }

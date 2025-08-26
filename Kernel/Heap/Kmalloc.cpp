@@ -205,7 +205,7 @@ Result<VirtualAddress> KmallocHeap::allocate(size_t size) {
 }
 
 #pragma clang diagnostic push
-#pragma ide diagnostic ignored "misc-no-recursion"
+// #pragma ide diagnostic ignored "misc-no-recursion"
 Result<VirtualAddress> KmallocHeap::allocate(size_t size, int attempt) {
     if (attempt == 3)
         return Error::from_code(1);
@@ -242,16 +242,16 @@ Result<void> KmallocHeap::grow() {
 }
 }// namespace Kernel
 
-void *operator new(size_t size) {
-    auto allocation = g_malloc_heap.allocate(size);
+void *operator new(const size_t size) {
+    const auto allocation = g_malloc_heap.allocate(size);
     if(allocation.is_error()) {
         return nullptr;
     }
     return reinterpret_cast<void *>(allocation.get().as_ptr());
 }
 
-void *operator new[](size_t size) {
-    auto allocation = g_malloc_heap.allocate(size);
+void *operator new[](const size_t size) {
+    const auto allocation = g_malloc_heap.allocate(size);
     if(allocation.is_error()) {
         return nullptr;
     }

@@ -6,7 +6,6 @@
 
 #include "DescriptorTables.h"
 #include <ACPI/Tables.h>
-#include <ConsoleIO.h>
 #include <PhysicalAddress.h>
 #include "LibStd/Result.h"
 #include "LibStd/StringView.h"

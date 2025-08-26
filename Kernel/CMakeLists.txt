@@ -59,12 +59,17 @@ SET(SOURCES
         Devices/PS2Keyboard.h
         Devices/PS2Mouse.cpp
         Devices/PS2Mouse.h
+        Devices/VirtioBlockDevice.cpp
+        Devices/VirtioBlockDevice.h
         Mutex.cpp
         Mutex.h
-#        Platform/x86_64/Entrypoint.cpp
         Platform/x86_64/PIC.cpp
         Platform/x86_64/PIC.h
-        )
+        Platform/x86_64/PortIO.cpp
+        Platform/x86_64/PortIO.h
+        Filesystems/Fat32.cpp
+        Filesystems/Fat32.h
+)
 
 SET(ACPICA_SOURCES
         ../Libraries/LibACPICA/ACPICA/source/components/dispatcher/dsargs.c

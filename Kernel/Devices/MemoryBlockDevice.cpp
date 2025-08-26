@@ -3,7 +3,6 @@
 //
 // SPDX-License-Identifier: GPL-3.0-only
 
-#include "ConsoleIO.h"
 #include "UnbufferedConsole.h"
 #include <Devices/MemoryBlockDevice.h>
 #include <LibStd/CString.h>
@@ -53,7 +52,7 @@ void *copy(void *destination, const void *source, size_t num) {
     return destination;
 }
 
-Result<void> MemoryBlockDevice::read(size_t offset, size_t size, u8 *buffer) {
+Result<void> MemoryBlockDevice::read(size_t offset, size_t size, void *buffer) {
     auto source = m_address.as_ptr();
     if (offset + size > m_size) {
         return Error::from_code(1);
@@ -62,7 +61,7 @@ Result<void> MemoryBlockDevice::read(size_t offset, size_t size, u8 *buffer) {
     return {};
 }
 
-Result<void> MemoryBlockDevice::write(size_t offset, size_t size, u8 *buffer) {
+Result<void> MemoryBlockDevice::write(size_t offset, size_t size, void *buffer) {
     auto destination = m_address.as_ptr() + offset;
     if (offset + size >= m_size) {
         return Error::from_code(1);

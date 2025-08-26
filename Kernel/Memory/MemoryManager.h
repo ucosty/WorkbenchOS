@@ -43,8 +43,10 @@ public:
     Std::Result<void> free_kernel_heap_page(VirtualAddress virtual_address);
 
     Std::Result<PhysicalAddress> allocate_physical_page();
+    Std::Result<PhysicalAddress> allocate_physical_pages(size_t page_count);
     Std::Result<void> free_page(PhysicalAddress address);
     Std::Result<PhysicalAddress> kernel_virtual_to_physical_address(const VirtualAddress &);
+    Std::Result<PhysicalAddress> kernel_virtual_to_physical_address(u64 address);
     Std::Result<PageTableEntry *> get_kernel_page_table_entry(const VirtualAddress &);
 
     static Std::Result<size_t> virtual_address_to_page_directory_index(VirtualAddress address);

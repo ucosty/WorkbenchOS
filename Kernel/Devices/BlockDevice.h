@@ -10,7 +10,7 @@
 
 class BlockDevice {
 public:
-    virtual Std::Result<void> read(size_t offset, size_t size, u8 *buffer) = 0;
+    virtual Std::Result<void> read(size_t offset, size_t size, void *buffer) = 0;
 
-    virtual Std::Result<void> write(size_t offset, size_t size, u8 *buffer) = 0;
+    virtual Std::Result<void> write(size_t offset, size_t size, void *buffer) = 0;
 };

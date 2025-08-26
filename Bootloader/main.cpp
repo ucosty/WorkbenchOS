@@ -172,6 +172,31 @@ Result<uint64_t> find_acpi_root_table(EFI::Raw::SystemTable *system_table) {
     return Error::from_code(1);
 }
 
+u64 read_msr(u32 id) {
+    u32 low, high;
+    asm volatile("rdmsr"
+                 : "=a"(low), "=d"(high)
+                 : "c"(id));
+    return (static_cast<u64>(high) << 32) | low;
+}
+
+void write_msr(u32 id, u64 value) {
+    u32 hi = value >> 32;
+    u32 lo = value & 0xFFFFFFFF;
+
+    asm volatile("wrmsr" : : "a"(lo), "d"(hi), "c"(id));
+}
+
+constexpr uint32_t IA32_PAT = 0x277;
+void pat_set_index7_to_wc() {
+    uint64_t pat = read_msr(IA32_PAT);
+    pat &= ~(0xFFull << 56);        // clear entry 7
+    pat |=  (0x01ull << 56);        // set entry 7 = WC (0x01)
+    write_msr(IA32_PAT, pat);
+
+    // After changing PAT entries, do a full TLB shootdown; WBINVD is also prudent.
+}
+
 Result<void> init(EFI::Raw::Handle image_handle, EFI::Raw::SystemTable *system_table) {
     auto boot_services = EFI::BootServices(system_table->boot_services);
 
@@ -423,6 +448,8 @@ Result<void> init(EFI::Raw::Handle image_handle, EFI::Raw::SystemTable *system_t
 
     boot_state->kernel_address_space.kernel_page_directory_virtual_address = boot_state->kernel_address_space.initial_pages.virtual_base + 0x3000;
 
+    pat_set_index7_to_wc();
+
     pml4[511].present = 1;
     pml4[511].writeable = 1;
     pml4[511].physical_address = ((uint64_t) pdpt) >> 12;
@@ -462,26 +489,32 @@ Result<void> init(EFI::Raw::Handle image_handle, EFI::Raw::SystemTable *system_t
         return offset_address >> 12;
     };
 
-    auto map_address_space = [&virtual_to_page_table, &kernel_page_tables](VirtualMapping &address_space) {
-        auto pages = address_space.size / Page;
+    auto map_address_space = [&virtual_to_page_table, &kernel_page_tables](const VirtualMapping &address_space, bool write_combining) {
+        const auto pages = address_space.size / Page;
         for (auto i = 0ull; i < pages; i++) {
-            auto page_physical = address_space.physical_base + (i * Page);
-            auto page_virtual = address_space.virtual_base + (i * Page);
-            auto page_table_entry = virtual_to_page_table(page_virtual);
+            const auto page_physical = address_space.physical_base + (i * Page);
+            const auto page_virtual = address_space.virtual_base + (i * Page);
+            const auto page_table_entry = virtual_to_page_table(page_virtual);
             kernel_page_tables[page_table_entry].present = 1;
             kernel_page_tables[page_table_entry].writeable = 1;
             kernel_page_tables[page_table_entry].physical_address = page_physical >> 12;
+
+            if (write_combining) {
+                kernel_page_tables[page_table_entry].write_through = 1;
+                kernel_page_tables[page_table_entry].cache_disabled = 1;
+                kernel_page_tables[page_table_entry].size = 1;
+            }
         }
     };
 
     // Map the kernel
-    map_address_space(boot_state->kernel_address_space.kernel);
-    map_address_space(boot_state->kernel_address_space.boot_state);
-    map_address_space(boot_state->kernel_address_space.initial_pages);
-    map_address_space(boot_state->kernel_address_space.memory_map);
-    map_address_space(boot_state->kernel_address_space.framebuffer);
-    map_address_space(boot_state->kernel_address_space.stack);
-    map_address_space(boot_state->kernel_address_space.frame_allocator);
+    map_address_space(boot_state->kernel_address_space.kernel, false);
+    map_address_space(boot_state->kernel_address_space.boot_state, false);
+    map_address_space(boot_state->kernel_address_space.initial_pages, false);
+    map_address_space(boot_state->kernel_address_space.memory_map, false);
+    map_address_space(boot_state->kernel_address_space.framebuffer, true);
+    map_address_space(boot_state->kernel_address_space.stack, false);
+    map_address_space(boot_state->kernel_address_space.frame_allocator, false);
 
     // Disable interrupts and load the new page tables
     auto entrypoint = elf_header->e_entry;

@@ -3,7 +3,6 @@
 //
 // SPDX-License-Identifier: GPL-3.0-only
 
-#include <ConsoleIO.h>
 #include <Debugging.h>
 #include <Devices/BlockDeviceReader.h>
 #include <Filesystems/SquashFS.h>

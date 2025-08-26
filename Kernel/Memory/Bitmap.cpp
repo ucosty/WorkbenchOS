@@ -39,9 +39,10 @@ Result<PhysicalAddress, BitmapError> Bitmap::allocate() {
 
     for (u64 i = 0; i < m_block_count; i++) {
         if (m_storage[i] != BITMAP_FULL) {
-            const auto offset = TRY(find_free(m_storage[i]));
+            const auto result = find_free(m_storage[i]);
+            if (result.is_error()) continue;
+            const auto offset = result.get();
             set_allocated({.block = i, .offset = offset});
-            m_free_pages--;
             const auto address = PhysicalAddress(m_base_address + (i * m_block_full_size) + (offset * m_page_size));
             memset(reinterpret_cast<char *>(address.as_ptr()), 0, m_page_size);
             return address;
@@ -61,6 +62,25 @@ Result<void, BitmapError> Bitmap::free(const PhysicalAddress address) {
     m_storage[block] &= mask;
     m_free_pages++;
     return {};
+}
+
+Result<PhysicalAddress, BitmapError> Bitmap::allocate_contiguous(size_t pages) {
+    if (m_free_pages == 0)
+        return BitmapError::NoFreeMemory;
+
+    for (u64 i = 0; i < m_block_count; i++) {
+
+        const auto result = find_n_free(m_storage[i], pages);
+        if (result.is_error()) continue;
+
+        const auto offset = result.get();
+        set_n_allocated({.block = i, .offset = offset}, pages);
+
+        const auto address = PhysicalAddress(m_base_address + (i * m_block_full_size) + (offset * m_page_size));
+        memset(reinterpret_cast<char *>(address.as_ptr()), 0, m_page_size);
+        return address;
+    }
+    return BitmapError::NoFreeMemory;
 }
 
 void Bitmap::set_allocated(const PhysicalAddress address) {
@@ -95,5 +115,33 @@ Result<size_t, BitmapError> Bitmap::find_free(const u64 bitmap) {
         }
     }
     return BitmapError::NoFreeMemory;
+}
+
+inline u64 make_mask(const int n) {
+    if (n >= 64) {
+        return ~0LL;
+    }
+
+    return (1LL << n) - 1;
+}
+
+Result<size_t, BitmapError> Bitmap::find_n_free(const u64 bitmap, const u8 n) {
+    auto mask = make_mask(n);
+    const auto iterations = 64 - n + 1;
+    for (size_t i = 0; i < iterations; i++) {
+        if ((mask & bitmap) == 0) {
+            return i;
+        }
+        mask <<= 1;
+    }
+    return BitmapError::NoFreeMemory;
+}
+
+void Bitmap::set_n_allocated(const BlockAndOffset block_and_offset, u8 n) {
+    auto mask = make_mask(n);
+    mask <<= block_and_offset.offset;
+
+    m_storage[block_and_offset.block] |= mask;
+    m_free_pages-= n;
 }
 }// namespace Kernel

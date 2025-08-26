@@ -5,6 +5,18 @@
 
 #include <LibStd/CString.h>
 
+extern "C" int memcmp(const void *s1, const void *s2, size_t n) {
+    const auto *b1 = static_cast<const u8 *>(s1);
+    const auto *b2 = static_cast<const u8 *>(s2);
+    for (size_t i = 0; i < n; i++) {
+        if (b1[i] != b2[i]) {
+            return 1;
+        }
+    }
+    return 0;
+}
+
+
 extern "C" void *memset(char *buffer, int value, size_t count) {
     for (size_t i = 0; i < count; i++)
         buffer[i] = (char) value;

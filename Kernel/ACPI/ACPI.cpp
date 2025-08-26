@@ -6,8 +6,6 @@
 #include "../APIC.h"
 #include "../Debugging.h"
 #include "../Memory/MemoryManager.h"
-#include "../Processor.h"
-#include <ConsoleIO.h>
 #include <LibStd/CString.h>
 #include <LibStd/Try.h>
 
@@ -63,7 +61,7 @@ void Kernel::ACPI::start_application_processors() {
 Result<void> Kernel::ACPI::find_devices() {
     auto fadt = TRY(m_descriptor_tables.find_table<FixedAcpiDescriptionTable>("FACP"_sv));
     auto dsdt_address = PhysicalAddress(fadt.table->x_dsdt).as_mapped_address();
-    println("fadt: revision = {}, length = {}, x_dsdt = {}", fadt.header->revision, fadt.header->length, dsdt_address);
+    println("fadt: revision = {}, length = {}, x_dsdt = {:#x}", fadt.header->revision, fadt.header->length, dsdt_address);
 
     auto *dsdt_header = reinterpret_cast<SystemDescriptionTableHeader *>(dsdt_address);
     println("dsdt_address: revision = {}, length = {}", dsdt_header->revision, dsdt_header->length - sizeof(SystemDescriptionTableHeader));

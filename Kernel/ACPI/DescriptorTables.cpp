@@ -33,7 +33,7 @@ void SystemDescriptorTables::list_tables() {
         auto entry_address = PhysicalAddress(entries[i]);
         auto header = entry_address.as_ptr<SystemDescriptionTableHeader>();
         StringView signature{reinterpret_cast<const char *>(&header->signature), 4};
-        println("Found table: signature = {}, length = {}", &signature, header->length);
+        println("Found table: signature = {:x}, length = {}", &signature, header->length);
     }
 }
 }// namespace Kernel

@@ -32,22 +32,22 @@ public:
     [[nodiscard]] bool has_free_objects() const { return m_free_objects > 0; }
     [[nodiscard]] size_t total_objects() const { return m_total_objects; }
     [[nodiscard]] size_t free_objects() const { return m_free_objects; }
-    [[nodiscard]] VirtualAddress get_object_address(size_t index) const {
-        auto page_address = reinterpret_cast<size_t>(this);
+    [[nodiscard]] VirtualAddress get_object_address(const size_t index) const {
+        const auto page_address = reinterpret_cast<size_t>(this);
         return VirtualAddress(page_address + sizeof(SlabPage) + (m_object_size * index));
     }
     [[nodiscard]] Std::Result<u8 *> allocate();
     Std::Result<void> free(VirtualAddress address);
-    [[nodiscard]] bool contains_object_at_address(VirtualAddress address) const {
-        auto base_address = reinterpret_cast<u64>(this);
+    [[nodiscard]] bool contains_object_at_address(const VirtualAddress address) const {
+        const auto base_address = reinterpret_cast<u64>(this);
         return (address.as_address() > base_address) &&
                (address.as_address() < base_address + 0x1000);
     }
 
 private:
-    size_t m_object_size;
-    size_t m_free_objects;
-    size_t m_total_objects;
+    size_t m_object_size{0};
+    size_t m_free_objects{0};
+    size_t m_total_objects{0};
     SlabPage *m_next_page{nullptr};
     SlabPage *m_previous_page{nullptr};
     FreeObject *m_free_list{nullptr};
@@ -60,13 +60,13 @@ public:
     Std::Result<void> initialise(size_t size);
     [[nodiscard]] bool is_slab_for(size_t size) const { return m_initialised && m_object_size == size; }
     [[nodiscard]] bool is_initialised() const { return m_initialised; }
-    [[nodiscard]] Std::Result<Std::NonNullPtr<u8>> allocate();
+    [[nodiscard]] Std::Result<Std::NonNullPtr<u8>> allocate() const;
     template<typename T>
     Std::Result<T *> allocate() {
-        auto result = TRY(allocate());
+        const auto result = TRY(allocate());
         return reinterpret_cast<T *>(result.as_address());
     }
-    [[nodiscard]] Std::Result<void> free(VirtualAddress address);
+    [[nodiscard]] Std::Result<void> free(VirtualAddress address) const;
 
 private:
     SlabPage *m_head{nullptr};

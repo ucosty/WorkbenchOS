@@ -5,7 +5,6 @@
 
 #include "MemoryManager.h"
 #include "../Debugging.h"
-#include <ConsoleIO.h>
 #include "LibStd/Try.h"
 
 using namespace Std;
@@ -73,6 +72,14 @@ Result<PhysicalAddress> MemoryManager::allocate_physical_page() {
     return result.get();
 }
 
+Result<PhysicalAddress> MemoryManager::allocate_physical_pages(size_t page_count) {
+    const auto result = m_bitmap.allocate_contiguous(page_count);
+    if (result.is_error()) {
+        return Error::from_code(1);
+    }
+    return result.get();
+}
+
 Result<void> MemoryManager::free_page(const PhysicalAddress address) {
     if (const auto result = m_bitmap.free(address); result.is_error()) {
         return Error::from_code(1);
@@ -121,16 +128,16 @@ Result<void> MemoryManager::unmap_kernel_page_directory(const VirtualAddress &vi
     return {};
 }
 
-Result<size_t> MemoryManager::virtual_address_to_page_directory_index(VirtualAddress address) {
-    auto result = (address.as_address() & 0x3fe00000) >> 21;
+Result<size_t> MemoryManager::virtual_address_to_page_directory_index(const VirtualAddress address) {
+    const auto result = (address.as_address() & 0x3fe00000ull) >> 21;
     if (result > 511) {
         return Error::from_code(1);
     }
     return result;
 }
 
-Result<size_t> MemoryManager::virtual_address_to_page_table_index(VirtualAddress address) {
-    auto result = (address.as_address() & 0x1ff000) >> 12;
+Result<size_t> MemoryManager::virtual_address_to_page_table_index(const VirtualAddress address) {
+    const auto result = (address.as_address() & 0x1ff000ull) >> 12;
     if (result > 511) {
         return Error::from_code(1);
     }
@@ -138,22 +145,28 @@ Result<size_t> MemoryManager::virtual_address_to_page_table_index(VirtualAddress
 }
 
 Result<PhysicalAddress> MemoryManager::kernel_virtual_to_physical_address(const VirtualAddress &virtual_address) {
-    auto page_directory_index = TRY(virtual_address_to_page_directory_index(virtual_address));
-    auto pde = &m_kernel_page_directory[page_directory_index];
+    const auto page_directory_index = TRY(virtual_address_to_page_directory_index(virtual_address));
+    const auto pde = &m_kernel_page_directory[page_directory_index];
     VERIFY(pde->present);
 
     // Get the page table from the page directory entry
-    auto pagetable_physical_address = PhysicalAddress(static_cast<u64>(pde->physical_address) << 12);
-    auto pagetable = pagetable_physical_address.as_ptr<PageTableEntry>();
-    VERIFY(pagetable->present);
+    const auto pagetable_physical_address = PhysicalAddress(pde->physical_address << 12);
+    const auto pagetable = pagetable_physical_address.as_ptr<PageTableEntry>();
 
     // Get the page table index for the virtual address
-    auto page_table_index = TRY(virtual_address_to_page_table_index(virtual_address));
-    auto page = &pagetable[page_table_index];
-    VERIFY(page->present);
+    const auto page_table_index = TRY(virtual_address_to_page_table_index(virtual_address));
+    const auto page = &pagetable[page_table_index];
 
-    auto address = ((u64) page->physical_address) << 12;
-    return PhysicalAddress(address);
+    const auto address = page->physical_address << 12;
+
+    // Get the lower 12 bits of the address from the virtual address
+    const auto lower_bits = virtual_address.as_address() & 0xfff;
+    return PhysicalAddress(address + lower_bits);
+}
+
+Result<PhysicalAddress> MemoryManager::kernel_virtual_to_physical_address(const u64 address) {
+    const VirtualAddress virtual_address(address);
+    return kernel_virtual_to_physical_address(virtual_address);
 }
 
 Result<PageTableEntry *> MemoryManager::get_kernel_page_table_entry(const VirtualAddress &virtual_address) {

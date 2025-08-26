@@ -20,6 +20,9 @@
 #include <LinearFramebuffer.h>
 #include <Memory/MemoryManager.h>
 #include <Processor.h>
+#include <Devices/VirtioBlockDevice.h>
+
+#include "Filesystems/Fat32.h"
 
 using namespace Kernel;
 
@@ -47,14 +50,16 @@ extern constructor_function __init_array_end[];
 
 Console g_console;
 
-void hexdump(u8 *buffer, size_t size) {
-    for(auto i = 0; i < size; i++) {
+void hexdump(const u8 *buffer, const size_t size) {
+    for(size_t i = 0; i < size; i++) {
+        auto value = static_cast<u32>(buffer[i]);
+        print("{:02x} ", value);
+
         if((i + 1) % 16 == 0) {
             print(" | ");
             for(int y = 15; y >= 0; y--) {
-                auto character = buffer[i - y];
-                if(character >= 32 && character < 127) {
-                    print("{} ", buffer[i - y]);
+                if(auto character = buffer[i - y]; character >= 32 && character < 127) {
+                    print("{:c} ", character);
                 } else {
                     print(". ");
                 }
@@ -62,34 +67,28 @@ void hexdump(u8 *buffer, size_t size) {
             println("");
         }
 
-        auto value = static_cast<u32>(buffer[i]);
-        if(value <= 0x0f) {
-            print("0{} ", value);
-        } else {
-            print("{} ", value);
-        }
     }
 }
 
-u64 divide_rounded_up(u64 value, u64 divisor) {
+u64 divide_rounded_up(const u64 value, const u64 divisor) {
     return (value + (divisor - 1)) / divisor;
 }
 
-u64 bytes_to_pages(u64 bytes) {
+u64 bytes_to_pages(const u64 bytes) {
     return divide_rounded_up(bytes, 0x1000);
 }
 
 Result<VirtualAddress> load_executable(u8 *buffer) {
-    auto elf_header = reinterpret_cast<ELF::Elf64_Ehdr *>(buffer);
+    const auto elf_header = reinterpret_cast<ELF::Elf64_Ehdr *>(buffer);
     if (elf_header->ei_magic != ELF_MAGIC) {
         return Error::with_message("Invalid ELF magic bytes"_sv);
     }
 
-    auto program_headers = reinterpret_cast<ELF::Elf64_Phdr *>(buffer + elf_header->e_phoff);
-    auto get_total_pages = [](ELF::Elf64_Ehdr *elf_header, ELF::Elf64_Phdr *program_headers) -> u64 {
+    const auto program_headers = reinterpret_cast<ELF::Elf64_Phdr *>(buffer + elf_header->e_phoff);
+    auto get_total_pages = [](const ELF::Elf64_Ehdr *elf_header, const ELF::Elf64_Phdr *headers) -> u64 {
         auto total_pages = 0ULL;
         for (int i = 0; i < elf_header->e_phnum; i++) {
-            auto program_header = &program_headers[i];
+            const auto program_header = &headers[i];
             if (program_header->p_type != PT_LOAD)
                 continue;
             total_pages += bytes_to_pages(program_header->p_memsz);
@@ -97,7 +96,7 @@ Result<VirtualAddress> load_executable(u8 *buffer) {
         return total_pages;
     };
 
-    auto pages = get_total_pages(elf_header, program_headers);
+    const auto pages = get_total_pages(elf_header, program_headers);
 
     println("Loading ELF file...");
     println("{} pages", pages);
@@ -163,14 +162,34 @@ extern "C" [[noreturn]] void kernel_stage2(const BootState &boot_state) {
 
     APIC apic;
     TRY_PANIC(apic.initialise());
-    acpi.start_application_processors();
 
-    auto stack = TRY_PANIC(memory_manager.allocate_kernel_heap_page());
-    tss0.rsp0 = stack.as_address() + Page;
-    Processor::load_task_register(0x28);
 
     auto pci = PCI();
     TRY_PANIC(pci.initialise());
+
+    auto device = TRY_PANIC(VirtioBlockDevice::detect_and_init(&pci));
+
+    auto fat_volume = Fat32{};
+    println("Mounting volume as fat32");
+    TRY_PANIC(fat_volume.mount(&device, 0));
+
+    uint8_t buf[64*1024] = {0};
+    println("Reading file /README.md");
+    int64_t n = TRY_PANIC(fat_volume.read_file("/README.md", buf, sizeof(buf)));
+    println("Read {} bytes from README.md", (long)n);
+
+    println("{}", (const char *)buf);
+
+    // hexdump(buf, 128);
+
+    while (true) {}
+
+    // Multiprocessor code
+    // acpi.start_application_processors();
+    //
+    // auto stack = TRY_PANIC(memory_manager.allocate_kernel_heap_page());
+    // tss0.rsp0 = stack.as_address() + Page;
+    // Processor::load_task_register(0x28);
 
     auto ram_block_device = MemoryBlockDevice(boot_state.ramdisk.address.as_virtual_address(), boot_state.ramdisk.size);
     auto ramdisk_fs = RamdiskFS::Filesystem(&ram_block_device);
