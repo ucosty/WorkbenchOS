@@ -9,9 +9,26 @@
 
 using namespace Std;
 
+
+namespace Std {
+    template <>
+    struct FromError<Kernel::SlabError, Kernel::MemoryManagerError> {
+        static constexpr Kernel::SlabError from(Kernel::MemoryManagerError e) {
+            return Kernel::SlabError{};
+        }
+    };
+
+    template <>
+    struct FromError<Kernel::SlabError, Error> {
+        static constexpr Kernel::SlabError from(Error e) {
+            return Kernel::SlabError{};
+        }
+    };
+}
+
 namespace Kernel {
 constexpr size_t MAX_OBJECT_SIZE = Page - sizeof(SlabPage);
-Result<NonNullPtr<Slab>> SlabAllocator::get_or_create_slab(const size_t size) {
+Result<NonNullPtr<Slab>, SlabError> SlabAllocator::get_or_create_slab(const size_t size) {
     VERIFY(size < MAX_OBJECT_SIZE);
     auto slab = find_slab(size);
     if (slab.is_error()) {
@@ -20,30 +37,30 @@ Result<NonNullPtr<Slab>> SlabAllocator::get_or_create_slab(const size_t size) {
     return slab;
 }
 
-Result<NonNullPtr<Slab>> SlabAllocator::find_slab(const size_t size) {
+Result<NonNullPtr<Slab>, SlabError> SlabAllocator::find_slab(const size_t size) {
     for (auto &slab: m_slabs) {
         if (slab.is_slab_for(size)) {
-            return NonNullPtr<Slab>::from(&slab);
+            return TRY_INTO(SlabError, NonNullPtr<Slab>::from(&slab));
         }
     }
-    return Error::from_code(1);
+    return SlabError{};
 }
 
-Result<NonNullPtr<Slab>> SlabAllocator::create_slab(const size_t size) {
+Result<NonNullPtr<Slab>, SlabError> SlabAllocator::create_slab(const size_t size) {
     for (auto &slab: m_slabs) {
         if (!slab.is_initialised()) {
             TRY(slab.initialise(size));
-            return NonNullPtr<Slab>::from(&slab);
+            return TRY_INTO(SlabError, NonNullPtr<Slab>::from(&slab));
         }
     }
-    return Error::from_code(1);
+    return SlabError{};
 }
 
-Result<void> Slab::initialise(const size_t size) {
-    auto &memory_manager = Kernel::MemoryManager::get_instance();
+Result<void, SlabError> Slab::initialise(const size_t size) {
+    auto &memory_manager = MemoryManager::get_instance();
     m_initialised = true;
     m_object_size = size;
-    const auto page_address = TRY(memory_manager.allocate_kernel_heap_page());
+    const auto page_address = TRY_INTO(SlabError, memory_manager.allocate_kernel_heap_page());
     m_head = reinterpret_cast<SlabPage *>(page_address.as_ptr());
     m_head->initialise(size);
     return {};

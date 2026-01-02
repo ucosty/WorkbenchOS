@@ -19,6 +19,12 @@ struct PACKED VirtualMapping {
     size_t size;
 };
 
+struct PACKED ProgramHeaderFlags {
+    u64 address{0};
+    u64 size{0};
+    u8 flags{0};
+};
+
 struct PACKED KernelAddressSpace {
     uint64_t kernel_page_directory_virtual_address;
     uint64_t base;
@@ -31,6 +37,10 @@ struct PACKED KernelAddressSpace {
     VirtualMapping framebuffer;
     VirtualMapping stack;
     VirtualMapping frame_allocator;
+
+    // Kernel Program header flags
+    uint8_t program_header_count{0};
+    ProgramHeaderFlags program_header_flags[8];
 };
 
 struct PACKED Ramdisk {

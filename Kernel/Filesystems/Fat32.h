@@ -68,6 +68,7 @@ public:
     // Read whole file by absolute path like "/EFI/BOOT/BOOTX64.EFI"
     // Returns number of bytes read, or <0 on error.
     Std::Result<u64> read_file(const char *abs_path, void *out_buf, uint32_t max_bytes) const;
+    Std::Result<u64> get_file_size(const char* abs_path) const;
 
 private:
     // helpers

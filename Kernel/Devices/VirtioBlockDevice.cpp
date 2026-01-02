@@ -61,16 +61,6 @@ Std::Result<VirtioBlockDevice> VirtioBlockDevice::detect_and_init(PCI *pci) {
         println("virtio-blk: capacity = {} sectors ({} MiB)",
                 device.capacity_sectors(), (device.capacity_sectors() / 2048));
 
-        // char buffer[512] = {};
-        // const auto result = device.read(0, 512, &buffer);
-        // TRY(device.rw(/*write=*/false, 0, /*src=*/nullptr, /*dst=*/buffer, 512));
-
-        // if (result.is_error()) {
-            // println("virtio-blk: read failed with code {}", result.get_error().get_code());
-        // } else {
-            // hexdump(reinterpret_cast<const u8 *>(buffer), 100);
-        // }
-
         return device;
     }
 
@@ -128,14 +118,16 @@ u32 VirtioBlockDevice::reg32(const u16 offset) const { return PortIO::in32(m_io_
 
 void VirtioBlockDevice::wr8(const u16 offset, const u8 value) const { PortIO::out8(m_io_base + offset, value); }
 
-void VirtioBlockDevice::wr16(const u16 offset, const u16 value) const { PortIO::out16(m_io_base + offset, value); }
+void VirtioBlockDevice::wr16(const u16 offset, const u16 value) const {
+    PortIO::out16(m_io_base + offset, value);
+}
 
 void VirtioBlockDevice::wr32(const u16 offset, const u32 value) const { PortIO::out32(m_io_base + offset, value); }
 
-static size_t vring_size_bytes(uint16_t num) {
+static size_t vring_size_bytes(const u16 num) {
     size_t sz = num * sizeof(VDesc);
     sz += sizeof(VAvail) + num * sizeof(uint16_t);
-    sz = (sz + VRING_ALIGN - 1) & ~(size_t) (VRING_ALIGN - 1);
+    sz = (sz + VRING_ALIGN - 1) & ~static_cast<size_t>(VRING_ALIGN - 1);
     sz += sizeof(VUsed) + num * sizeof(VUsedEl);
     return sz;
 }
@@ -150,11 +142,11 @@ void VirtioBlockDevice::push_free(uint16_t idx) {
 }
 
 
-bool VirtioBlockDevice::setup_queue0(uint16_t preferred_num) {
+bool VirtioBlockDevice::setup_queue0(const uint16_t preferred_num) {
     // Select queue 0
     wr16(VIRTIO_PCI_QUEUE_SEL, 0);
 
-    uint16_t qmax = reg16(VIRTIO_PCI_QUEUE_NUM);
+    const uint16_t qmax = reg16(VIRTIO_PCI_QUEUE_NUM);
     if (qmax == 0) {
         println("VirtioBlockDevice::setup_queue0: no queues");
         return false;
@@ -207,26 +199,29 @@ bool VirtioBlockDevice::setup_queue0(uint16_t preferred_num) {
     // NOTE: you said: PhysicalAddress::as_virtual_address() returns VA mapped to the same PA.
     // We need the PHYSICAL address here:
     phys = m_ring_phys.as_address(); // <-- use the PhysicalAddress method that returns PA
-    uint32_t pfn = (uint32_t) (phys >> 12);
+    const auto pfn = static_cast<uint32_t>(phys >> 12);
     wr32(VIRTIO_PCI_QUEUE_PFN, pfn);
 
     return true;
 }
 
-Std::Result<void> VirtioBlockDevice::rw(bool write, uint64_t lba,
-                                        const void *src_or_null, void *dst_or_null, uint32_t bytes) {
+
+Std::Result<void> VirtioBlockDevice::rw(const bool write, const uint64_t lba,
+                                        const void *src_or_null, void *dst_or_null, const uint32_t bytes) {
     const auto memory_manager = &Kernel::MemoryManager::get_instance();
 
-    // Sanity
-    if (bytes == 0 || (bytes % 512) != 0) return Std::Error::from_code(1);
+    if (bytes == 0 || (bytes % 512) != 0) {
+        return Std::Error::from_code(1);
+    }
 
-    // 3 descriptors: header, data, status
     uint16_t d0 = pop_free();
     uint16_t d1 = pop_free();
     uint16_t d2 = pop_free();
-    if (d0 == 0xFFFF || d1 == 0xFFFF || d2 == 0xFFFF) Std::Error::from_code(2);
 
-    // Staging small objects (you may want per-request storage later)
+    if (d0 == 0xFFFF || d1 == 0xFFFF || d2 == 0xFFFF) {
+        return Std::Error::from_code(2);
+    }
+
     alignas(16) BlkReq hdr{};
     hdr.type = write ? 1u : 0u;
     hdr.reserved = 0;
@@ -234,14 +229,9 @@ Std::Result<void> VirtioBlockDevice::rw(bool write, uint64_t lba,
 
     volatile uint8_t status = 0xFF;
 
-    // Translate to phys addrs
-    auto hdr_pa = TRY(memory_manager->kernel_virtual_to_physical_address(reinterpret_cast<u64>(&hdr)));
-    auto st_pa = TRY(memory_manager->kernel_virtual_to_physical_address(reinterpret_cast<u64>(&status)));
-    auto buf_pa = TRY(
-        memory_manager->kernel_virtual_to_physical_address(write ? reinterpret_cast<u64>(src_or_null): reinterpret_cast<
-            u64>(dst_or_null)));
-
-    auto buffer = write ? reinterpret_cast<u64>(src_or_null): reinterpret_cast<u64>(dst_or_null);
+    const auto hdr_pa = TRY_INTO(Std::Error, memory_manager->kernel_virtual_to_physical_address(reinterpret_cast<u64>(&hdr)));
+    const auto buf_pa = TRY_INTO(Std::Error, memory_manager->kernel_virtual_to_physical_address(write ? reinterpret_cast<u64>(src_or_null): reinterpret_cast<u64>(dst_or_null)));
+    const auto st_pa = TRY_INTO(Std::Error, memory_manager->kernel_virtual_to_physical_address(reinterpret_cast<u64>(&status)));
 
     // 1) header (device reads)
     m_q.desc[d0].addr = hdr_pa.as_address();
@@ -261,20 +251,16 @@ Std::Result<void> VirtioBlockDevice::rw(bool write, uint64_t lba,
     m_q.desc[d2].flags = VRING_DESC_F_WRITE;
     m_q.desc[d2].next = 0;
 
-    // sanity check again
-    // println("Header: virt = {:#x}, phys = {:#x}", (void*)&hdr, hdr_pa.as_address());
-    // println("Buffer: virt = {:#x}, phys = {:#x}", buffer, buf_pa.as_address());
-    // println("Status: virt = {:#x}, phys = {:#x}", (void*)&status, st_pa.as_address());
-
-    // Publish to avail
+    // Publish to avail ring
     uint16_t *aring = vring_avail_ring(m_q.avail);
-    uint16_t aidx = m_q.avail->idx;
-    aring[aidx % m_q.num] = d0;
-    asm volatile("" ::: "memory"); // publish barrier
-    m_q.avail->idx = aidx + 1;
+    const uint16_t avail_index = m_q.avail->idx;
+    aring[avail_index % m_q.num] = d0;
+    m_q.avail->idx = avail_index + 1;
 
     // Notify device (queue 0)
+    // println("m_io_base = {:#x}", m_io_base);
     wr16(VIRTIO_PCI_QUEUE_NOTIFY, 0);
+
 
     // Poll for completion
     while (m_q.used->idx == m_q.used_idx_shadow) {
@@ -282,11 +268,10 @@ Std::Result<void> VirtioBlockDevice::rw(bool write, uint64_t lba,
     }
 
     // One completion
-    VUsedEl e = vring_used_ring(m_q.used)[m_q.used_idx_shadow % m_q.num];
+    // VUsedEl e = vring_used_ring(m_q.used)[m_q.used_idx_shadow % m_q.num];
     m_q.used_idx_shadow++;
 
     // Reclaim descriptors (the chain head id should be d0)
-    (void) e;
     push_free(d0);
     push_free(d1);
     push_free(d2);
@@ -298,9 +283,9 @@ Std::Result<void> VirtioBlockDevice::rw(bool write, uint64_t lba,
 }
 
 Std::Result<void> VirtioBlockDevice::read(const size_t offset, const size_t size, void *buffer) {
-    return rw(/*write=*/false, offset, /*src=*/nullptr, /*dst=*/buffer, size);
+    return rw(false, offset, nullptr, buffer, size);
 }
 
 Std::Result<void> VirtioBlockDevice::write(const size_t offset, const size_t size, void *buffer) {
-    return rw(/*write=*/true, offset, /*src=*/buffer, /*dst=*/nullptr, size);
+    return rw(true, offset, buffer, nullptr, size);
 }

@@ -25,6 +25,9 @@ enum class BitmapError {
     DoubleFree,
     Full
 };
+struct BitmapAllocatorError {
+    BitmapError kind;
+};
 
 class Bitmap {
 public:

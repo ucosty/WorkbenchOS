@@ -17,6 +17,8 @@ public:
     void set_rsp(VirtualAddress rsp);
     void set_page_directory(PhysicalAddress);
 
+    PhysicalAddress get_page_directory() const;
+
 private:
     PhysicalAddress m_page_directory;
     VirtualAddress m_rsp;

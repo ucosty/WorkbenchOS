@@ -193,8 +193,6 @@ void pat_set_index7_to_wc() {
     pat &= ~(0xFFull << 56);        // clear entry 7
     pat |=  (0x01ull << 56);        // set entry 7 = WC (0x01)
     write_msr(IA32_PAT, pat);
-
-    // After changing PAT entries, do a full TLB shootdown; WBINVD is also prudent.
 }
 
 Result<void> init(EFI::Raw::Handle image_handle, EFI::Raw::SystemTable *system_table) {
@@ -204,7 +202,7 @@ Result<void> init(EFI::Raw::Handle image_handle, EFI::Raw::SystemTable *system_t
     boot_services.set_watchdog_timer(0, 0, 0, nullptr);
 
     auto gfx = TRY(init_graphics(&boot_services));
-    memset((char *) gfx.mode()->framebuffer_base, 0x77, 1280 * 1024 * 4);
+    memset(reinterpret_cast<char *>(gfx.mode()->framebuffer_base), 0x77, 1280 * 1024 * 4);
 
     g_boot_console.initialise(reinterpret_cast<uint32_t *>(gfx.mode()->framebuffer_base), 1280, 1024);
     g_boot_console.println("WorkbenchOS is booting...");
@@ -229,11 +227,11 @@ Result<void> init(EFI::Raw::Handle image_handle, EFI::Raw::SystemTable *system_t
         panic("Kernel.elf: invalid ELF magic bytes");
     }
 
-    auto program_headers = reinterpret_cast<ELF::Elf64_Phdr *>((char *) kernel_bytes + elf_header->e_phoff);
-    auto get_total_pages = [](ELF::Elf64_Ehdr *elf_header, ELF::Elf64_Phdr *program_headers) -> uint64_t {
+    auto program_headers = reinterpret_cast<ELF::Elf64_Phdr *>(static_cast<char *>(kernel_bytes) + elf_header->e_phoff);
+    auto get_total_pages = [](const ELF::Elf64_Ehdr *elf, const ELF::Elf64_Phdr *program) -> uint64_t {
         auto total_pages = 0ULL;
-        for (int i = 0; i < elf_header->e_phnum; i++) {
-            auto program_header = &program_headers[i];
+        for (int i = 0; i < elf->e_phnum; i++) {
+            const auto program_header = &program[i];
             if (program_header->p_type != PT_LOAD)
                 continue;
             total_pages += bytes_to_pages(program_header->p_memsz);
@@ -314,7 +312,7 @@ Result<void> init(EFI::Raw::Handle image_handle, EFI::Raw::SystemTable *system_t
     auto bitmap_size_in_bytes = bitmap_required_size_in_bytes(memory_size, Page);
     auto bitmap_size_in_pages = divide_rounded_up(bitmap_size_in_bytes, Page);
     auto bitmap_physical_base = TRY(boot_services.allocate_pages(EFI::Raw::AllocateType::EFI_ALLOCATE_ANY_PAGES, EFI::MemoryType::EFI_LOADER_DATA, bitmap_size_in_pages));
-    memset((char *) bitmap_physical_base, 0, bitmap_size_in_pages * Page);
+    memset(reinterpret_cast<char *>(bitmap_physical_base), 0, bitmap_size_in_pages * Page);
 
     // Start with the kernel pages
     auto pages = kernel_pages + GUARD_PAGE;
@@ -329,26 +327,26 @@ Result<void> init(EFI::Raw::Handle image_handle, EFI::Raw::SystemTable *system_t
     pages += get_efi_preserved_page_count(memory_map) + GUARD_PAGE;
 
     // Add the initial page table pages
-    auto pagetable_size = get_pagetable_size(pages);
-    pages += pagetable_size + GUARD_PAGE;
+    auto page_table_size = get_pagetable_size(pages);
+    pages += page_table_size + GUARD_PAGE;
 
     // Add the frame allocator pages
     pages += bitmap_size_in_pages + GUARD_PAGE;
 
     // Allocate memory for the kernel
     auto kernel_physical_base = TRY(boot_services.allocate_pages(EFI::Raw::AllocateType::EFI_ALLOCATE_ANY_PAGES, EFI::MemoryType::EFI_LOADER_DATA, pages));
-    memset((char *) kernel_physical_base, 0, pages * Page);
+    memset(reinterpret_cast<char *>(kernel_physical_base), 0, pages * Page);
 
     // Allocate memory for the boot state block
     auto boot_state_page_count = bytes_to_pages(sizeof(BootState));
     auto boot_state_base = TRY(boot_services.allocate_pages(EFI::Raw::AllocateType::EFI_ALLOCATE_ANY_PAGES, EFI::MemoryType::EFI_LOADER_DATA, boot_state_page_count));
-    memset((char *) boot_state_base, 0, boot_state_page_count * Page);
+    memset(reinterpret_cast<char *>(boot_state_base), 0, boot_state_page_count * Page);
     auto boot_state = reinterpret_cast<BootState *>(boot_state_base);
 
     // Allocate memory for the kernel stack
-    auto kernel_stack_page_count = 2;
+    auto kernel_stack_page_count = 10;
     auto kernel_stack_physical_base = TRY(boot_services.allocate_pages(EFI::Raw::AllocateType::EFI_ALLOCATE_ANY_PAGES, EFI::MemoryType::EFI_LOADER_DATA, kernel_stack_page_count));
-    memset((char *) kernel_stack_physical_base, 0, kernel_stack_page_count * Page);
+    memset(reinterpret_cast<char *>(kernel_stack_physical_base), 0, kernel_stack_page_count * Page);
 
     // Convert virtual addresses to kernel physical addresses
     auto kernel_virtual_to_physical = [](uint64_t physical_base, uint64_t virtual_address) {
@@ -364,9 +362,16 @@ Result<void> init(EFI::Raw::Handle image_handle, EFI::Raw::SystemTable *system_t
 
         auto load_pages = bytes_to_pages(program_header->p_memsz);
         auto physical_address = kernel_virtual_to_physical(kernel_physical_base, program_header->p_vaddr);
-        auto load_address = (void *) ((char *) kernel_bytes + program_header->p_offset);
-        memset((char *) physical_address, 0, load_pages * Page);
-        memcpy((void *) physical_address, load_address, program_header->p_filesz);
+        auto load_address = static_cast<void *>(static_cast<char *>(kernel_bytes) + program_header->p_offset);
+        memset(reinterpret_cast<char *>(physical_address), 0, load_pages * Page);
+        memcpy(reinterpret_cast<void *>(physical_address), load_address, program_header->p_filesz);
+
+        // set the program header value
+        auto c = boot_state->kernel_address_space.program_header_count;
+        boot_state->kernel_address_space.program_header_flags[c].address = program_header->p_vaddr;
+        boot_state->kernel_address_space.program_header_flags[c].size = load_pages * Page;
+        boot_state->kernel_address_space.program_header_flags[c].flags = program_header->p_flags;
+        boot_state->kernel_address_space.program_header_count++;
     }
 
     // Get the system memory map
@@ -401,7 +406,7 @@ Result<void> init(EFI::Raw::Handle image_handle, EFI::Raw::SystemTable *system_t
     // Initial pages region
     boot_state->kernel_address_space.initial_pages.physical_base = kernel_physical_base + (kernel_pages * Page);
     boot_state->kernel_address_space.initial_pages.virtual_base = next_virtual_mapping(boot_state->kernel_address_space.boot_state);
-    boot_state->kernel_address_space.initial_pages.size = pagetable_size * Page;
+    boot_state->kernel_address_space.initial_pages.size = page_table_size * Page;
 
     // Memory map region
     boot_state->kernel_address_space.memory_map.virtual_base = next_virtual_mapping(boot_state->kernel_address_space.initial_pages);

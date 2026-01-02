@@ -6,7 +6,6 @@
 
 #include "../Heap/SlabAllocator.h"
 #include "Process.h"
-#include "StackFrame.h"
 #include "LibStd/Result.h"
 #include "LibStd/Vector.h"
 
@@ -21,7 +20,7 @@ public:
     void operator=(ProcessManager const &) = delete;
 
     Std::Result<void> initialise();
-    Std::Result<void> create_process();
+    Std::Result<Process *> create_process();
     Process * current_process();
     Process * next_process();
 

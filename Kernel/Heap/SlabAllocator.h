@@ -16,6 +16,8 @@ struct FreeObject {
     FreeObject *next;
 };
 
+struct SlabError {};
+
 static_assert(sizeof(FreeObject) == 8);
 
 // Stored at the end of the slab page
@@ -57,7 +59,7 @@ static_assert(sizeof(SlabPage) == 48);
 
 class Slab {
 public:
-    Std::Result<void> initialise(size_t size);
+    Std::Result<void, SlabError> initialise(size_t size);
     [[nodiscard]] bool is_slab_for(size_t size) const { return m_initialised && m_object_size == size; }
     [[nodiscard]] bool is_initialised() const { return m_initialised; }
     [[nodiscard]] Std::Result<Std::NonNullPtr<u8>> allocate() const;
@@ -84,12 +86,12 @@ public:
     SlabAllocator(SlabAllocator const &) = delete;
     void operator=(SlabAllocator const &) = delete;
 
-    Std::Result<Std::NonNullPtr<Slab>> get_or_create_slab(size_t size);
+    Std::Result<Std::NonNullPtr<Slab>, SlabError> get_or_create_slab(size_t size);
 
 private:
     SlabAllocator() = default;
-    Std::Result<Std::NonNullPtr<Slab>> find_slab(size_t size);
-    Std::Result<Std::NonNullPtr<Slab>> create_slab(size_t size);
+    Std::Result<Std::NonNullPtr<Slab>, SlabError> find_slab(size_t size);
+    Std::Result<Std::NonNullPtr<Slab>, SlabError> create_slab(size_t size);
     Slab m_slabs[32];
 };
 }// namespace Kernel

@@ -17,4 +17,7 @@ void Process::set_page_directory(PhysicalAddress address) {
     m_page_directory = address;
 }
 
+PhysicalAddress Process::get_page_directory() const {
+    return m_page_directory;
+}
 }// namespace Kernel

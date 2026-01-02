@@ -74,6 +74,7 @@ struct PACKED TSS {
     uint16_t reserved_4;
     uint16_t iomap_base;
 };
+static_assert(sizeof(TSS) == 0x68);
 
 struct PACKED InterruptDescriptor {
     uint64_t offset : 16;

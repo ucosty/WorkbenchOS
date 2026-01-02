@@ -36,7 +36,7 @@ void delay(const size_t microseconds) {
 
 void debug_putchar(const char c) {
     PortIO::out8(0xe9, c);
-    g_console.write_character(c);
+   g_console.write_character(c);
     if(c == '\n') {
         g_console.flip_buffer_screen();
     }

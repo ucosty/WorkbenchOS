@@ -101,12 +101,23 @@ struct PACKED BacktraceFrame {
 };
 static_assert(sizeof(BacktraceFrame) == 16);
 
+struct FramePointer {
+    FramePointer* next;
+    u64           ret;
+};
+
+static bool is_canonical(const u64 address) {
+    const u64 sign = (address >> 47) & 1;
+    const u64 top  = address >> 48;
+    return sign ? (top == 0xFFFF) : (top == 0x0000);
+}
+
 EXCEPTION_HANDLER_WITH_CODE(14, page_fault_exception);
 void page_fault_exception_handler(StackFrameErrorCode *frame) {
-    u64 address = 0;
-    asm volatile("movq %%cr2, %%rax"
-                 : "=a"(address));
     println("\u001b[31mPage Fault Exception!\u001b[0m");
+    uint64_t cr2;
+    asm volatile("mov %%cr2, %0" : "=r"(cr2) :: "memory");
+
     println("    rip = {:#x}", frame->rip);
     println("     cs = {:#x}", frame->cs);
     println(" rflags = {:#x}", frame->rflags);
@@ -114,20 +125,44 @@ void page_fault_exception_handler(StackFrameErrorCode *frame) {
     println("    rsp = {:#x}", frame->rsp);
     println("     ss = {:#x}", frame->ss);
     println("  error = {:#x}", frame->error);
-    println("address = {:#x}", address);
+    println("address = {:#x}", cr2);
 
     println("\nBacktrace:");
-    BacktraceFrame *stack_frame;
-    asm("movq %%rbp, %0"
-        : "=r"(stack_frame));
 
-    for (int i = 0; i < 10; i++) {
-        println("{}: rip = {:#x}", i, stack_frame->rip);
+    // First entry: the faulting RIP itself (this is *not* a return address).
+    println("fault: rip = {:#x}", frame->rip);
 
-        if (stack_frame->rbp == nullptr || stack_frame->rbp == stack_frame)
-            break;
+    // Start from the *faulting context* RBP, not the handler's RBP.
+    auto* fp = reinterpret_cast<FramePointer*>(frame->rbp);
 
-        stack_frame = stack_frame->rbp;
+    for (int i = 0; i < 15; i++) {
+        if (!fp) break;
+
+        uint64_t fp_addr = reinterpret_cast<uint64_t>(fp);
+        if (!is_canonical(fp_addr) || (fp_addr & 0x7)) break; // basic sanity
+
+        // Optional but strongly recommended:
+        // if (!in_stack_range(fp_addr)) break;
+
+        // Read next + return address.
+        // NOTE: This assumes the memory at fp is mapped; if you still sometimes
+        // fault here, you need either a "safe read" or ensure stacks are mapped.
+        FramePointer* next = fp->next;
+        uint64_t ret = fp->ret;
+
+        if (!is_canonical(ret) || ret == 0) break;
+
+        // ret points *after* the call. Subtract 1 to land within the call site.
+        uint64_t ip = ret - 1;
+
+        println("{}: rip = {:#x} (ret={:#x}, rbp={:#x})",
+                i, ip, ret, fp_addr);
+
+        // Stop on obvious loops / non-progress.
+        if (next == fp) break;
+        if (reinterpret_cast<uint64_t>(next) <= fp_addr) break; // stack should grow down, rbp should increase as you unwind
+
+        fp = next;
     }
 }
 
@@ -157,24 +192,24 @@ void virtualisation_exception_handler(StackFrame *frame) {
 }
 
 void configure_exceptions(InterruptVectorTable &ivt) {
-    InterruptVectorTable::set_interrupt_gate(0, PrivilegeLevel::Kernel, &divide_by_zero_exception_asm_wrapper);
-    InterruptVectorTable::set_interrupt_gate(1, PrivilegeLevel::Kernel, &debug_exception_asm_wrapper);
-    InterruptVectorTable::set_interrupt_gate(2, PrivilegeLevel::Kernel, &nmi_interrupt_asm_wrapper);
-    InterruptVectorTable::set_interrupt_gate(3, PrivilegeLevel::Kernel, &breakpoint_exception_asm_wrapper);
-    InterruptVectorTable::set_interrupt_gate(4, PrivilegeLevel::Kernel, &overflow_exception_asm_wrapper);
-    InterruptVectorTable::set_interrupt_gate(5, PrivilegeLevel::Kernel, &bound_range_exceeded_exception_asm_wrapper);
-    InterruptVectorTable::set_interrupt_gate(6, PrivilegeLevel::Kernel, &invalid_opcode_exception_asm_wrapper);
-    InterruptVectorTable::set_interrupt_gate(7, PrivilegeLevel::Kernel, &device_not_available_exception_asm_wrapper);
-    InterruptVectorTable::set_interrupt_gate(8, PrivilegeLevel::Kernel, &double_fault_exception_asm_wrapper);
-    InterruptVectorTable::set_interrupt_gate(9, PrivilegeLevel::Kernel, &coprocessor_segment_overrun_exception_asm_wrapper);
-    InterruptVectorTable::set_interrupt_gate(10, PrivilegeLevel::Kernel, &invalid_tss_exception_asm_wrapper);
-    InterruptVectorTable::set_interrupt_gate(11, PrivilegeLevel::Kernel, &segment_not_present_exception_asm_wrapper);
-    InterruptVectorTable::set_interrupt_gate(12, PrivilegeLevel::Kernel, &stack_fault_exception_asm_wrapper);
-    InterruptVectorTable::set_interrupt_gate(13, PrivilegeLevel::Kernel, &general_protection_fault_exception_asm_wrapper);
-    InterruptVectorTable::set_interrupt_gate(14, PrivilegeLevel::Kernel, &page_fault_exception_asm_wrapper);
-    InterruptVectorTable::set_interrupt_gate(16, PrivilegeLevel::Kernel, &floating_point_error_exception_asm_wrapper);
-    InterruptVectorTable::set_interrupt_gate(17, PrivilegeLevel::Kernel, &alignment_check_exception_asm_wrapper);
-    InterruptVectorTable::set_interrupt_gate(18, PrivilegeLevel::Kernel, &machine_check_exception_asm_wrapper);
-    InterruptVectorTable::set_interrupt_gate(19, PrivilegeLevel::Kernel, &simd_floating_point_exception_asm_wrapper);
-    InterruptVectorTable::set_interrupt_gate(20, PrivilegeLevel::Kernel, &virtualisation_exception_asm_wrapper);
+    InterruptVectorTable::set_interrupt_gate(0, PrivilegeLevel::Kernel, 0, &divide_by_zero_exception_asm_wrapper);
+    InterruptVectorTable::set_interrupt_gate(1, PrivilegeLevel::Kernel, 0, &debug_exception_asm_wrapper);
+    InterruptVectorTable::set_interrupt_gate(2, PrivilegeLevel::Kernel, 0, &nmi_interrupt_asm_wrapper);
+    InterruptVectorTable::set_interrupt_gate(3, PrivilegeLevel::Kernel, 0, &breakpoint_exception_asm_wrapper);
+    InterruptVectorTable::set_interrupt_gate(4, PrivilegeLevel::Kernel, 0, &overflow_exception_asm_wrapper);
+    InterruptVectorTable::set_interrupt_gate(5, PrivilegeLevel::Kernel, 0, &bound_range_exceeded_exception_asm_wrapper);
+    InterruptVectorTable::set_interrupt_gate(6, PrivilegeLevel::Kernel, 0, &invalid_opcode_exception_asm_wrapper);
+    InterruptVectorTable::set_interrupt_gate(7, PrivilegeLevel::Kernel, 0, &device_not_available_exception_asm_wrapper);
+    InterruptVectorTable::set_interrupt_gate(8, PrivilegeLevel::Kernel, 2, &double_fault_exception_asm_wrapper);
+    InterruptVectorTable::set_interrupt_gate(9, PrivilegeLevel::Kernel, 0, &coprocessor_segment_overrun_exception_asm_wrapper);
+    InterruptVectorTable::set_interrupt_gate(10, PrivilegeLevel::Kernel, 0, &invalid_tss_exception_asm_wrapper);
+    InterruptVectorTable::set_interrupt_gate(11, PrivilegeLevel::Kernel, 0, &segment_not_present_exception_asm_wrapper);
+    InterruptVectorTable::set_interrupt_gate(12, PrivilegeLevel::Kernel, 0, &stack_fault_exception_asm_wrapper);
+    InterruptVectorTable::set_interrupt_gate(13, PrivilegeLevel::Kernel, 0, &general_protection_fault_exception_asm_wrapper);
+    InterruptVectorTable::set_interrupt_gate(14, PrivilegeLevel::Kernel, 1, &page_fault_exception_asm_wrapper);
+    InterruptVectorTable::set_interrupt_gate(16, PrivilegeLevel::Kernel, 0, &floating_point_error_exception_asm_wrapper);
+    InterruptVectorTable::set_interrupt_gate(17, PrivilegeLevel::Kernel, 0, &alignment_check_exception_asm_wrapper);
+    InterruptVectorTable::set_interrupt_gate(18, PrivilegeLevel::Kernel, 0, &machine_check_exception_asm_wrapper);
+    InterruptVectorTable::set_interrupt_gate(19, PrivilegeLevel::Kernel, 0, &simd_floating_point_exception_asm_wrapper);
+    InterruptVectorTable::set_interrupt_gate(20, PrivilegeLevel::Kernel, 0, &virtualisation_exception_asm_wrapper);
 }

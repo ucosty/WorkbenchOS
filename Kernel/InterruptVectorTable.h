@@ -21,7 +21,7 @@ public:
     InterruptVectorTable(InterruptVectorTable const &) = delete;
     void operator=(InterruptVectorTable const &) = delete;
     void initialise();
-    static void set_interrupt_gate(u8 id, PrivilegeLevel dpl, void (*handler)());
+    static void set_interrupt_gate(u8 id, PrivilegeLevel dpl, u8 ist, void (*handler)());
 
 private:
     InterruptVectorTable() = default;

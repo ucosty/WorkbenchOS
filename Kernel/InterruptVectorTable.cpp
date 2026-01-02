@@ -69,19 +69,19 @@ void schedule_handler(StackFrame *frame) {
 
 void InterruptVectorTable::initialise() {
     for (int i = 0; i < 255; i++) {
-        set_interrupt_gate(i, PrivilegeLevel::Kernel, &not_implemented_asm_wrapper);
+        set_interrupt_gate(i, PrivilegeLevel::Kernel, 0, &not_implemented_asm_wrapper);
     }
     configure_exceptions(*this);
-    set_interrupt_gate(32, PrivilegeLevel::User, &timer_asm_wrapper);
-    set_interrupt_gate(33, PrivilegeLevel::Kernel, &ps2_keyboard_asm_wrapper);
-    set_interrupt_gate(34, PrivilegeLevel::Kernel, &ps2_mouse_asm_wrapper);
+    set_interrupt_gate(32, PrivilegeLevel::User, 0, &timer_asm_wrapper);
+    set_interrupt_gate(33, PrivilegeLevel::Kernel, 0, &ps2_keyboard_asm_wrapper);
+    set_interrupt_gate(34, PrivilegeLevel::Kernel, 0, &ps2_mouse_asm_wrapper);
 
     g_idt_pointer.address = reinterpret_cast<u64>(&g_interrupts);
     g_idt_pointer.limit = sizeof(InterruptDescriptor) * 256;
     asm volatile("lidt g_idt_pointer");
 }
 
-void InterruptVectorTable::set_interrupt_gate(u8 id, PrivilegeLevel dpl, void (*handler)()) {
+void InterruptVectorTable::set_interrupt_gate(const u8 id, const PrivilegeLevel dpl, const u8 ist, void (*handler)()) {
     const auto descriptor_privilege_level = dpl == PrivilegeLevel::User ? 3 : 0;
     const auto address = reinterpret_cast<u64>(handler);
     g_interrupts[id].offset = address & 0xffff;
@@ -91,4 +91,5 @@ void InterruptVectorTable::set_interrupt_gate(u8 id, PrivilegeLevel dpl, void (*
     g_interrupts[id].type = 0x0f;
     g_interrupts[id].descriptor_privilege_level = descriptor_privilege_level;
     g_interrupts[id].present = 1;
+    g_interrupts[id].ist = ist;
 }
